@@ -197,32 +197,6 @@ func (c *Client) Connect() error {
 	}
 }
 
-func (c *Client) performConnection() {
-	defer func() {
-		if r := recover(); r != nil {
-			c.logger.ErrorWithFields("Connection panic", map[string]interface{}{
-				"session_name": c.sessionName,
-				"error":        r,
-			})
-			c.setError(fmt.Sprintf("connection panic: %v", r))
-		}
-	}()
-
-	if c.client.IsConnected() {
-		c.client.Disconnect()
-	}
-
-	if c.isDeviceRegistered() {
-		c.connectExistingDevice()
-	} else {
-		c.connectNewDevice()
-	}
-}
-
-func (c *Client) isDeviceRegistered() bool {
-	return c.device.ID != nil
-}
-
 func (c *Client) connectExistingDevice() error {
 	c.logger.InfoWithFields("Connecting existing device", map[string]interface{}{
 		"session_name": c.sessionName,
@@ -255,33 +229,6 @@ func (c *Client) connectNewDevice() error {
 	return nil
 }
 
-func (c *Client) waitForAuthentication() {
-
-	timeout := time.After(10 * time.Second)
-	ticker := time.NewTicker(500 * time.Millisecond)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-timeout:
-			c.logger.WarnWithFields("Authentication timeout", map[string]interface{}{
-				"session_name": c.sessionName,
-			})
-			return
-		case <-ticker.C:
-			if c.client.IsConnected() && c.client.IsLoggedIn() {
-				c.setState(StateLoggedIn)
-				c.logger.InfoWithFields("Authentication successful", map[string]interface{}{
-					"session_name": c.sessionName,
-				})
-				return
-			}
-		case <-c.ctx.Done():
-			return
-		}
-	}
-}
-
 func (c *Client) setState(state ConnectionState) {
 	c.state = state
 	c.lastActivity = time.Now()
@@ -296,10 +243,6 @@ func (c *Client) setError(message string) {
 	c.state = StateError
 	c.errorMessage = message
 	c.lastActivity = time.Now()
-}
-
-func (c *Client) clearError() {
-	c.errorMessage = ""
 }
 
 func (c *Client) setupEventHandlers() {
