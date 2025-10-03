@@ -13,7 +13,6 @@ import (
 	"zpwoot/platform/logger"
 )
 
-
 type MyClient struct {
 	WAClient       *whatsmeow.Client
 	eventHandlerID uint32
@@ -23,26 +22,22 @@ type MyClient struct {
 	db             *sqlx.DB
 	gateway        *Gateway
 	logger         *logger.Logger
-	
 
-	isConnected    bool
-	connectionMux  sync.RWMutex
+	isConnected   bool
+	connectionMux sync.RWMutex
 }
-
 
 type ClientManager struct {
-	clients    map[uuid.UUID]*MyClient
+	clients     map[uuid.UUID]*MyClient
 	httpClients map[uuid.UUID]interface{}
-	mutex      sync.RWMutex
-	logger     *logger.Logger
+	mutex       sync.RWMutex
+	logger      *logger.Logger
 }
-
 
 var (
 	clientManager *ClientManager
 	once          sync.Once
 )
-
 
 func GetClientManager(logger *logger.Logger) *ClientManager {
 	once.Do(func() {
@@ -55,23 +50,20 @@ func GetClientManager(logger *logger.Logger) *ClientManager {
 	return clientManager
 }
 
-
 func (cm *ClientManager) SetWhatsmeowClient(sessionID uuid.UUID, client *whatsmeow.Client) {
 	cm.mutex.Lock()
 	defer cm.mutex.Unlock()
-	
+
 	if mycli, exists := cm.clients[sessionID]; exists {
 		mycli.WAClient = client
 	}
 }
-
 
 func (cm *ClientManager) SetMyClient(sessionID uuid.UUID, client *MyClient) {
 	cm.mutex.Lock()
 	defer cm.mutex.Unlock()
 	cm.clients[sessionID] = client
 }
-
 
 func (cm *ClientManager) GetMyClient(sessionID uuid.UUID) (*MyClient, bool) {
 	cm.mutex.RLock()
@@ -80,13 +72,11 @@ func (cm *ClientManager) GetMyClient(sessionID uuid.UUID) (*MyClient, bool) {
 	return client, exists
 }
 
-
 func (cm *ClientManager) DeleteMyClient(sessionID uuid.UUID) {
 	cm.mutex.Lock()
 	defer cm.mutex.Unlock()
 	delete(cm.clients, sessionID)
 }
-
 
 func (cm *ClientManager) DeleteWhatsmeowClient(sessionID uuid.UUID) {
 	cm.mutex.Lock()
@@ -96,13 +86,11 @@ func (cm *ClientManager) DeleteWhatsmeowClient(sessionID uuid.UUID) {
 	}
 }
 
-
 func (cm *ClientManager) SetHTTPClient(sessionID uuid.UUID, client interface{}) {
 	cm.mutex.Lock()
 	defer cm.mutex.Unlock()
 	cm.httpClients[sessionID] = client
 }
-
 
 func (cm *ClientManager) DeleteHTTPClient(sessionID uuid.UUID) {
 	cm.mutex.Lock()
@@ -110,18 +98,16 @@ func (cm *ClientManager) DeleteHTTPClient(sessionID uuid.UUID) {
 	delete(cm.httpClients, sessionID)
 }
 
-
 func NewMyClient(sessionID uuid.UUID, sessionName string, client *whatsmeow.Client, db *sqlx.DB, gateway *Gateway, logger *logger.Logger) *MyClient {
 	mycli := &MyClient{
-		WAClient:    client,
-		sessionID:   sessionID,
-		sessionName: sessionName,
-		db:          db,
-		gateway:     gateway,
-		logger:      logger,
+		WAClient:      client,
+		sessionID:     sessionID,
+		sessionName:   sessionName,
+		db:            db,
+		gateway:       gateway,
+		logger:        logger,
 		subscriptions: []string{"Connected", "Disconnected", "QR", "PairSuccess", "LoggedOut"},
 	}
-
 
 	if client != nil {
 		mycli.eventHandlerID = client.AddEventHandler(mycli.myEventHandler)
@@ -130,13 +116,11 @@ func NewMyClient(sessionID uuid.UUID, sessionName string, client *whatsmeow.Clie
 	return mycli
 }
 
-
 func (mc *MyClient) IsConnected() bool {
 	mc.connectionMux.RLock()
 	defer mc.connectionMux.RUnlock()
 	return mc.isConnected
 }
-
 
 func (mc *MyClient) SetConnected(connected bool) {
 	mc.connectionMux.Lock()
@@ -144,16 +128,13 @@ func (mc *MyClient) SetConnected(connected bool) {
 	mc.isConnected = connected
 }
 
-
 func (mc *MyClient) GetSessionID() uuid.UUID {
 	return mc.sessionID
 }
 
-
 func (mc *MyClient) GetSessionName() string {
 	return mc.sessionName
 }
-
 
 func (mc *MyClient) Disconnect() {
 	if mc.WAClient != nil {
@@ -161,7 +142,6 @@ func (mc *MyClient) Disconnect() {
 		mc.SetConnected(false)
 	}
 }
-
 
 func (mc *MyClient) Connect() error {
 	if mc.WAClient == nil {
@@ -180,7 +160,6 @@ func (mc *MyClient) Connect() error {
 	return nil
 }
 
-
 func (mc *MyClient) UpdateConnectionStatus(connected bool) error {
 	query := `UPDATE "zpSessions" SET "isConnected" = $1, "updatedAt" = NOW() WHERE id = $2`
 	_, err := mc.db.Exec(query, connected, mc.sessionID.String())
@@ -196,7 +175,6 @@ func (mc *MyClient) UpdateConnectionStatus(connected bool) error {
 	mc.SetConnected(connected)
 	return nil
 }
-
 
 func (mc *MyClient) UpdateDeviceJID(deviceJID string) error {
 	query := `UPDATE "zpSessions" SET "deviceJid" = $1, "isConnected" = true, "connectedAt" = NOW(), "updatedAt" = NOW() WHERE id = $2`
@@ -214,7 +192,6 @@ func (mc *MyClient) UpdateDeviceJID(deviceJID string) error {
 	return nil
 }
 
-
 func (mc *MyClient) ClearQRCode() error {
 	query := `UPDATE "zpSessions" SET "qrCode" = NULL, "qrCodeExpiresAt" = NULL, "updatedAt" = NOW() WHERE id = $1`
 	_, err := mc.db.Exec(query, mc.sessionID.String())
@@ -228,7 +205,6 @@ func (mc *MyClient) ClearQRCode() error {
 
 	return nil
 }
-
 
 func (mc *MyClient) UpdateQRCode(qrCode string, expiresAt time.Time) error {
 	query := `UPDATE "zpSessions" SET "qrCode" = $1, "qrCodeExpiresAt" = $2, "updatedAt" = NOW() WHERE id = $3`
@@ -244,7 +220,6 @@ func (mc *MyClient) UpdateQRCode(qrCode string, expiresAt time.Time) error {
 	return nil
 }
 
-
 func (mc *MyClient) SetConnectionError(errorMsg string) error {
 	query := `UPDATE "zpSessions" SET "connectionError" = $1, "isConnected" = false, "updatedAt" = NOW() WHERE id = $2`
 	_, err := mc.db.Exec(query, errorMsg, mc.sessionID.String())
@@ -259,7 +234,6 @@ func (mc *MyClient) SetConnectionError(errorMsg string) error {
 	mc.SetConnected(false)
 	return nil
 }
-
 
 func (mc *MyClient) GetDeviceJID() (string, error) {
 	var deviceJID sql.NullString

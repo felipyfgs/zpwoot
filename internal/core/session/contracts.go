@@ -88,5 +88,3 @@ type QRCodeGenerator interface {
 	GenerateImage(ctx context.Context, qrCode string) ([]byte, error)
 	IsExpired(expiresAt time.Time) bool
 }
-
-

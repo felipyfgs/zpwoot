@@ -11,18 +11,15 @@ import (
 	"zpwoot/platform/logger"
 )
 
-
 type Mapper struct {
 	logger *logger.Logger
 }
-
 
 func NewMapper(logger *logger.Logger) *Mapper {
 	return &Mapper{
 		logger: logger,
 	}
 }
-
 
 func (m *Mapper) MapDeviceInfoFromWhatsmeow(jid types.JID, pushName string, connected bool) *session.DeviceInfo {
 	deviceInfo := &session.DeviceInfo{
@@ -42,7 +39,6 @@ func (m *Mapper) MapDeviceInfoFromWhatsmeow(jid types.JID, pushName string, conn
 	return deviceInfo
 }
 
-
 func (m *Mapper) MapDeviceInfoFromPairSuccess(evt *events.PairSuccess) *session.DeviceInfo {
 	deviceInfo := &session.DeviceInfo{
 		Platform:    evt.Platform,
@@ -59,7 +55,6 @@ func (m *Mapper) MapDeviceInfoFromPairSuccess(evt *events.PairSuccess) *session.
 
 	return deviceInfo
 }
-
 
 func (m *Mapper) MapConnectionStatus(evt interface{}) (session.SessionStatus, string) {
 	switch e := evt.(type) {
@@ -103,7 +98,6 @@ func (m *Mapper) MapConnectionStatus(evt interface{}) (session.SessionStatus, st
 	}
 }
 
-
 func (m *Mapper) MapQRCodeResponse(qrCode string, base64Image string, expiresAt time.Time) *session.QRCodeResponse {
 	timeout := int(time.Until(expiresAt).Seconds())
 	if timeout < 0 {
@@ -125,7 +119,6 @@ func (m *Mapper) MapQRCodeResponse(qrCode string, base64Image string, expiresAt 
 
 	return response
 }
-
 
 func (m *Mapper) MapEventTypeToString(evt interface{}) string {
 	switch evt.(type) {
@@ -154,14 +147,12 @@ func (m *Mapper) MapEventTypeToString(evt interface{}) string {
 	}
 }
 
-
 func (m *Mapper) MapJIDToString(jid types.JID) string {
 	if jid.IsEmpty() {
 		return ""
 	}
 	return jid.String()
 }
-
 
 func (m *Mapper) MapStringToJID(jidStr string) (types.JID, error) {
 	if jidStr == "" {
@@ -180,7 +171,6 @@ func (m *Mapper) MapStringToJID(jidStr string) (types.JID, error) {
 	return jid, nil
 }
 
-
 func (m *Mapper) MapErrorToConnectionError(err error) string {
 	if err == nil {
 		return ""
@@ -193,7 +183,6 @@ func (m *Mapper) MapErrorToConnectionError(err error) string {
 
 	return errorMsg
 }
-
 
 func (m *Mapper) MapSessionStatusToString(status session.SessionStatus) string {
 	switch status {
@@ -213,7 +202,6 @@ func (m *Mapper) MapSessionStatusToString(status session.SessionStatus) string {
 		return "unknown"
 	}
 }
-
 
 func (m *Mapper) MapStringToSessionStatus(statusStr string) session.SessionStatus {
 	switch statusStr {
@@ -237,24 +225,20 @@ func (m *Mapper) MapStringToSessionStatus(statusStr string) session.SessionStatu
 	}
 }
 
-
 func (m *Mapper) IsConnectionEvent(evt interface{}) bool {
 	switch evt.(type) {
-	case *events.Connected, *events.Disconnected, *events.LoggedOut, 
-		 *events.ConnectFailure, *events.PairSuccess:
+	case *events.Connected, *events.Disconnected, *events.LoggedOut,
+		*events.ConnectFailure, *events.PairSuccess:
 		return true
 	default:
 		return false
 	}
 }
 
-
 func (m *Mapper) IsQREvent(evt interface{}) bool {
-
 
 	return false
 }
-
 
 func (m *Mapper) GetEventPriority(evt interface{}) string {
 	switch evt.(type) {
@@ -271,7 +255,6 @@ func (m *Mapper) GetEventPriority(evt interface{}) string {
 	}
 }
 
-
 func (m *Mapper) CreateEventContext(evt interface{}, sessionID string, sessionName string) map[string]interface{} {
 	context := map[string]interface{}{
 		"session_id":   sessionID,
@@ -280,7 +263,6 @@ func (m *Mapper) CreateEventContext(evt interface{}, sessionID string, sessionNa
 		"priority":     m.GetEventPriority(evt),
 		"timestamp":    time.Now(),
 	}
-
 
 	switch e := evt.(type) {
 	case *events.PairSuccess:

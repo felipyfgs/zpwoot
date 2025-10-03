@@ -137,8 +137,6 @@ func (s *SessionService) GetSession(ctx context.Context, sessionID string) (*con
 	return response, nil
 }
 
-
-
 func (s *SessionService) RestoreAllSessions(ctx context.Context) error {
 	s.logger.Info("Starting session restoration process")
 
@@ -153,10 +151,6 @@ func (s *SessionService) RestoreAllSessions(ctx context.Context) error {
 	s.logger.Info("Session restoration completed successfully")
 	return nil
 }
-
-
-
-
 
 func (s *SessionService) ListSessions(ctx context.Context, req *contracts.ListSessionsRequest) (*contracts.ListSessionsResponse, error) {
 
@@ -231,7 +225,6 @@ func (s *SessionService) ConnectSession(ctx context.Context, sessionID string) (
 		}
 	}
 
-
 	qrResponse, qrErr := s.waitForQRCode(ctx, id, 5*time.Second)
 	if qrErr == nil && qrResponse != nil {
 		response.QRCode = qrResponse.QRCode
@@ -244,12 +237,10 @@ func (s *SessionService) ConnectSession(ctx context.Context, sessionID string) (
 	return response, nil
 }
 
-
 func (s *SessionService) waitForQRCode(ctx context.Context, sessionID uuid.UUID, timeout time.Duration) (*contracts.QRCodeResponse, error) {
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-
 
 	ticker := time.NewTicker(200 * time.Millisecond)
 	defer ticker.Stop()

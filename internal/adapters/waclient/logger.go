@@ -8,12 +8,10 @@ import (
 	"zpwoot/platform/logger"
 )
 
-
 type WhatsmeowLogger struct {
 	zpLogger *logger.Logger
 	module   string
 }
-
 
 func NewWhatsmeowLogger(zpLogger *logger.Logger) waLog.Logger {
 	return &WhatsmeowLogger{
@@ -21,7 +19,6 @@ func NewWhatsmeowLogger(zpLogger *logger.Logger) waLog.Logger {
 		module:   "whatsmeow",
 	}
 }
-
 
 func (wl *WhatsmeowLogger) Debugf(msg string, args ...interface{}) {
 	message := fmt.Sprintf(msg, args...)
@@ -31,7 +28,6 @@ func (wl *WhatsmeowLogger) Debugf(msg string, args ...interface{}) {
 	})
 }
 
-
 func (wl *WhatsmeowLogger) Infof(msg string, args ...interface{}) {
 	message := fmt.Sprintf(msg, args...)
 	wl.zpLogger.InfoWithFields("WhatsApp Info", map[string]interface{}{
@@ -39,7 +35,6 @@ func (wl *WhatsmeowLogger) Infof(msg string, args ...interface{}) {
 		"message": message,
 	})
 }
-
 
 func (wl *WhatsmeowLogger) Warnf(msg string, args ...interface{}) {
 	message := fmt.Sprintf(msg, args...)
@@ -49,7 +44,6 @@ func (wl *WhatsmeowLogger) Warnf(msg string, args ...interface{}) {
 	})
 }
 
-
 func (wl *WhatsmeowLogger) Errorf(msg string, args ...interface{}) {
 	message := fmt.Sprintf(msg, args...)
 	wl.zpLogger.ErrorWithFields("WhatsApp Error", map[string]interface{}{
@@ -57,7 +51,6 @@ func (wl *WhatsmeowLogger) Errorf(msg string, args ...interface{}) {
 		"message": message,
 	})
 }
-
 
 func (wl *WhatsmeowLogger) Sub(module string) waLog.Logger {
 	subModule := fmt.Sprintf("%s.%s", wl.module, module)
@@ -67,22 +60,18 @@ func (wl *WhatsmeowLogger) Sub(module string) waLog.Logger {
 	}
 }
 
-
 func (wl *WhatsmeowLogger) GetLevel() string {
 
 	return "INFO"
 }
 
-
 func (wl *WhatsmeowLogger) SetLevel(level string) {
-
 
 	wl.zpLogger.DebugWithFields("WhatsApp log level change requested", map[string]interface{}{
 		"requested_level": level,
-		"note":           "zpwoot manages log levels globally",
+		"note":            "zpwoot manages log levels globally",
 	})
 }
-
 
 type LogLevel int
 
@@ -92,7 +81,6 @@ const (
 	LogLevelWarn
 	LogLevelError
 )
-
 
 func (l LogLevel) String() string {
 	switch l {
@@ -109,7 +97,6 @@ func (l LogLevel) String() string {
 	}
 }
 
-
 func CreateWhatsmeowLoggerWithLevel(zpLogger *logger.Logger, minLevel LogLevel) waLog.Logger {
 	return &FilteredWhatsmeowLogger{
 		WhatsmeowLogger: &WhatsmeowLogger{
@@ -120,17 +107,14 @@ func CreateWhatsmeowLoggerWithLevel(zpLogger *logger.Logger, minLevel LogLevel) 
 	}
 }
 
-
 type FilteredWhatsmeowLogger struct {
 	*WhatsmeowLogger
 	minLevel LogLevel
 }
 
-
 func (fwl *FilteredWhatsmeowLogger) shouldLog(level LogLevel) bool {
 	return level >= fwl.minLevel
 }
-
 
 func (fwl *FilteredWhatsmeowLogger) Debugf(msg string, args ...interface{}) {
 	if fwl.shouldLog(LogLevelDebug) {
@@ -138,13 +122,11 @@ func (fwl *FilteredWhatsmeowLogger) Debugf(msg string, args ...interface{}) {
 	}
 }
 
-
 func (fwl *FilteredWhatsmeowLogger) Infof(msg string, args ...interface{}) {
 	if fwl.shouldLog(LogLevelInfo) {
 		fwl.WhatsmeowLogger.Infof(msg, args...)
 	}
 }
-
 
 func (fwl *FilteredWhatsmeowLogger) Warnf(msg string, args ...interface{}) {
 	if fwl.shouldLog(LogLevelWarn) {
@@ -152,13 +134,11 @@ func (fwl *FilteredWhatsmeowLogger) Warnf(msg string, args ...interface{}) {
 	}
 }
 
-
 func (fwl *FilteredWhatsmeowLogger) Errorf(msg string, args ...interface{}) {
 	if fwl.shouldLog(LogLevelError) {
 		fwl.WhatsmeowLogger.Errorf(msg, args...)
 	}
 }
-
 
 func (fwl *FilteredWhatsmeowLogger) Sub(module string) waLog.Logger {
 	subModule := fmt.Sprintf("%s.%s", fwl.module, module)
@@ -171,7 +151,6 @@ func (fwl *FilteredWhatsmeowLogger) Sub(module string) waLog.Logger {
 	}
 }
 
-
 type LoggerConfig struct {
 	Level      string
 	Module     string
@@ -179,7 +158,6 @@ type LoggerConfig struct {
 	FilterSQL  bool
 	FilterHTTP bool
 }
-
 
 func NewWhatsmeowLoggerWithConfig(zpLogger *logger.Logger, config LoggerConfig) waLog.Logger {
 	if config.Module == "" {
@@ -190,7 +168,6 @@ func NewWhatsmeowLoggerWithConfig(zpLogger *logger.Logger, config LoggerConfig) 
 		zpLogger: zpLogger.WithModule(config.Module),
 		module:   config.Module,
 	}
-
 
 	if config.FilterSQL || config.FilterHTTP {
 		return &FilteringWhatsmeowLogger{
@@ -203,28 +180,25 @@ func NewWhatsmeowLoggerWithConfig(zpLogger *logger.Logger, config LoggerConfig) 
 	return baseLogger
 }
 
-
 type FilteringWhatsmeowLogger struct {
 	*WhatsmeowLogger
 	filterSQL  bool
 	filterHTTP bool
 }
 
-
 func (fwl *FilteringWhatsmeowLogger) shouldFilter(msg string) bool {
 	msgLower := strings.ToLower(msg)
-	
+
 	if fwl.filterSQL && (strings.Contains(msgLower, "sql") || strings.Contains(msgLower, "database")) {
 		return true
 	}
-	
+
 	if fwl.filterHTTP && (strings.Contains(msgLower, "http") || strings.Contains(msgLower, "request")) {
 		return true
 	}
-	
+
 	return false
 }
-
 
 func (fwl *FilteringWhatsmeowLogger) Debugf(msg string, args ...interface{}) {
 	message := fmt.Sprintf(msg, args...)
@@ -233,14 +207,12 @@ func (fwl *FilteringWhatsmeowLogger) Debugf(msg string, args ...interface{}) {
 	}
 }
 
-
 func (fwl *FilteringWhatsmeowLogger) Infof(msg string, args ...interface{}) {
 	message := fmt.Sprintf(msg, args...)
 	if !fwl.shouldFilter(message) {
 		fwl.WhatsmeowLogger.Infof(msg, args...)
 	}
 }
-
 
 func (fwl *FilteringWhatsmeowLogger) Warnf(msg string, args ...interface{}) {
 	message := fmt.Sprintf(msg, args...)
@@ -249,14 +221,12 @@ func (fwl *FilteringWhatsmeowLogger) Warnf(msg string, args ...interface{}) {
 	}
 }
 
-
 func (fwl *FilteringWhatsmeowLogger) Errorf(msg string, args ...interface{}) {
 	message := fmt.Sprintf(msg, args...)
 	if !fwl.shouldFilter(message) {
 		fwl.WhatsmeowLogger.Errorf(msg, args...)
 	}
 }
-
 
 func (fwl *FilteringWhatsmeowLogger) Sub(module string) waLog.Logger {
 	subModule := fmt.Sprintf("%s.%s", fwl.module, module)

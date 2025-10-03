@@ -141,7 +141,6 @@ func (c *Container) initialize() error {
 		validator,
 	)
 
-
 	sessionEventHandler := session.NewSessionEventHandler(c.sessionCore)
 	c.whatsappGateway.SetEventHandler(sessionEventHandler)
 
@@ -225,8 +224,6 @@ func (a *sessionServiceAdapter) ClearQRCode(ctx context.Context, id uuid.UUID) e
 
 	return nil
 }
-
-
 
 func (c *Container) GetGroupService() *services.GroupService {
 	return c.groupService

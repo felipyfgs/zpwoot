@@ -9,11 +9,9 @@ import (
 	"zpwoot/platform/logger"
 )
 
-
 type Validator struct {
 	logger *logger.Logger
 }
-
 
 func NewValidator(logger *logger.Logger) *Validator {
 	return &Validator{
@@ -21,24 +19,20 @@ func NewValidator(logger *logger.Logger) *Validator {
 	}
 }
 
-
 func parseJID(arg string) (types.JID, bool) {
 
 	if len(arg) > 0 && arg[0] == '+' {
 		arg = arg[1:]
 	}
 
-
 	if !strings.ContainsRune(arg, '@') {
 		return types.NewJID(arg, types.DefaultUserServer), true
 	}
-
 
 	recipient, err := types.ParseJID(arg)
 	if err != nil {
 		return recipient, false
 	}
-
 
 	if recipient.User == "" {
 		return recipient, false
@@ -46,7 +40,6 @@ func parseJID(arg string) (types.JID, bool) {
 
 	return recipient, true
 }
-
 
 func (v *Validator) ParseJID(jid string) (types.JID, error) {
 	parsedJID, valid := parseJID(jid)
@@ -67,7 +60,6 @@ func (v *Validator) ParseJID(jid string) (types.JID, error) {
 	return parsedJID, nil
 }
 
-
 func (v *Validator) ValidatePhoneNumber(phone string) error {
 
 	cleaned := strings.TrimSpace(phone)
@@ -77,16 +69,13 @@ func (v *Validator) ValidatePhoneNumber(phone string) error {
 	cleaned = strings.ReplaceAll(cleaned, "(", "")
 	cleaned = strings.ReplaceAll(cleaned, ")", "")
 
-
 	if !regexp.MustCompile(`^\d+$`).MatchString(cleaned) {
 		return fmt.Errorf("phone number must contain only digits: %s", phone)
 	}
 
-
 	if len(cleaned) < 7 {
 		return fmt.Errorf("phone number too short: %s", phone)
 	}
-
 
 	if len(cleaned) > 15 {
 		return fmt.Errorf("phone number too long: %s", phone)
@@ -100,13 +89,11 @@ func (v *Validator) ValidatePhoneNumber(phone string) error {
 	return nil
 }
 
-
 func (v *Validator) NormalizePhoneNumber(phone string) (string, error) {
 	err := v.ValidatePhoneNumber(phone)
 	if err != nil {
 		return "", err
 	}
-
 
 	cleaned := strings.TrimSpace(phone)
 	cleaned = strings.TrimPrefix(cleaned, "+")
@@ -118,12 +105,10 @@ func (v *Validator) NormalizePhoneNumber(phone string) (string, error) {
 	return cleaned, nil
 }
 
-
 func (v *Validator) IsValidJID(jid string) bool {
 	_, valid := parseJID(jid)
 	return valid
 }
-
 
 func (v *Validator) IsGroupJID(jid string) bool {
 	parsedJID, valid := parseJID(jid)
@@ -133,7 +118,6 @@ func (v *Validator) IsGroupJID(jid string) bool {
 	return parsedJID.Server == types.GroupServer
 }
 
-
 func (v *Validator) IsUserJID(jid string) bool {
 	parsedJID, valid := parseJID(jid)
 	if !valid {
@@ -141,7 +125,6 @@ func (v *Validator) IsUserJID(jid string) bool {
 	}
 	return parsedJID.Server == types.DefaultUserServer
 }
-
 
 func (v *Validator) IsBroadcastJID(jid string) bool {
 	parsedJID, valid := parseJID(jid)
@@ -151,7 +134,6 @@ func (v *Validator) IsBroadcastJID(jid string) bool {
 	return parsedJID.Server == types.BroadcastServer
 }
 
-
 func (v *Validator) ValidateSessionName(name string) error {
 	if name == "" {
 		return fmt.Errorf("session name cannot be empty")
@@ -160,7 +142,6 @@ func (v *Validator) ValidateSessionName(name string) error {
 	if len(name) > 100 {
 		return fmt.Errorf("session name too long (max 100 characters): %s", name)
 	}
-
 
 	if !regexp.MustCompile(`^[a-zA-Z0-9_-]+$`).MatchString(name) {
 		return fmt.Errorf("session name contains invalid characters (only alphanumeric, underscore, and hyphen allowed): %s", name)
@@ -173,13 +154,11 @@ func (v *Validator) ValidateSessionName(name string) error {
 	return nil
 }
 
-
 func (v *Validator) ExtractPhoneFromJID(jid string) (string, error) {
 	parsedJID, valid := parseJID(jid)
 	if !valid {
 		return "", fmt.Errorf("invalid JID: %s", jid)
 	}
-
 
 	if parsedJID.Server == types.DefaultUserServer {
 		return parsedJID.User, nil
@@ -187,7 +166,6 @@ func (v *Validator) ExtractPhoneFromJID(jid string) (string, error) {
 
 	return "", fmt.Errorf("JID is not a user JID: %s", jid)
 }
-
 
 func (v *Validator) FormatJIDForDisplay(jid string) string {
 	parsedJID, valid := parseJID(jid)
@@ -210,12 +188,10 @@ func (v *Validator) FormatJIDForDisplay(jid string) string {
 	}
 }
 
-
 func (v *Validator) ValidateMessageContent(content string) error {
 	if content == "" {
 		return fmt.Errorf("message content cannot be empty")
 	}
-
 
 	if len(content) > 65536 {
 		return fmt.Errorf("message content too long (max 65536 characters)")
@@ -224,23 +200,19 @@ func (v *Validator) ValidateMessageContent(content string) error {
 	return nil
 }
 
-
 func (v *Validator) SanitizeInput(input string) string {
 
 	sanitized := strings.ReplaceAll(input, "\x00", "")
-	
 
 	sanitized = strings.TrimSpace(sanitized)
-	
+
 	return sanitized
 }
-
 
 func (v *Validator) ValidateQRCode(qrCode string) error {
 	if qrCode == "" {
 		return fmt.Errorf("QR code cannot be empty")
 	}
-
 
 	if len(qrCode) < 10 {
 		return fmt.Errorf("QR code too short")

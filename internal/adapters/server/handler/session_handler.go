@@ -26,8 +26,6 @@ func NewSessionHandler(sessionService *services.SessionService, logger *logger.L
 	}
 }
 
-
-
 // @Summary Create new session
 // @Description Create a new WhatsApp session with optional proxy configuration. If qrCode is true, returns QR code immediately for connection.
 // @Tags Sessions

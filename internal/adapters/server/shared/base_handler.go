@@ -53,8 +53,6 @@ func (h *BaseHandler) GetSessionIDFromURL(r *http.Request) (uuid.UUID, error) {
 	return sessionID, nil
 }
 
-
-
 func (h *BaseHandler) GetStringParam(r *http.Request, paramName string) (string, error) {
 	value := chi.URLParam(r, paramName)
 	if value == "" {

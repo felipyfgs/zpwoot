@@ -17,7 +17,6 @@ import (
 	"zpwoot/platform/logger"
 )
 
-
 type Gateway struct {
 	container    *sqlstore.Container
 	logger       *logger.Logger
@@ -26,15 +25,12 @@ type Gateway struct {
 	validator    *Validator
 	mapper       *Mapper
 	qrGenerator  *QRGenerator
-	
 
-	sessions     map[uuid.UUID]*MyClient
-	mutex        sync.RWMutex
-
+	sessions map[uuid.UUID]*MyClient
+	mutex    sync.RWMutex
 
 	killChannels map[uuid.UUID]chan bool
 }
-
 
 func NewGateway(container *sqlstore.Container, logger *logger.Logger) *Gateway {
 	return &Gateway{
@@ -48,16 +44,13 @@ func NewGateway(container *sqlstore.Container, logger *logger.Logger) *Gateway {
 	}
 }
 
-
 func (g *Gateway) SetDatabase(db *sqlx.DB) {
 	g.db = db
 }
 
-
 func (g *Gateway) SetEventHandler(handler session.EventHandler) {
 	g.eventHandler = handler
 }
-
 
 func (g *Gateway) CreateSession(ctx context.Context, sessionId uuid.UUID) error {
 	g.mutex.Lock()
@@ -67,24 +60,20 @@ func (g *Gateway) CreateSession(ctx context.Context, sessionId uuid.UUID) error 
 		"session_id": sessionId.String(),
 	})
 
-
 	if _, exists := g.sessions[sessionId]; exists {
 		return fmt.Errorf("session already exists: %s", sessionId.String())
 	}
-
 
 	deviceStore := g.container.NewDevice()
 	if deviceStore == nil {
 		return fmt.Errorf("failed to create device store for session: %s", sessionId.String())
 	}
 
-
 	waLogger := NewWhatsmeowLogger(g.logger)
 	client := whatsmeow.NewClient(deviceStore, waLogger)
 	if client == nil {
 		return fmt.Errorf("failed to create WhatsApp client for session: %s", sessionId.String())
 	}
-
 
 	g.killChannels[sessionId] = make(chan bool, 1)
 
@@ -95,7 +84,6 @@ func (g *Gateway) CreateSession(ctx context.Context, sessionId uuid.UUID) error 
 	return nil
 }
 
-
 func (g *Gateway) ConnectSession(ctx context.Context, sessionId uuid.UUID) error {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
@@ -104,12 +92,10 @@ func (g *Gateway) ConnectSession(ctx context.Context, sessionId uuid.UUID) error
 		"session_id": sessionId.String(),
 	})
 
-
 	go g.startClient(sessionId)
 
 	return nil
 }
-
 
 func (g *Gateway) DisconnectSession(ctx context.Context, sessionName string) error {
 	g.mutex.Lock()
@@ -118,7 +104,6 @@ func (g *Gateway) DisconnectSession(ctx context.Context, sessionName string) err
 	g.logger.InfoWithFields("Disconnecting WhatsApp session", map[string]interface{}{
 		"session_name": sessionName,
 	})
-
 
 	if killChan, exists := g.killChannels[sessionName]; exists {
 		select {
@@ -133,19 +118,16 @@ func (g *Gateway) DisconnectSession(ctx context.Context, sessionName string) err
 		}
 	}
 
-
 	delete(g.sessions, sessionName)
 	delete(g.killChannels, sessionName)
 
 	return nil
 }
 
-
 func (g *Gateway) DeleteSession(ctx context.Context, sessionName string) error {
 	g.logger.InfoWithFields("Deleting WhatsApp session", map[string]interface{}{
 		"session_name": sessionName,
 	})
-
 
 	err := g.DisconnectSession(ctx, sessionName)
 	if err != nil {
@@ -155,7 +137,6 @@ func (g *Gateway) DeleteSession(ctx context.Context, sessionName string) error {
 		})
 	}
 
-
 	g.mutex.Lock()
 	delete(g.sessionUUIDs, sessionName)
 	g.mutex.Unlock()
@@ -163,18 +144,15 @@ func (g *Gateway) DeleteSession(ctx context.Context, sessionName string) error {
 	return nil
 }
 
-
 func (g *Gateway) RestoreSession(ctx context.Context, sessionName string) error {
 	g.logger.InfoWithFields("Restoring WhatsApp session", map[string]interface{}{
 		"session_name": sessionName,
 	})
 
-
 	sessionID, exists := g.sessionUUIDs[sessionName]
 	if !exists {
 		return fmt.Errorf("session UUID not registered: %s", sessionName)
 	}
-
 
 	var deviceJID string
 	query := `SELECT COALESCE("deviceJid", '') FROM "zpSessions" WHERE id = $1`
@@ -201,7 +179,6 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionName string) error 
 			return fmt.Errorf("invalid device JID: %w", err)
 		}
 
-
 		_, err = g.container.GetDevice(ctx, jid)
 		if err != nil {
 			g.logger.ErrorWithFields("Failed to get device store", map[string]interface{}{
@@ -219,12 +196,10 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionName string) error 
 			"device_jid":   deviceJID,
 		})
 
-
 	}
 
 	return nil
 }
-
 
 func (g *Gateway) RestoreAllSessions(ctx context.Context, sessionNames []string) error {
 	g.logger.InfoWithFields("Restoring all WhatsApp sessions", map[string]interface{}{
@@ -250,7 +225,6 @@ func (g *Gateway) RestoreAllSessions(ctx context.Context, sessionNames []string)
 	return nil
 }
 
-
 func (g *Gateway) RegisterSessionUUID(sessionName, sessionUUID string) {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
@@ -272,22 +246,18 @@ func (g *Gateway) RegisterSessionUUID(sessionName, sessionUUID string) {
 	})
 }
 
-
 func (g *Gateway) SessionExists(sessionName string) bool {
 	g.mutex.RLock()
 	defer g.mutex.RUnlock()
-
 
 	_, exists := g.sessions[sessionName]
 	if exists {
 		return true
 	}
 
-
 	_, uuidExists := g.sessionUUIDs[sessionName]
 	return uuidExists
 }
-
 
 func (g *Gateway) IsSessionConnected(ctx context.Context, sessionName string) (bool, error) {
 	g.mutex.RLock()
@@ -306,7 +276,6 @@ func (g *Gateway) IsSessionConnected(ctx context.Context, sessionName string) (b
 
 	return client.IsConnected(), nil
 }
-
 
 func (g *Gateway) GetSessionInfo(ctx context.Context, sessionName string) (*session.DeviceInfo, error) {
 	g.mutex.RLock()
@@ -330,17 +299,13 @@ func (g *Gateway) GetSessionInfo(ctx context.Context, sessionName string) (*sess
 	return deviceInfo, nil
 }
 
-
 func (g *Gateway) GenerateQRCode(ctx context.Context, sessionName string) (*session.QRCodeResponse, error) {
 	g.logger.InfoWithFields("Generating QR code for session", map[string]interface{}{
 		"session_name": sessionName,
 	})
 
-
-
 	return g.qrGenerator.Generate(ctx, sessionName)
 }
-
 
 func (g *Gateway) Stop(ctx context.Context) error {
 	g.mutex.Lock()
@@ -349,7 +314,6 @@ func (g *Gateway) Stop(ctx context.Context) error {
 	g.logger.InfoWithFields("Stopping WhatsApp gateway", map[string]interface{}{
 		"active_sessions": len(g.sessions),
 	})
-
 
 	for sessionName, killChan := range g.killChannels {
 		select {
@@ -364,7 +328,6 @@ func (g *Gateway) Stop(ctx context.Context) error {
 		}
 	}
 
-
 	g.sessions = make(map[string]*MyClient)
 	g.sessionUUIDs = make(map[string]uuid.UUID)
 	g.killChannels = make(map[string]chan bool)
@@ -372,17 +335,14 @@ func (g *Gateway) Stop(ctx context.Context) error {
 	return nil
 }
 
-
 func (g *Gateway) startClient(sessionID uuid.UUID, sessionName string) {
 	g.logger.InfoWithFields("Starting WhatsApp client", map[string]interface{}{
 		"session_id":   sessionID.String(),
 		"session_name": sessionName,
 	})
 
-
 	var deviceStore *store.Device
 	var err error
-
 
 	deviceJID, err := g.getDeviceJIDFromDB(sessionID)
 	if err != nil {
@@ -426,7 +386,6 @@ func (g *Gateway) startClient(sessionID uuid.UUID, sessionName string) {
 		return
 	}
 
-
 	waLogger := NewWhatsmeowLogger(g.logger)
 	client := whatsmeow.NewClient(deviceStore, waLogger)
 	if client == nil {
@@ -436,19 +395,15 @@ func (g *Gateway) startClient(sessionID uuid.UUID, sessionName string) {
 		return
 	}
 
-
 	myClient := NewMyClient(sessionID, sessionName, client, g.db, g, g.logger)
-
 
 	g.mutex.Lock()
 	g.sessions[sessionName] = myClient
 	g.mutex.Unlock()
 
-
 	clientManager := GetClientManager(g.logger)
 	clientManager.SetMyClient(sessionID, myClient)
 	clientManager.SetWhatsmeowClient(sessionID, client)
-
 
 	if client.Store.ID == nil {
 
@@ -469,10 +424,8 @@ func (g *Gateway) startClient(sessionID uuid.UUID, sessionName string) {
 		}
 	}
 
-
 	g.keepClientAlive(sessionID, sessionName, myClient)
 }
-
 
 func (g *Gateway) handleQRCodePairing(myClient *MyClient) {
 	qrChan, err := myClient.WAClient.GetQRChannel(context.Background())
@@ -495,7 +448,6 @@ func (g *Gateway) handleQRCodePairing(myClient *MyClient) {
 			return
 		}
 
-
 		for evt := range qrChan {
 			switch evt.Event {
 			case "code":
@@ -516,11 +468,9 @@ func (g *Gateway) handleQRCodePairing(myClient *MyClient) {
 				})
 				myClient.ClearQRCode()
 
-
 				clientManager := GetClientManager(g.logger)
 				clientManager.DeleteMyClient(myClient.sessionID)
 				clientManager.DeleteWhatsmeowClient(myClient.sessionID)
-
 
 				if killChan, exists := g.killChannels[myClient.sessionName]; exists {
 					select {
@@ -546,7 +496,6 @@ func (g *Gateway) handleQRCodePairing(myClient *MyClient) {
 	}
 }
 
-
 func (g *Gateway) keepClientAlive(sessionID uuid.UUID, sessionName string, myClient *MyClient) {
 	killChan, exists := g.killChannels[sessionName]
 	if !exists {
@@ -570,17 +519,14 @@ func (g *Gateway) keepClientAlive(sessionID uuid.UUID, sessionName string, myCli
 				"session_name": sessionName,
 			})
 
-
 			if myClient.WAClient != nil {
 				myClient.WAClient.Disconnect()
 			}
-
 
 			clientManager := GetClientManager(g.logger)
 			clientManager.DeleteMyClient(sessionID)
 			clientManager.DeleteWhatsmeowClient(sessionID)
 			clientManager.DeleteHTTPClient(sessionID)
-
 
 			myClient.UpdateConnectionStatus(false)
 			myClient.ClearQRCode()
@@ -593,14 +539,12 @@ func (g *Gateway) keepClientAlive(sessionID uuid.UUID, sessionName string, myCli
 	}
 }
 
-
 func (g *Gateway) getDeviceJIDFromDB(sessionID uuid.UUID) (string, error) {
 	var deviceJID string
 	query := `SELECT COALESCE("deviceJid", '') FROM "zpSessions" WHERE id = $1`
 	err := g.db.Get(&deviceJID, query, sessionID.String())
 	return deviceJID, err
 }
-
 
 func (g *Gateway) SetProxy(ctx context.Context, sessionName string, proxy *session.ProxyConfig) error {
 	g.logger.InfoWithFields("Setting proxy for session", map[string]interface{}{
@@ -610,10 +554,8 @@ func (g *Gateway) SetProxy(ctx context.Context, sessionName string, proxy *sessi
 		"proxy_port":   proxy.Port,
 	})
 
-
 	return fmt.Errorf("proxy configuration not implemented yet")
 }
-
 
 func (g *Gateway) SendTextMessage(ctx context.Context, sessionName, to, content string) (*session.MessageSendResult, error) {
 	g.logger.InfoWithFields("Send text message requested", map[string]interface{}{
@@ -622,10 +564,8 @@ func (g *Gateway) SendTextMessage(ctx context.Context, sessionName, to, content 
 		"content_len":  len(content),
 	})
 
-
 	return nil, fmt.Errorf("text message sending not implemented yet - focus is on connection only")
 }
-
 
 func (g *Gateway) SendMediaMessage(ctx context.Context, sessionName, to, mediaURL, caption, mediaType string) (*session.MessageSendResult, error) {
 	g.logger.InfoWithFields("Send media message requested", map[string]interface{}{
@@ -635,10 +575,8 @@ func (g *Gateway) SendMediaMessage(ctx context.Context, sessionName, to, mediaUR
 		"has_caption":  caption != "",
 	})
 
-
 	return nil, fmt.Errorf("media message sending not implemented yet - focus is on connection only")
 }
-
 
 func (g *Gateway) SendLocationMessage(ctx context.Context, sessionName, to string, latitude, longitude float64, address string) (*session.MessageSendResult, error) {
 	g.logger.InfoWithFields("Send location message requested", map[string]interface{}{
@@ -649,19 +587,16 @@ func (g *Gateway) SendLocationMessage(ctx context.Context, sessionName, to strin
 		"address":      address,
 	})
 
-
 	return nil, fmt.Errorf("location message sending not implemented yet - focus is on connection only")
 }
 
-
 func (g *Gateway) SendContactMessage(ctx context.Context, sessionName, to, contactName, contactPhone string) (*session.MessageSendResult, error) {
 	g.logger.InfoWithFields("Send contact message requested", map[string]interface{}{
-		"session_name": sessionName,
-		"to":           to,
-		"contact_name": contactName,
+		"session_name":  sessionName,
+		"to":            to,
+		"contact_name":  contactName,
 		"contact_phone": contactPhone,
 	})
-
 
 	return nil, fmt.Errorf("contact message sending not implemented yet - focus is on connection only")
 }

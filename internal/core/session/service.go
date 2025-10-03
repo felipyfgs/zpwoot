@@ -83,8 +83,6 @@ func (s *Service) GetSession(ctx context.Context, id uuid.UUID) (*Session, error
 	return session, nil
 }
 
-
-
 func (s *Service) ListSessions(ctx context.Context, limit, offset int) ([]*Session, error) {
 
 	if limit <= 0 {
@@ -113,8 +111,6 @@ func (s *Service) ListConnectedSessions(ctx context.Context) ([]*Session, error)
 
 	return sessions, nil
 }
-
-
 
 func (s *Service) ConnectSession(ctx context.Context, id uuid.UUID) error {
 	session, err := s.repository.GetByID(ctx, id)
@@ -452,10 +448,10 @@ func (h *SessionEventHandler) OnSessionDisconnected(sessionId uuid.UUID, reason 
 	_ = h.service.repository.Update(ctx, session)
 }
 
-func (h *SessionEventHandler) OnQRCodeGenerated(sessionName string, qrCode string, expiresAt time.Time) {
+func (h *SessionEventHandler) OnQRCodeGenerated(sessionId uuid.UUID, qrCode string, expiresAt time.Time) {
 	ctx := context.Background()
 
-	session, err := h.service.repository.GetByName(ctx, sessionName)
+	session, err := h.service.repository.GetByID(ctx, sessionId)
 	if err != nil {
 		return
 	}
@@ -464,10 +460,10 @@ func (h *SessionEventHandler) OnQRCodeGenerated(sessionName string, qrCode strin
 	_ = h.service.repository.Update(ctx, session)
 }
 
-func (h *SessionEventHandler) OnConnectionError(sessionName string, err error) {
+func (h *SessionEventHandler) OnConnectionError(sessionId uuid.UUID, err error) {
 	ctx := context.Background()
 
-	session, err2 := h.service.repository.GetByName(ctx, sessionName)
+	session, err2 := h.service.repository.GetByID(ctx, sessionId)
 	if err2 != nil {
 		return
 	}
@@ -476,10 +472,10 @@ func (h *SessionEventHandler) OnConnectionError(sessionName string, err error) {
 	_ = h.service.repository.Update(ctx, session)
 }
 
-func (h *SessionEventHandler) OnMessageReceived(sessionName string, message *WhatsAppMessage) {
+func (h *SessionEventHandler) OnMessageReceived(sessionId uuid.UUID, message *WhatsAppMessage) {
 
 	ctx := context.Background()
-	session, err := h.service.repository.GetByName(ctx, sessionName)
+	session, err := h.service.repository.GetByID(ctx, sessionId)
 	if err != nil {
 		return
 	}
@@ -574,10 +570,10 @@ func (s *Service) RestoreAllSessions(ctx context.Context) error {
 	return s.gateway.RestoreAllSessions(ctx, sessionNames)
 }
 
-func (h *SessionEventHandler) OnMessageSent(sessionName string, messageID string, status string) {
+func (h *SessionEventHandler) OnMessageSent(sessionId uuid.UUID, messageID string, status string) {
 
 	ctx := context.Background()
-	session, err := h.service.repository.GetByName(ctx, sessionName)
+	session, err := h.service.repository.GetByID(ctx, sessionId)
 	if err != nil {
 		return
 	}
