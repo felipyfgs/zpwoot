@@ -13,6 +13,7 @@ import (
 
 	"zpwoot/internal/core/messaging"
 	"zpwoot/internal/core/session"
+	"zpwoot/internal/core/group"
 
 	"zpwoot/internal/services"
 	"zpwoot/internal/services/shared/validation"
@@ -110,7 +111,6 @@ func (c *Container) initialize() error {
 
 	c.messagingCore = messaging.NewService(
 		c.messageRepo,
-		c.logger,
 	)
 
 	validator := validation.New()
@@ -121,9 +121,6 @@ func (c *Container) initialize() error {
 	c.sessionService = services.NewSessionService(
 		c.sessionCore,
 		sessionResolver,
-		c.sessionRepo,
-		c.whatsappGateway,
-		qrGenerator,
 		c.logger,
 		validator,
 	)
@@ -132,18 +129,17 @@ func (c *Container) initialize() error {
 		c.messagingCore,
 		c.sessionCore,
 		sessionResolver,
-		c.messageRepo,
-		c.sessionRepo,
-		c.whatsappGateway,
 		c.logger,
 		validator,
-		c.sessionService,
 	)
 
+	// Create group core service (placeholder for now)
+	groupCore := group.NewService(nil) // TODO: Implement proper group validator
+
 	c.groupService = services.NewGroupService(
-		nil,
-		nil,
-		nil,
+		groupCore,
+		nil, // TODO: Implement group repository
+		nil, // TODO: Fix WhatsAppGateway interface compatibility
 		c.logger,
 		validator,
 	)

@@ -6,19 +6,15 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
-	"zpwoot/platform/logger"
 )
 
 type Service struct {
 	repository Repository
-	logger     *logger.Logger
 }
 
-func NewService(repo Repository, logger *logger.Logger) *Service {
+func NewService(repo Repository) *Service {
 	return &Service{
 		repository: repo,
-		logger:     logger,
 	}
 }
 
@@ -56,14 +52,6 @@ func (s *Service) CreateMessage(ctx context.Context, req *CreateMessageRequest) 
 		return nil, fmt.Errorf("failed to create message: %w", err)
 	}
 
-	s.logger.InfoWithFields("Message created successfully", map[string]interface{}{
-		"message_id":    message.ID.String(),
-		"session_id":    message.SessionID.String(),
-		"zp_message_id": message.ZpMessageID,
-		"type":          message.ZpType,
-		"from_me":       message.ZpFromMe,
-	})
-
 	return message, nil
 }
 
@@ -95,13 +83,6 @@ func (s *Service) UpdateSyncStatus(ctx context.Context, id uuid.UUID, status Syn
 		return fmt.Errorf("failed to update sync status: %w", err)
 	}
 
-	s.logger.InfoWithFields("Message sync status updated", map[string]interface{}{
-		"message_id":         id.String(),
-		"sync_status":        string(status),
-		"cw_message_id":      cwMessageID,
-		"cw_conversation_id": cwConversationID,
-	})
-
 	return nil
 }
 
@@ -110,12 +91,6 @@ func (s *Service) MarkAsSynced(ctx context.Context, id uuid.UUID, cwMessageID, c
 		return fmt.Errorf("failed to mark message as synced: %w", err)
 	}
 
-	s.logger.InfoWithFields("Message marked as synced", map[string]interface{}{
-		"message_id":         id.String(),
-		"cw_message_id":      cwMessageID,
-		"cw_conversation_id": cwConversationID,
-	})
-
 	return nil
 }
 
@@ -123,11 +98,6 @@ func (s *Service) MarkAsFailed(ctx context.Context, id uuid.UUID, errorReason st
 	if err := s.repository.MarkAsFailed(ctx, id, errorReason); err != nil {
 		return fmt.Errorf("failed to mark message as failed: %w", err)
 	}
-
-	s.logger.ErrorWithFields("Message marked as failed", map[string]interface{}{
-		"message_id":   id.String(),
-		"error_reason": errorReason,
-	})
 
 	return nil
 }

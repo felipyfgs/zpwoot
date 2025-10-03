@@ -536,6 +536,85 @@ func (s *Service) ClearQRCode(ctx context.Context, id uuid.UUID) error {
 	return s.repository.ClearQRCode(ctx, id)
 }
 
+// Message sending methods - delegate to WhatsApp Gateway
+func (s *Service) SendTextMessage(ctx context.Context, sessionID uuid.UUID, to, content string) (*MessageSendResult, error) {
+	session, err := s.GetSession(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("session not found: %w", err)
+	}
+
+	if !session.IsConnected {
+		return nil, fmt.Errorf("session %s is not connected", session.Name)
+	}
+
+	return s.gateway.SendTextMessage(ctx, session.Name, to, content)
+}
+
+func (s *Service) SendMediaMessage(ctx context.Context, sessionID uuid.UUID, to, mediaURL, caption, mediaType string) (*MessageSendResult, error) {
+	session, err := s.GetSession(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("session not found: %w", err)
+	}
+
+	if !session.IsConnected {
+		return nil, fmt.Errorf("session %s is not connected", session.Name)
+	}
+
+	return s.gateway.SendMediaMessage(ctx, session.Name, to, mediaURL, caption, mediaType)
+}
+
+func (s *Service) SendLocationMessage(ctx context.Context, sessionID uuid.UUID, to string, latitude, longitude float64, address string) (*MessageSendResult, error) {
+	session, err := s.GetSession(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("session not found: %w", err)
+	}
+
+	if !session.IsConnected {
+		return nil, fmt.Errorf("session %s is not connected", session.Name)
+	}
+
+	return s.gateway.SendLocationMessage(ctx, session.Name, to, latitude, longitude, address)
+}
+
+func (s *Service) SendContactMessage(ctx context.Context, sessionID uuid.UUID, to, contactName, contactPhone string) (*MessageSendResult, error) {
+	session, err := s.GetSession(ctx, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("session not found: %w", err)
+	}
+
+	if !session.IsConnected {
+		return nil, fmt.Errorf("session %s is not connected", session.Name)
+	}
+
+	return s.gateway.SendContactMessage(ctx, session.Name, to, contactName, contactPhone)
+}
+
+// RestoreAllSessions restores all sessions from database
+func (s *Service) RestoreAllSessions(ctx context.Context) error {
+	sessions, err := s.ListSessions(ctx, 1000, 0)
+	if err != nil {
+		return fmt.Errorf("failed to get sessions: %w", err)
+	}
+
+	if len(sessions) == 0 {
+		return nil
+	}
+
+	// Register all sessions with gateway
+	for _, sess := range sessions {
+		s.gateway.RegisterSessionUUID(sess.Name, sess.ID.String())
+	}
+
+	// Prepare session names for restoration
+	sessionNames := make([]string, len(sessions))
+	for i, sess := range sessions {
+		sessionNames[i] = sess.Name
+	}
+
+	// Restore all sessions in gateway
+	return s.gateway.RestoreAllSessions(ctx, sessionNames)
+}
+
 func (h *SessionEventHandler) OnMessageSent(sessionName string, messageID string, status string) {
 
 	ctx := context.Background()

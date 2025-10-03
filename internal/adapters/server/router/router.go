@@ -35,7 +35,7 @@ func setupAllRoutes(r *chi.Mux, appLogger *logger.Logger, sessionService *servic
 
 		setupGroupRoutes(r, groupService, sessionService, appLogger)
 
-		setupContactRoutes(r, sessionService, appLogger)
+		// TODO: Re-implement contact routes after contact service refactoring
 
 		setupWebhookRoutes(r, sessionService, appLogger)
 

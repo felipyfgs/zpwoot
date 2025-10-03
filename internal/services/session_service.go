@@ -17,10 +17,6 @@ type SessionService struct {
 	coreService *session.Service
 	resolver    session.SessionResolver
 
-	repository session.Repository
-	gateway    session.WhatsAppGateway
-	qrGen      session.QRCodeGenerator
-
 	logger    *logger.Logger
 	validator *validation.Validator
 }
@@ -28,18 +24,12 @@ type SessionService struct {
 func NewSessionService(
 	coreService *session.Service,
 	resolver session.SessionResolver,
-	repository session.Repository,
-	gateway session.WhatsAppGateway,
-	qrGen session.QRCodeGenerator,
 	logger *logger.Logger,
 	validator *validation.Validator,
 ) *SessionService {
 	return &SessionService{
 		coreService: coreService,
 		resolver:    resolver,
-		repository:  repository,
-		gateway:     gateway,
-		qrGen:       qrGen,
 		logger:      logger,
 		validator:   validator,
 	}
@@ -157,41 +147,15 @@ func (s *SessionService) ResolveSessionID(ctx context.Context, idOrName string) 
 func (s *SessionService) RestoreAllSessions(ctx context.Context) error {
 	s.logger.Info("Starting session restoration process")
 
-	sessions, err := s.coreService.ListSessions(ctx, 1000, 0)
+	err := s.coreService.RestoreAllSessions(ctx)
 	if err != nil {
-		s.logger.ErrorWithFields("Failed to get sessions for restoration", map[string]interface{}{
+		s.logger.ErrorWithFields("Failed to restore sessions", map[string]interface{}{
 			"error": err.Error(),
-		})
-		return fmt.Errorf("failed to get sessions: %w", err)
-	}
-
-	if len(sessions) == 0 {
-		s.logger.Info("No sessions found to restore")
-		return nil
-	}
-
-	for _, sess := range sessions {
-		s.gateway.RegisterSessionUUID(sess.Name, sess.ID.String())
-	}
-
-	sessionNames := make([]string, len(sessions))
-	for i, sess := range sessions {
-		sessionNames[i] = sess.Name
-	}
-
-	err = s.gateway.RestoreAllSessions(ctx, sessionNames)
-	if err != nil {
-		s.logger.ErrorWithFields("Failed to restore sessions in gateway", map[string]interface{}{
-			"session_count": len(sessionNames),
-			"error":         err.Error(),
 		})
 		return fmt.Errorf("failed to restore sessions: %w", err)
 	}
 
-	s.logger.InfoWithFields("Session restoration completed successfully", map[string]interface{}{
-		"restored_sessions": len(sessionNames),
-	})
-
+	s.logger.Info("Session restoration completed successfully")
 	return nil
 }
 
