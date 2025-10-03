@@ -96,6 +96,9 @@ type SessionResolver interface {
 	// ResolveToID resolves a session name to its UUID for internal operations
 	ResolveToID(ctx context.Context, sessionName string) (uuid.UUID, error)
 
+	// ResolveToName resolves a session UUID to its name for external operations
+	ResolveToName(ctx context.Context, sessionID uuid.UUID) (string, error)
+
 	// Resolve resolves a session name to complete session information
 	Resolve(ctx context.Context, sessionName string) (*ResolveResult, error)
 }
