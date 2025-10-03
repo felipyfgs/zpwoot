@@ -38,7 +38,6 @@ type Container struct {
 	sessionService   *services.SessionService
 	messagingService *services.MessageService
 	groupService     *services.GroupService
-	sessionResolver  session.SessionResolver
 
 	sessionRepo     session.Repository
 	messageRepo     messaging.Repository
@@ -114,11 +113,8 @@ func (c *Container) initialize() error {
 
 	validator := validation.New()
 
-	c.sessionResolver = services.NewSessionResolver(c.sessionRepo)
-
 	c.sessionService = services.NewSessionService(
 		c.sessionCore,
-		c.sessionResolver,
 		c.logger,
 		validator,
 	)
@@ -126,7 +122,6 @@ func (c *Container) initialize() error {
 	c.messagingService = services.NewMessageService(
 		c.messagingCore,
 		c.sessionCore,
-		c.sessionResolver,
 		c.logger,
 		validator,
 	)
@@ -193,12 +188,11 @@ func (c *Container) Stop(ctx context.Context) error {
 
 func (c *Container) Server() *server.Server {
 	return server.New(&server.Config{
-		Config:          c.config,
-		Logger:          c.logger,
-		SessionService:  c.sessionService,
-		MessageService:  c.messagingService,
-		GroupService:    c.groupService,
-		SessionResolver: c.sessionResolver,
+		Config:         c.config,
+		Logger:         c.logger,
+		SessionService: c.sessionService,
+		MessageService: c.messagingService,
+		GroupService:   c.groupService,
 	})
 }
 
@@ -229,6 +223,4 @@ func (c *Container) GetGroupService() *services.GroupService {
 	return c.groupService
 }
 
-func (c *Container) GetSessionResolver() session.SessionResolver {
-	return c.sessionResolver
-}
+// GetSessionResolver removed - using sessionId directly

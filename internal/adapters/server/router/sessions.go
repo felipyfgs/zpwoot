@@ -9,8 +9,8 @@ import (
 	"zpwoot/platform/logger"
 )
 
-func setupSessionRoutes(r chi.Router, sessionService *services.SessionService, sessionResolver session.SessionResolver, appLogger *logger.Logger) {
-	sessionHandler := handler.NewSessionHandler(sessionService, sessionResolver, appLogger)
+func setupSessionRoutes(r chi.Router, sessionService *services.SessionService, appLogger *logger.Logger) {
+	sessionHandler := handler.NewSessionHandler(sessionService, appLogger)
 
 	r.Post("/create", sessionHandler.CreateSession)
 	r.Get("/list", sessionHandler.ListSessions)

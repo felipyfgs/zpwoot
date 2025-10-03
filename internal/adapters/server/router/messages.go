@@ -9,7 +9,7 @@ import (
 	"zpwoot/platform/logger"
 )
 
-func setupMessageRoutes(r chi.Router, messageService *services.MessageService, sessionService *services.SessionService, sessionResolver session.SessionResolver, appLogger *logger.Logger) {
+func setupMessageRoutes(r chi.Router, messageService *services.MessageService, sessionService *services.SessionService, appLogger *logger.Logger) {
 	messageHandler := handler.NewMessageHandler(
 		messageService,
 		sessionService,

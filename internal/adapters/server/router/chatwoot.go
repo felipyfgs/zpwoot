@@ -9,7 +9,7 @@ import (
 	"zpwoot/platform/logger"
 )
 
-func setupChatwootRoutes(r chi.Router, messageService *services.MessageService, sessionService *services.SessionService, sessionResolver session.SessionResolver, appLogger *logger.Logger) {
+func setupChatwootRoutes(r chi.Router, messageService *services.MessageService, sessionService *services.SessionService, appLogger *logger.Logger) {
 	chatwootHandler := handler.NewChatwootHandler(messageService, sessionService, sessionResolver, appLogger)
 
 	r.Route("/{sessionId}/chatwoot", func(r chi.Router) {

@@ -9,7 +9,7 @@ import (
 	"zpwoot/platform/logger"
 )
 
-func setupGroupRoutes(r chi.Router, groupService *services.GroupService, sessionService *services.SessionService, sessionResolver session.SessionResolver, appLogger *logger.Logger) {
+func setupGroupRoutes(r chi.Router, groupService *services.GroupService, sessionService *services.SessionService, appLogger *logger.Logger) {
 	groupHandler := handler.NewGroupHandler(groupService, sessionService, sessionResolver, appLogger)
 
 	r.Route("/{sessionId}/groups", func(r chi.Router) {

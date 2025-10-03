@@ -9,7 +9,7 @@ import (
 	"zpwoot/platform/logger"
 )
 
-func setupWebhookRoutes(r chi.Router, sessionService *services.SessionService, sessionResolver session.SessionResolver, appLogger *logger.Logger) {
+func setupWebhookRoutes(r chi.Router, sessionService *services.SessionService, appLogger *logger.Logger) {
 	webhookHandler := handler.NewWebhookHandler(sessionService, sessionResolver, appLogger)
 
 	r.Route("/{sessionId}/webhook", func(r chi.Router) {

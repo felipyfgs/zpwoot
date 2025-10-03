@@ -13,7 +13,7 @@ import (
 	"zpwoot/platform/logger"
 )
 
-func SetupRoutes(cfg *config.Config, logger *logger.Logger, sessionService *services.SessionService, messageService *services.MessageService, groupService *services.GroupService, sessionResolver session.SessionResolver) http.Handler {
+func SetupRoutes(cfg *config.Config, logger *logger.Logger, sessionService *services.SessionService, messageService *services.MessageService, groupService *services.GroupService) http.Handler {
 	r := chi.NewRouter()
 
 	setupMiddlewares(r, cfg, logger)
@@ -22,25 +22,25 @@ func SetupRoutes(cfg *config.Config, logger *logger.Logger, sessionService *serv
 
 	setupHealthRoutes(r)
 
-	setupAllRoutes(r, logger, sessionService, messageService, groupService, sessionResolver)
+	setupAllRoutes(r, logger, sessionService, messageService, groupService)
 
 	return r
 }
 
-func setupAllRoutes(r *chi.Mux, appLogger *logger.Logger, sessionService *services.SessionService, messageService *services.MessageService, groupService *services.GroupService, sessionResolver session.SessionResolver) {
+func setupAllRoutes(r *chi.Mux, appLogger *logger.Logger, sessionService *services.SessionService, messageService *services.MessageService, groupService *services.GroupService) {
 	r.Route("/sessions", func(r chi.Router) {
 
-		setupSessionRoutes(r, sessionService, sessionResolver, appLogger)
+		setupSessionRoutes(r, sessionService, appLogger)
 
-		setupMessageRoutes(r, messageService, sessionService, sessionResolver, appLogger)
+		setupMessageRoutes(r, messageService, sessionService, appLogger)
 
-		setupGroupRoutes(r, groupService, sessionService, sessionResolver, appLogger)
+		setupGroupRoutes(r, groupService, sessionService, appLogger)
 
-		setupWebhookRoutes(r, sessionService, sessionResolver, appLogger)
+		setupWebhookRoutes(r, sessionService, appLogger)
 
-		setupMediaRoutes(r, sessionService, sessionResolver, appLogger)
+		setupMediaRoutes(r, sessionService, appLogger)
 
-		setupChatwootRoutes(r, messageService, sessionService, sessionResolver, appLogger)
+		setupChatwootRoutes(r, messageService, sessionService, appLogger)
 	})
 
 	setupGlobalRoutes(r, appLogger)

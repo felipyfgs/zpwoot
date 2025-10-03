@@ -9,7 +9,7 @@ import (
 	"zpwoot/platform/logger"
 )
 
-func setupMediaRoutes(r chi.Router, sessionService *services.SessionService, sessionResolver session.SessionResolver, appLogger *logger.Logger) {
+func setupMediaRoutes(r chi.Router, sessionService *services.SessionService, appLogger *logger.Logger) {
 	mediaHandler := handler.NewMediaHandler(sessionService, sessionResolver, appLogger)
 
 	r.Route("/{sessionId}/media", func(r chi.Router) {
