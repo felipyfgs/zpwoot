@@ -7,6 +7,7 @@ import (
 
 	"zpwoot/internal/adapters/server/contracts"
 	"zpwoot/internal/adapters/server/shared"
+	"zpwoot/internal/core/session"
 	"zpwoot/internal/services"
 	"zpwoot/platform/logger"
 )
@@ -20,10 +21,11 @@ type GroupHandler struct {
 func NewGroupHandler(
 	groupService *services.GroupService,
 	sessionService *services.SessionService,
+	resolver session.SessionResolver,
 	logger *logger.Logger,
 ) *GroupHandler {
 	return &GroupHandler{
-		BaseHandler:    shared.NewBaseHandler(logger),
+		BaseHandler:    shared.NewBaseHandler(logger, resolver),
 		groupService:   groupService,
 		sessionService: sessionService,
 	}

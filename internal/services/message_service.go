@@ -52,8 +52,6 @@ func (s *MessageService) validateSession(ctx context.Context, sessionName string
 	return sessionInfo, nil
 }
 
-
-
 type CreateMessageRequest struct {
 	SessionID   string `json:"session_id" validate:"required,uuid"`
 	ZpMessageID string `json:"zp_message_id" validate:"required"`
@@ -275,7 +273,6 @@ func (s *MessageService) SendTextMessage(ctx context.Context, sessionName, to, c
 		"content_len":  len(content),
 	})
 
-	// Use sessionCore to send message via gateway
 	sessionID, err := s.resolver.ResolveToID(ctx, sessionName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve session: %w", err)
@@ -321,7 +318,6 @@ func (s *MessageService) SendMediaMessage(ctx context.Context, sessionName, to, 
 		"has_caption":  caption != "",
 	})
 
-	// Use sessionCore to send message via gateway
 	sessionID, err := s.resolver.ResolveToID(ctx, sessionName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve session: %w", err)

@@ -4,12 +4,13 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"zpwoot/internal/adapters/server/handler"
+	"zpwoot/internal/core/session"
 	"zpwoot/internal/services"
 	"zpwoot/platform/logger"
 )
 
-func setupGroupRoutes(r chi.Router, groupService *services.GroupService, sessionService *services.SessionService, appLogger *logger.Logger) {
-	groupHandler := handler.NewGroupHandler(groupService, sessionService, appLogger)
+func setupGroupRoutes(r chi.Router, groupService *services.GroupService, sessionService *services.SessionService, sessionResolver session.SessionResolver, appLogger *logger.Logger) {
+	groupHandler := handler.NewGroupHandler(groupService, sessionService, sessionResolver, appLogger)
 
 	r.Route("/{sessionName}/groups", func(r chi.Router) {
 

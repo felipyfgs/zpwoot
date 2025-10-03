@@ -9,6 +9,7 @@ import (
 
 	"zpwoot/internal/adapters/server/contracts"
 	"zpwoot/internal/adapters/server/shared"
+	"zpwoot/internal/core/session"
 	"zpwoot/internal/services"
 	"zpwoot/platform/logger"
 )
@@ -18,22 +19,20 @@ type SessionHandler struct {
 	sessionService *services.SessionService
 }
 
-func NewSessionHandler(sessionService *services.SessionService, logger *logger.Logger) *SessionHandler {
+func NewSessionHandler(sessionService *services.SessionService, resolver session.SessionResolver, logger *logger.Logger) *SessionHandler {
 	return &SessionHandler{
-		BaseHandler:    shared.NewBaseHandler(logger),
+		BaseHandler:    shared.NewBaseHandler(logger, resolver),
 		sessionService: sessionService,
 	}
 }
 
-// resolveSessionIdentifier resolves a session name from URL to internal UUID
-// Accepts session.name from public API and resolves to UUID for internal operations
 func (h *SessionHandler) resolveSessionIdentifier(r *http.Request) (uuid.UUID, string, error) {
 	sessionName := chi.URLParam(r, "sessionName")
 	if sessionName == "" {
 		return uuid.Nil, "", fmt.Errorf("session name is required")
 	}
 
-	sessionID, err := h.sessionService.ResolveSessionID(r.Context(), sessionName)
+	sessionID, err := h.ResolveSessionID(r)
 	if err != nil {
 		return uuid.Nil, sessionName, fmt.Errorf("session not found: %w", err)
 	}

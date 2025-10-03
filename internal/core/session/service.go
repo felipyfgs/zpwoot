@@ -159,7 +159,6 @@ func (s *Service) ConnectSession(ctx context.Context, id uuid.UUID) error {
 	}
 
 	if connected {
-
 		session.UpdateConnectionStatus(true)
 		if err := s.repository.Update(ctx, session); err != nil {
 			return fmt.Errorf("failed to update session status: %w", err)
@@ -385,10 +384,9 @@ func (s *Service) validateProxyConfig(proxy *ProxyConfig) error {
 }
 
 func (s *Service) initiateConnection(ctx context.Context, session *Session) error {
-
 	sessionExists := s.gateway.SessionExists(session.Name)
-	if !sessionExists {
 
+	if !sessionExists {
 		s.gateway.RegisterSessionUUID(session.Name, session.ID.String())
 
 		if err := s.gateway.RestoreSession(ctx, session.Name); err != nil {
@@ -398,14 +396,7 @@ func (s *Service) initiateConnection(ctx context.Context, session *Session) erro
 		}
 	}
 
-	if session.ProxyConfig != nil {
-		if err := s.gateway.SetProxy(ctx, session.Name, session.ProxyConfig); err != nil {
-			return fmt.Errorf("failed to set proxy: %w", err)
-		}
-	}
-
 	if err := s.gateway.ConnectSession(ctx, session.Name); err != nil {
-
 		session.SetConnectionError(err.Error())
 		_ = s.repository.Update(ctx, session)
 		return fmt.Errorf("failed to connect session: %w", err)
@@ -536,7 +527,6 @@ func (s *Service) ClearQRCode(ctx context.Context, id uuid.UUID) error {
 	return s.repository.ClearQRCode(ctx, id)
 }
 
-// Message sending methods - delegate to WhatsApp Gateway
 func (s *Service) SendTextMessage(ctx context.Context, sessionID uuid.UUID, to, content string) (*MessageSendResult, error) {
 	session, err := s.GetSession(ctx, sessionID)
 	if err != nil {
@@ -589,7 +579,6 @@ func (s *Service) SendContactMessage(ctx context.Context, sessionID uuid.UUID, t
 	return s.gateway.SendContactMessage(ctx, session.Name, to, contactName, contactPhone)
 }
 
-// RestoreAllSessions restores all sessions from database
 func (s *Service) RestoreAllSessions(ctx context.Context) error {
 	sessions, err := s.ListSessions(ctx, 1000, 0)
 	if err != nil {
@@ -600,18 +589,15 @@ func (s *Service) RestoreAllSessions(ctx context.Context) error {
 		return nil
 	}
 
-	// Register all sessions with gateway
 	for _, sess := range sessions {
 		s.gateway.RegisterSessionUUID(sess.Name, sess.ID.String())
 	}
 
-	// Prepare session names for restoration
 	sessionNames := make([]string, len(sessions))
 	for i, sess := range sessions {
 		sessionNames[i] = sess.Name
 	}
 
-	// Restore all sessions in gateway
 	return s.gateway.RestoreAllSessions(ctx, sessionNames)
 }
 

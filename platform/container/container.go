@@ -11,9 +11,9 @@ import (
 	_ "github.com/lib/pq"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 
+	"zpwoot/internal/core/group"
 	"zpwoot/internal/core/messaging"
 	"zpwoot/internal/core/session"
-	"zpwoot/internal/core/group"
 
 	"zpwoot/internal/services"
 	"zpwoot/internal/services/shared/validation"
@@ -38,6 +38,7 @@ type Container struct {
 	sessionService   *services.SessionService
 	messagingService *services.MessageService
 	groupService     *services.GroupService
+	sessionResolver  session.SessionResolver
 
 	sessionRepo     session.Repository
 	messageRepo     messaging.Repository
@@ -115,12 +116,15 @@ func (c *Container) initialize() error {
 
 	validator := validation.New()
 
-	// Create session resolver
-	sessionResolver := services.NewSessionResolver(c.sessionRepo)
+	c.sessionResolver = services.NewSessionResolver(c.sessionRepo)
+
+	if gateway, ok := c.whatsappGateway.(*waclient.Gateway); ok {
+		gateway.SetSessionResolver(c.sessionResolver)
+	}
 
 	c.sessionService = services.NewSessionService(
 		c.sessionCore,
-		sessionResolver,
+		c.sessionResolver,
 		c.logger,
 		validator,
 	)
@@ -128,18 +132,17 @@ func (c *Container) initialize() error {
 	c.messagingService = services.NewMessageService(
 		c.messagingCore,
 		c.sessionCore,
-		sessionResolver,
+		c.sessionResolver,
 		c.logger,
 		validator,
 	)
 
-	// Create group core service (placeholder for now)
-	groupCore := group.NewService(nil) // TODO: Implement proper group validator
+	groupCore := group.NewService(nil)
 
 	c.groupService = services.NewGroupService(
 		groupCore,
-		nil, // TODO: Implement group repository
-		nil, // TODO: Fix WhatsAppGateway interface compatibility
+		nil,
+		nil,
 		c.logger,
 		validator,
 	)
@@ -201,11 +204,12 @@ func (c *Container) Stop(ctx context.Context) error {
 
 func (c *Container) Server() *server.Server {
 	return server.New(&server.Config{
-		Config:         c.config,
-		Logger:         c.logger,
-		SessionService: c.sessionService,
-		MessageService: c.messagingService,
-		GroupService:   c.groupService,
+		Config:          c.config,
+		Logger:          c.logger,
+		SessionService:  c.sessionService,
+		MessageService:  c.messagingService,
+		GroupService:    c.groupService,
+		SessionResolver: c.sessionResolver,
 	})
 }
 
@@ -245,4 +249,12 @@ func (a *sessionServiceAdapter) GetSession(ctx context.Context, sessionID string
 			DeviceJID: &response.Session.DeviceJID,
 		},
 	}, nil
+}
+
+func (c *Container) GetGroupService() *services.GroupService {
+	return c.groupService
+}
+
+func (c *Container) GetSessionResolver() session.SessionResolver {
+	return c.sessionResolver
 }

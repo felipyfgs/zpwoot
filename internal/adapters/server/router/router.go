@@ -7,12 +7,13 @@ import (
 	"github.com/go-chi/cors"
 
 	"zpwoot/internal/adapters/server/middleware"
+	"zpwoot/internal/core/session"
 	"zpwoot/internal/services"
 	"zpwoot/platform/config"
 	"zpwoot/platform/logger"
 )
 
-func SetupRoutes(cfg *config.Config, logger *logger.Logger, sessionService *services.SessionService, messageService *services.MessageService, groupService *services.GroupService) http.Handler {
+func SetupRoutes(cfg *config.Config, logger *logger.Logger, sessionService *services.SessionService, messageService *services.MessageService, groupService *services.GroupService, sessionResolver session.SessionResolver) http.Handler {
 	r := chi.NewRouter()
 
 	setupMiddlewares(r, cfg, logger)
@@ -21,27 +22,25 @@ func SetupRoutes(cfg *config.Config, logger *logger.Logger, sessionService *serv
 
 	setupHealthRoutes(r)
 
-	setupAllRoutes(r, logger, sessionService, messageService, groupService)
+	setupAllRoutes(r, logger, sessionService, messageService, groupService, sessionResolver)
 
 	return r
 }
 
-func setupAllRoutes(r *chi.Mux, appLogger *logger.Logger, sessionService *services.SessionService, messageService *services.MessageService, groupService *services.GroupService) {
+func setupAllRoutes(r *chi.Mux, appLogger *logger.Logger, sessionService *services.SessionService, messageService *services.MessageService, groupService *services.GroupService, sessionResolver session.SessionResolver) {
 	r.Route("/sessions", func(r chi.Router) {
 
-		setupSessionRoutes(r, sessionService, appLogger)
+		setupSessionRoutes(r, sessionService, sessionResolver, appLogger)
 
-		setupMessageRoutes(r, messageService, sessionService, appLogger)
+		setupMessageRoutes(r, messageService, sessionService, sessionResolver, appLogger)
 
-		setupGroupRoutes(r, groupService, sessionService, appLogger)
+		setupGroupRoutes(r, groupService, sessionService, sessionResolver, appLogger)
 
-		// TODO: Re-implement contact routes after contact service refactoring
+		setupWebhookRoutes(r, sessionService, sessionResolver, appLogger)
 
-		setupWebhookRoutes(r, sessionService, appLogger)
+		setupMediaRoutes(r, sessionService, sessionResolver, appLogger)
 
-		setupMediaRoutes(r, sessionService, appLogger)
-
-		setupChatwootRoutes(r, messageService, sessionService, appLogger)
+		setupChatwootRoutes(r, messageService, sessionService, sessionResolver, appLogger)
 	})
 
 	setupGlobalRoutes(r, appLogger)

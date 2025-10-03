@@ -18,13 +18,15 @@ type BaseHandler struct {
 	logger    *logger.Logger
 	writer    *ResponseWriter
 	validator *validation.Validator
+	resolver  session.SessionResolver
 }
 
-func NewBaseHandler(logger *logger.Logger) *BaseHandler {
+func NewBaseHandler(logger *logger.Logger, resolver session.SessionResolver) *BaseHandler {
 	return &BaseHandler{
 		logger:    logger,
 		writer:    NewResponseWriter(logger),
 		validator: validation.New(),
+		resolver:  resolver,
 	}
 }
 
@@ -52,6 +54,34 @@ func (h *BaseHandler) GetSessionIDFromURL(r *http.Request) (uuid.UUID, error) {
 	}
 
 	return uuid.Nil, fmt.Errorf("session_name:%s", sessionIDStr)
+}
+
+func (h *BaseHandler) ResolveSession(r *http.Request) (*session.Session, error) {
+	sessionName := chi.URLParam(r, "sessionName")
+	if sessionName == "" {
+		return nil, fmt.Errorf("session name is required")
+	}
+
+	resolved, err := h.resolver.Resolve(r.Context(), sessionName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve session: %w", err)
+	}
+
+	return resolved.Session, nil
+}
+
+func (h *BaseHandler) ResolveSessionID(r *http.Request) (uuid.UUID, error) {
+	sessionName := chi.URLParam(r, "sessionName")
+	if sessionName == "" {
+		return uuid.Nil, fmt.Errorf("session name is required")
+	}
+
+	sessionID, err := h.resolver.ResolveToID(r.Context(), sessionName)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("failed to resolve session: %w", err)
+	}
+
+	return sessionID, nil
 }
 
 func (h *BaseHandler) GetSessionNameFromURL(r *http.Request) (string, error) {

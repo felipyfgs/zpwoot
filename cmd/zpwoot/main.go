@@ -175,7 +175,6 @@ func connectOnStartup(container *container.Container, logger *logger.Logger) {
 		return
 	}
 
-	// Auto-reconnection is now handled by the gateway during restoration
 	logger.Info("Auto-reconnection is handled automatically during session restoration")
 }
 
@@ -239,7 +238,6 @@ func reconnectSessionsSequential(ctx context.Context, sessions []sessionInfo, se
 		default:
 		}
 
-		// Create timeout context for individual session connection
 		sessionCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		result, err := sessionService.ConnectSession(sessionCtx, session.ID)
 		cancel()

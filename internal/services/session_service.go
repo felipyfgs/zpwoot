@@ -240,7 +240,6 @@ func (s *SessionService) ListSessions(ctx context.Context, req *contracts.ListSe
 }
 
 func (s *SessionService) ConnectSession(ctx context.Context, sessionID string) (*contracts.ConnectSessionResponse, error) {
-
 	id, err := uuid.Parse(sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid session ID format: %w", err)

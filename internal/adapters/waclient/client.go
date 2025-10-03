@@ -3,7 +3,6 @@ package waclient
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"sync"
 	"time"
 
@@ -181,24 +180,21 @@ func NewClientWithDevice(sessionName string, deviceStore *store.Device, containe
 }
 
 func (c *Client) Connect() error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	if c.client == nil {
+		return fmt.Errorf("whatsapp client not initialized")
+	}
 
-	if c.state == StateConnecting || c.state == StateLoggedIn {
+	if c.client.IsConnected() {
 		return nil
 	}
 
-	c.setState(StateConnecting)
-	c.clearError()
+	if c.client.Store.ID == nil {
 
-	if c.cancel != nil {
-		c.cancel()
+		return c.connectNewDevice()
+	} else {
+
+		return c.connectExistingDevice()
 	}
-	c.ctx, c.cancel = context.WithCancel(context.Background())
-
-	go c.performConnection()
-
-	return nil
 }
 
 func (c *Client) performConnection() {
@@ -227,7 +223,7 @@ func (c *Client) isDeviceRegistered() bool {
 	return c.device.ID != nil
 }
 
-func (c *Client) connectExistingDevice() {
+func (c *Client) connectExistingDevice() error {
 	c.logger.InfoWithFields("Connecting existing device", map[string]interface{}{
 		"session_name": c.sessionName,
 	})
@@ -237,14 +233,13 @@ func (c *Client) connectExistingDevice() {
 			"session_name": c.sessionName,
 			"error":        err.Error(),
 		})
-		c.setError(fmt.Sprintf("connection failed: %v", err))
-		return
+		return fmt.Errorf("connection failed: %w", err)
 	}
 
-	c.waitForAuthentication()
+	return nil
 }
 
-func (c *Client) connectNewDevice() {
+func (c *Client) connectNewDevice() error {
 	c.logger.InfoWithFields("Connecting new device", map[string]interface{}{
 		"session_name": c.sessionName,
 	})
@@ -254,10 +249,10 @@ func (c *Client) connectNewDevice() {
 			"session_name": c.sessionName,
 			"error":        err.Error(),
 		})
-		c.setError(fmt.Sprintf("connection failed: %v", err))
-		return
+		return fmt.Errorf("connection failed: %w", err)
 	}
 
+	return nil
 }
 
 func (c *Client) waitForAuthentication() {
@@ -485,16 +480,6 @@ func (c *Client) GetQRCode() (string, error) {
 }
 
 func (c *Client) SetProxy(proxy *session.ProxyConfig) error {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.proxyConfig = proxy
-
-	if c.IsConnected() {
-		if err := c.configureProxy(); err != nil {
-			return fmt.Errorf("failed to apply proxy configuration: %w", err)
-		}
-	}
 
 	return nil
 }
@@ -512,53 +497,6 @@ func (c *Client) GetJID() types.JID {
 
 func (c *Client) GetClient() *whatsmeow.Client {
 	return c.client
-}
-
-func (c *Client) configureProxy() error {
-	if c.proxyConfig == nil {
-		return nil
-	}
-
-	var proxyURL *url.URL
-	var err error
-
-	switch c.proxyConfig.Type {
-	case "http":
-		if c.proxyConfig.Username != "" && c.proxyConfig.Password != "" {
-			proxyURL, err = url.Parse(fmt.Sprintf("http://%s:%s@%s:%d",
-				c.proxyConfig.Username, c.proxyConfig.Password,
-				c.proxyConfig.Host, c.proxyConfig.Port))
-		} else {
-			proxyURL, err = url.Parse(fmt.Sprintf("http://%s:%d",
-				c.proxyConfig.Host, c.proxyConfig.Port))
-		}
-	case "socks5":
-		if c.proxyConfig.Username != "" && c.proxyConfig.Password != "" {
-			proxyURL, err = url.Parse(fmt.Sprintf("socks5://%s:%s@%s:%d",
-				c.proxyConfig.Username, c.proxyConfig.Password,
-				c.proxyConfig.Host, c.proxyConfig.Port))
-		} else {
-			proxyURL, err = url.Parse(fmt.Sprintf("socks5://%s:%d",
-				c.proxyConfig.Host, c.proxyConfig.Port))
-		}
-	default:
-		return fmt.Errorf("unsupported proxy type: %s", c.proxyConfig.Type)
-	}
-
-	if err != nil {
-		return fmt.Errorf("failed to parse proxy URL: %w", err)
-	}
-
-	c.client.SetProxyAddress(proxyURL.String())
-
-	c.logger.InfoWithFields("Proxy configured", map[string]interface{}{
-		"session_name": c.sessionName,
-		"proxy_type":   c.proxyConfig.Type,
-		"proxy_host":   c.proxyConfig.Host,
-		"proxy_port":   c.proxyConfig.Port,
-	})
-
-	return nil
 }
 
 func (c *Client) GetStatus() string {

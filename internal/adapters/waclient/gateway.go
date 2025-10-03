@@ -91,13 +91,13 @@ type Gateway struct {
 
 	clients       map[string]*Client
 	eventHandlers map[string][]session.EventHandler
-	sessionUUIDs  map[string]string
 	mu            sync.RWMutex
 
 	webhookHandler  WebhookEventHandler
 	chatwootManager ChatwootManager
 
-	sessionService SessionServiceExtended
+	sessionService  SessionServiceExtended
+	sessionResolver session.SessionResolver
 }
 
 type DatabaseInterface interface {
@@ -110,8 +110,11 @@ func NewGateway(container *sqlstore.Container, logger *logger.Logger) *Gateway {
 		container:     container,
 		clients:       make(map[string]*Client),
 		eventHandlers: make(map[string][]session.EventHandler),
-		sessionUUIDs:  make(map[string]string),
 	}
+}
+
+func (g *Gateway) SetSessionResolver(resolver session.SessionResolver) {
+	g.sessionResolver = resolver
 }
 
 func (g *Gateway) SetDatabase(db DatabaseInterface) {
@@ -128,11 +131,8 @@ func (g *Gateway) SetSessionService(service SessionServiceExtended) {
 }
 
 func (g *Gateway) RegisterSessionUUID(sessionName, sessionUUID string) {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	g.sessionUUIDs[sessionName] = sessionUUID
 
-	g.logger.DebugWithFields("Session UUID registered", map[string]interface{}{
+	g.logger.DebugWithFields("RegisterSessionUUID called (deprecated)", map[string]interface{}{
 		"session_name": sessionName,
 		"session_uuid": sessionUUID,
 	})
@@ -146,12 +146,12 @@ func (g *Gateway) SessionExists(sessionName string) bool {
 }
 
 func (g *Gateway) GetSessionUUID(sessionName string) string {
-	g.mu.RLock()
-	defer g.mu.RUnlock()
-	return g.sessionUUIDs[sessionName]
+
+	g.logger.WarnWithFields("GetSessionUUID called (deprecated)", map[string]interface{}{
+		"session_name": sessionName,
+	})
+	return ""
 }
-
-
 
 func (g *Gateway) CreateSession(ctx context.Context, sessionName string) error {
 	g.mu.Lock()
@@ -207,7 +207,8 @@ func (g *Gateway) ConnectSession(ctx context.Context, sessionName string) error 
 		return nil
 	}
 
-	if err := client.Connect(); err != nil {
+	err := client.Connect()
+	if err != nil {
 		g.logger.ErrorWithFields("Failed to connect WhatsApp session", map[string]interface{}{
 			"session_name": sessionName,
 			"error":        err.Error(),
@@ -226,20 +227,15 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionName string) error 
 		return nil
 	}
 
-	sessionUUID, exists := g.sessionUUIDs[sessionName]
-	if !exists {
-		g.logger.ErrorWithFields("Session UUID not found in mapping", map[string]interface{}{
-			"session_name":    sessionName,
-			"available_uuids": len(g.sessionUUIDs),
-			"registered_names": func() []string {
-				names := make([]string, 0, len(g.sessionUUIDs))
-				for name := range g.sessionUUIDs {
-					names = append(names, name)
-				}
-				return names
-			}(),
-		})
-		return fmt.Errorf("session UUID not found for session %s", sessionName)
+	var sessionUUID string
+	if g.sessionResolver != nil {
+		if id, err := g.sessionResolver.ResolveToID(ctx, sessionName); err == nil {
+			sessionUUID = id.String()
+		} else {
+			sessionUUID = sessionName
+		}
+	} else {
+		sessionUUID = sessionName
 	}
 
 	client, err := g.newClientWithExistingDevice(sessionName, sessionUUID)
@@ -324,57 +320,24 @@ func (g *Gateway) getDeviceJIDFromDatabase(sessionUUID string) (string, error) {
 	return *deviceJID, nil
 }
 
-func (g *Gateway) getDeviceJIDsBatch(sessionUUIDs []string) (map[string]string, error) {
-	if len(sessionUUIDs) == 0 {
+func (g *Gateway) getDeviceJIDsBatch(sessionNames []string) (map[string]string, error) {
+	if len(sessionNames) == 0 {
 		return make(map[string]string), nil
 	}
 
-	deviceJIDs := make(map[string]string, len(sessionUUIDs))
+	deviceJIDs := make(map[string]string, len(sessionNames))
 
-	if len(sessionUUIDs) <= 10 {
-		for _, uuid := range sessionUUIDs {
-			deviceJID, err := g.getDeviceJIDFromDatabase(uuid)
-			if err != nil {
-				g.logger.WarnWithFields("Failed to get device JID", map[string]interface{}{
-					"session_uuid": uuid,
-					"error":        err.Error(),
-				})
-				continue
-			}
-			if deviceJID != "" {
-				deviceJIDs[uuid] = deviceJID
-			}
-		}
-		return deviceJIDs, nil
-	}
-
-	if g.sessionService != nil {
-		return g.getDeviceJIDsFromService(sessionUUIDs)
-	}
-
-	for _, uuid := range sessionUUIDs {
-		deviceJID, err := g.getDeviceJIDFromDatabase(uuid)
+	for _, sessionName := range sessionNames {
+		deviceJID, err := g.getDeviceJIDFromDatabase(sessionName)
 		if err != nil {
+			g.logger.WarnWithFields("Failed to get device JID", map[string]interface{}{
+				"session_name": sessionName,
+				"error":        err.Error(),
+			})
 			continue
 		}
 		if deviceJID != "" {
-			deviceJIDs[uuid] = deviceJID
-		}
-	}
-
-	return deviceJIDs, nil
-}
-
-func (g *Gateway) getDeviceJIDsFromService(sessionUUIDs []string) (map[string]string, error) {
-	deviceJIDs := make(map[string]string)
-
-	for _, uuid := range sessionUUIDs {
-		session, err := g.sessionService.GetSession(context.Background(), uuid)
-		if err != nil {
-			continue
-		}
-		if session.Session.DeviceJID != nil && *session.Session.DeviceJID != "" {
-			deviceJIDs[uuid] = *session.Session.DeviceJID
+			deviceJIDs[sessionName] = deviceJID
 		}
 	}
 
@@ -389,11 +352,10 @@ func (g *Gateway) newClientWithDeviceJID(sessionName, deviceJID string) (*Client
 
 	deviceStore, err := g.container.GetDevice(context.Background(), jid)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get device from store: %w", err)
-	}
 
-	if deviceStore == nil {
-		return nil, fmt.Errorf("device not found in store")
+		deviceStore = g.container.NewDevice()
+	} else if deviceStore == nil {
+		deviceStore = g.container.NewDevice()
 	}
 
 	config := ClientConfig{
@@ -414,14 +376,7 @@ func (g *Gateway) RestoreAllSessions(ctx context.Context, sessionNames []string)
 		"session_count": len(sessionNames),
 	})
 
-	sessionUUIDs := make([]string, 0, len(sessionNames))
-	for _, sessionName := range sessionNames {
-		if sessionUUID, exists := g.sessionUUIDs[sessionName]; exists {
-			sessionUUIDs = append(sessionUUIDs, sessionUUID)
-		}
-	}
-
-	deviceJIDs, err := g.getDeviceJIDsBatch(sessionUUIDs)
+	deviceJIDs, err := g.getDeviceJIDsBatch(sessionNames)
 	if err != nil {
 		g.logger.WarnWithFields("Failed to get device JIDs in batch, falling back to individual queries", map[string]interface{}{
 			"error": err.Error(),
@@ -432,17 +387,9 @@ func (g *Gateway) RestoreAllSessions(ctx context.Context, sessionNames []string)
 
 	successCount := 0
 	for _, sessionName := range sessionNames {
-		sessionUUID, exists := g.sessionUUIDs[sessionName]
-		if !exists {
-			g.logger.ErrorWithFields("Session UUID not found", map[string]interface{}{
-				"session_name": sessionName,
-			})
-			continue
-		}
+		deviceJID := deviceJIDs[sessionName]
 
-		deviceJID := deviceJIDs[sessionUUID]
-
-		err := g.restoreSessionWithDeviceJID(ctx, sessionName, sessionUUID, deviceJID)
+		err := g.restoreSessionWithDeviceJID(ctx, sessionName, sessionName, deviceJID)
 		if err != nil {
 			g.logger.ErrorWithFields("Failed to restore session", map[string]interface{}{
 				"session_name": sessionName,
@@ -452,10 +399,9 @@ func (g *Gateway) RestoreAllSessions(ctx context.Context, sessionNames []string)
 		}
 		successCount++
 
-		// Auto-connect restored sessions that have device JID
 		if deviceJID != "" {
 			go func(sName string) {
-				time.Sleep(2 * time.Second) // Give time for client to initialize
+				time.Sleep(2 * time.Second)
 				if err := g.ConnectSession(ctx, sName); err != nil {
 					g.logger.WarnWithFields("Failed to auto-connect restored session", map[string]interface{}{
 						"session_name": sName,
@@ -742,29 +688,12 @@ func (g *Gateway) setupEventHandlers(client *Client, sessionName string) {
 
 	client.GetClient().AddEventHandler(func(evt interface{}) {
 
-		sessionUUID := g.GetSessionUUID(sessionName)
-		if sessionUUID == "" {
-
-			sessionUUID = sessionName
-			g.logger.WarnWithFields("Session UUID not found, using session name", map[string]interface{}{
-				"session_name": sessionName,
-			})
-		}
-		eventHandler.HandleEvent(evt, sessionUUID)
+		eventHandler.HandleEvent(evt, sessionName)
 	})
 
 	client.AddEventHandler(func(evt interface{}) {
 
-		sessionUUID := g.GetSessionUUID(sessionName)
-		if sessionUUID == "" {
-
-			sessionUUID = sessionName
-			g.logger.WarnWithFields("Session UUID not found for custom event, using session name", map[string]interface{}{
-				"session_name": sessionName,
-				"event_type":   fmt.Sprintf("%T", evt),
-			})
-		}
-		eventHandler.HandleEvent(evt, sessionUUID)
+		eventHandler.HandleEvent(evt, sessionName)
 	})
 
 	g.logger.DebugWithFields("Event handlers configured", map[string]interface{}{

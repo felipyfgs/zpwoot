@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"zpwoot/internal/adapters/server/shared"
+	"zpwoot/internal/core/session"
 	"zpwoot/internal/services"
 	"zpwoot/platform/logger"
 )
@@ -17,10 +18,11 @@ type WebhookHandler struct {
 
 func NewWebhookHandler(
 	sessionService *services.SessionService,
+	resolver session.SessionResolver,
 	logger *logger.Logger,
 ) *WebhookHandler {
 	return &WebhookHandler{
-		BaseHandler:    shared.NewBaseHandler(logger),
+		BaseHandler:    shared.NewBaseHandler(logger, resolver),
 		sessionService: sessionService,
 	}
 }
