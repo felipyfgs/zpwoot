@@ -137,7 +137,7 @@ func (s *SessionService) GetSession(ctx context.Context, sessionID string) (*con
 	return response, nil
 }
 
-// ResolveSessionID removed - using sessionId directly
+
 
 func (s *SessionService) RestoreAllSessions(ctx context.Context) error {
 	s.logger.Info("Starting session restoration process")
@@ -154,9 +154,9 @@ func (s *SessionService) RestoreAllSessions(ctx context.Context) error {
 	return nil
 }
 
-// DeleteSessionByNameOrID removed - using DeleteSession with sessionId directly
 
-// GetSessionByNameOrID removed - using GetSession with sessionId directly
+
+
 
 func (s *SessionService) ListSessions(ctx context.Context, req *contracts.ListSessionsRequest) (*contracts.ListSessionsResponse, error) {
 
@@ -231,7 +231,7 @@ func (s *SessionService) ConnectSession(ctx context.Context, sessionID string) (
 		}
 	}
 
-	// Wait for QR code to be generated (up to 5 seconds)
+
 	qrResponse, qrErr := s.waitForQRCode(ctx, id, 5*time.Second)
 	if qrErr == nil && qrResponse != nil {
 		response.QRCode = qrResponse.QRCode
@@ -244,13 +244,13 @@ func (s *SessionService) ConnectSession(ctx context.Context, sessionID string) (
 	return response, nil
 }
 
-// waitForQRCode waits for QR code to be generated for a session
+
 func (s *SessionService) waitForQRCode(ctx context.Context, sessionID uuid.UUID, timeout time.Duration) (*contracts.QRCodeResponse, error) {
-	// Create a context with timeout
+
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	// Poll for QR code every 200ms
+
 	ticker := time.NewTicker(200 * time.Millisecond)
 	defer ticker.Stop()
 
@@ -261,7 +261,7 @@ func (s *SessionService) waitForQRCode(ctx context.Context, sessionID uuid.UUID,
 		case <-ticker.C:
 			qrResponse, err := s.coreService.GetQRCode(ctx, sessionID)
 			if err == nil && qrResponse != nil && qrResponse.QRCode != "" {
-				// Convert from session.QRCodeResponse to contracts.QRCodeResponse
+
 				return &contracts.QRCodeResponse{
 					QRCode:      qrResponse.QRCode,
 					QRCodeImage: qrResponse.QRCodeImage,

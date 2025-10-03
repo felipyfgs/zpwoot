@@ -53,7 +53,7 @@ func (h *BaseHandler) GetSessionIDFromURL(r *http.Request) (uuid.UUID, error) {
 	return sessionID, nil
 }
 
-// Session resolution methods removed - using sessionId directly
+
 
 func (h *BaseHandler) GetStringParam(r *http.Request, paramName string) (string, error) {
 	value := chi.URLParam(r, paramName)

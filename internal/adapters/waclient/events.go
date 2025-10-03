@@ -15,7 +15,7 @@ import (
 	"zpwoot/internal/core/session"
 )
 
-// myEventHandler handles WhatsApp events, adapted from wuzapi
+
 func (mc *MyClient) myEventHandler(rawEvt interface{}) {
 	sessionID := mc.sessionID.String()
 	
@@ -57,7 +57,7 @@ func (mc *MyClient) myEventHandler(rawEvt interface{}) {
 	}
 }
 
-// handleAppStateSyncComplete handles app state sync completion
+
 func (mc *MyClient) handleAppStateSyncComplete(evt *events.AppStateSyncComplete) {
 	if len(mc.WAClient.Store.PushName) > 0 && evt.Name == appstate.WAPatchCriticalBlock {
 		err := mc.WAClient.SendPresence(types.PresenceAvailable)
@@ -74,13 +74,13 @@ func (mc *MyClient) handleAppStateSyncComplete(evt *events.AppStateSyncComplete)
 	}
 }
 
-// handleConnected handles connection events
+
 func (mc *MyClient) handleConnected(evt *events.Connected) {
 	mc.logger.InfoWithFields("WhatsApp connected", map[string]interface{}{
 		"session_id": mc.sessionID.String(),
 	})
 
-	// Update connection status in database
+
 	err := mc.UpdateConnectionStatus(true)
 	if err != nil {
 		mc.logger.ErrorWithFields("Failed to update connection status", map[string]interface{}{
@@ -89,7 +89,7 @@ func (mc *MyClient) handleConnected(evt *events.Connected) {
 		})
 	}
 
-	// Clear QR code since we're connected
+
 	err = mc.ClearQRCode()
 	if err != nil {
 		mc.logger.ErrorWithFields("Failed to clear QR code", map[string]interface{}{
@@ -98,7 +98,7 @@ func (mc *MyClient) handleConnected(evt *events.Connected) {
 		})
 	}
 
-	// Send presence available
+
 	if len(mc.WAClient.Store.PushName) > 0 {
 		err = mc.WAClient.SendPresence(types.PresenceAvailable)
 		if err != nil {
@@ -109,7 +109,7 @@ func (mc *MyClient) handleConnected(evt *events.Connected) {
 		}
 	}
 
-	// Notify gateway about connection
+
 	if mc.gateway != nil && mc.gateway.eventHandler != nil {
 		deviceInfo := &session.DeviceInfo{
 			Platform:    "android",
@@ -121,7 +121,7 @@ func (mc *MyClient) handleConnected(evt *events.Connected) {
 	}
 }
 
-// handlePushNameSetting handles push name setting events
+
 func (mc *MyClient) handlePushNameSetting(evt *events.PushNameSetting) {
 	pushName := ""
 	if evt.Action != nil && evt.Action.Name != nil {
@@ -133,7 +133,7 @@ func (mc *MyClient) handlePushNameSetting(evt *events.PushNameSetting) {
 		"push_name":  pushName,
 	})
 
-	// Send presence available when pushname is set
+
 	if len(pushName) > 0 {
 		err := mc.WAClient.SendPresence(types.PresenceAvailable)
 		if err != nil {
@@ -145,7 +145,7 @@ func (mc *MyClient) handlePushNameSetting(evt *events.PushNameSetting) {
 	}
 }
 
-// handlePairSuccess handles successful pairing
+
 func (mc *MyClient) handlePairSuccess(evt *events.PairSuccess) {
 	mc.logger.InfoWithFields("QR Pair Success", map[string]interface{}{
 		"session_id":    mc.sessionID.String(),
@@ -155,7 +155,7 @@ func (mc *MyClient) handlePairSuccess(evt *events.PairSuccess) {
 		"platform":      evt.Platform,
 	})
 
-	// Update device JID in database
+
 	err := mc.UpdateDeviceJID(evt.ID.String())
 	if err != nil {
 		mc.logger.ErrorWithFields("Failed to update device JID", map[string]interface{}{
@@ -165,7 +165,7 @@ func (mc *MyClient) handlePairSuccess(evt *events.PairSuccess) {
 		})
 	}
 
-	// Clear QR code
+
 	err = mc.ClearQRCode()
 	if err != nil {
 		mc.logger.ErrorWithFields("Failed to clear QR code after pairing", map[string]interface{}{
@@ -174,7 +174,7 @@ func (mc *MyClient) handlePairSuccess(evt *events.PairSuccess) {
 		})
 	}
 
-	// Notify gateway about successful pairing
+
 	if mc.gateway != nil && mc.gateway.eventHandler != nil {
 		deviceInfo := &session.DeviceInfo{
 			Platform:    evt.Platform,
@@ -186,22 +186,22 @@ func (mc *MyClient) handlePairSuccess(evt *events.PairSuccess) {
 	}
 }
 
-// handleStreamReplaced handles stream replacement
+
 func (mc *MyClient) handleStreamReplaced(evt *events.StreamReplaced) {
 	mc.logger.InfoWithFields("Stream replaced", map[string]interface{}{
 		"session_id": mc.sessionID.String(),
 	})
-	// Just log for now, no action needed
+
 }
 
-// handleLoggedOut handles logout events
+
 func (mc *MyClient) handleLoggedOut(evt *events.LoggedOut) {
 	mc.logger.InfoWithFields("Logged out from WhatsApp", map[string]interface{}{
 		"session_id": mc.sessionID.String(),
 		"reason":     evt.Reason.String(),
 	})
 
-	// Update connection status
+
 	err := mc.UpdateConnectionStatus(false)
 	if err != nil {
 		mc.logger.ErrorWithFields("Failed to update connection status on logout", map[string]interface{}{
@@ -210,7 +210,7 @@ func (mc *MyClient) handleLoggedOut(evt *events.LoggedOut) {
 		})
 	}
 
-	// Clear QR code
+
 	err = mc.ClearQRCode()
 	if err != nil {
 		mc.logger.ErrorWithFields("Failed to clear QR code on logout", map[string]interface{}{
@@ -219,25 +219,25 @@ func (mc *MyClient) handleLoggedOut(evt *events.LoggedOut) {
 		})
 	}
 
-	// Notify gateway about disconnection
+
 	if mc.gateway != nil && mc.gateway.eventHandler != nil {
 		mc.gateway.eventHandler.OnSessionDisconnected(mc.sessionName, evt.Reason.String())
 	}
 
-	// Remove from client manager
+
 	clientManager := GetClientManager(mc.logger)
 	clientManager.DeleteMyClient(mc.sessionID)
 	clientManager.DeleteWhatsmeowClient(mc.sessionID)
 	clientManager.DeleteHTTPClient(mc.sessionID)
 }
 
-// handleDisconnected handles disconnection events
+
 func (mc *MyClient) handleDisconnected(evt *events.Disconnected) {
 	mc.logger.InfoWithFields("Disconnected from WhatsApp", map[string]interface{}{
 		"session_id": mc.sessionID.String(),
 	})
 
-	// Update connection status
+
 	err := mc.UpdateConnectionStatus(false)
 	if err != nil {
 		mc.logger.ErrorWithFields("Failed to update connection status on disconnect", map[string]interface{}{
@@ -246,20 +246,20 @@ func (mc *MyClient) handleDisconnected(evt *events.Disconnected) {
 		})
 	}
 
-	// Notify gateway about disconnection
+
 	if mc.gateway != nil && mc.gateway.eventHandler != nil {
 		mc.gateway.eventHandler.OnSessionDisconnected(mc.sessionName, "disconnected")
 	}
 }
 
-// handleConnectFailure handles connection failure events
+
 func (mc *MyClient) handleConnectFailure(evt *events.ConnectFailure) {
 	mc.logger.ErrorWithFields("Failed to connect to WhatsApp", map[string]interface{}{
 		"session_id": mc.sessionID.String(),
 		"reason":     fmt.Sprintf("%+v", evt),
 	})
 
-	// Set connection error
+
 	err := mc.SetConnectionError(fmt.Sprintf("Connection failed: %+v", evt))
 	if err != nil {
 		mc.logger.ErrorWithFields("Failed to set connection error", map[string]interface{}{
@@ -268,19 +268,19 @@ func (mc *MyClient) handleConnectFailure(evt *events.ConnectFailure) {
 		})
 	}
 
-	// Notify gateway about connection error
+
 	if mc.gateway != nil && mc.gateway.eventHandler != nil {
 		mc.gateway.eventHandler.OnConnectionError(mc.sessionName, fmt.Errorf("connection failed: %+v", evt))
 	}
 }
 
-// handleQRCode handles QR code generation (called from gateway)
+
 func (mc *MyClient) handleQRCode(qrCode string) error {
 	mc.logger.InfoWithFields("QR code generated", map[string]interface{}{
 		"session_id": mc.sessionID.String(),
 	})
 
-	// Generate QR code image
+
 	image, err := qrcode.Encode(qrCode, qrcode.Medium, 256)
 	if err != nil {
 		mc.logger.ErrorWithFields("Failed to encode QR code", map[string]interface{}{
@@ -290,11 +290,11 @@ func (mc *MyClient) handleQRCode(qrCode string) error {
 		return err
 	}
 
-	// Create base64 encoded QR code
+
 	base64QRCode := "data:image/png;base64," + base64.StdEncoding.EncodeToString(image)
 
-	// Update QR code in database
-	expiresAt := time.Now().Add(2 * time.Minute) // QR codes typically expire in 2 minutes
+
+	expiresAt := time.Now().Add(2 * time.Minute)
 	err = mc.UpdateQRCode(base64QRCode, expiresAt)
 	if err != nil {
 		mc.logger.ErrorWithFields("Failed to update QR code in database", map[string]interface{}{
@@ -304,11 +304,11 @@ func (mc *MyClient) handleQRCode(qrCode string) error {
 		return err
 	}
 
-	// Display QR code in terminal for debugging
+
 	qrterminal.GenerateHalfBlock(qrCode, qrterminal.L, os.Stdout)
 	fmt.Println("QR code:", qrCode)
 
-	// Notify gateway about QR code generation
+
 	if mc.gateway != nil && mc.gateway.eventHandler != nil {
 		mc.gateway.eventHandler.OnQRCodeGenerated(mc.sessionName, base64QRCode, expiresAt)
 	}

@@ -55,12 +55,12 @@ type WhatsAppGateway interface {
 }
 
 type EventHandler interface {
-	OnSessionConnected(sessionName string, deviceInfo *DeviceInfo)
-	OnSessionDisconnected(sessionName string, reason string)
-	OnQRCodeGenerated(sessionName string, qrCode string, expiresAt time.Time)
-	OnConnectionError(sessionName string, err error)
-	OnMessageReceived(sessionName string, message *WhatsAppMessage)
-	OnMessageSent(sessionName string, messageID string, status string)
+	OnSessionConnected(sessionId uuid.UUID, deviceInfo *DeviceInfo)
+	OnSessionDisconnected(sessionId uuid.UUID, reason string)
+	OnQRCodeGenerated(sessionId uuid.UUID, qrCode string, expiresAt time.Time)
+	OnConnectionError(sessionId uuid.UUID, err error)
+	OnMessageReceived(sessionId uuid.UUID, message *WhatsAppMessage)
+	OnMessageSent(sessionId uuid.UUID, messageID string, status string)
 }
 
 type WhatsAppMessage struct {
@@ -84,9 +84,9 @@ type MessageSendResult struct {
 }
 
 type QRCodeGenerator interface {
-	Generate(ctx context.Context, sessionName string) (*QRCodeResponse, error)
+	Generate(ctx context.Context, sessionId uuid.UUID) (*QRCodeResponse, error)
 	GenerateImage(ctx context.Context, qrCode string) ([]byte, error)
 	IsExpired(expiresAt time.Time) bool
 }
 
-// SessionResolver interface removed - using sessionId directly
+

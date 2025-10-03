@@ -83,22 +83,7 @@ func (s *Service) GetSession(ctx context.Context, id uuid.UUID) (*Session, error
 	return session, nil
 }
 
-func (s *Service) GetSessionByName(ctx context.Context, name string) (*Session, error) {
-	if name == "" {
-		return nil, ErrInvalidSessionName
-	}
 
-	session, err := s.repository.GetByName(ctx, name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get session by name: %w", err)
-	}
-
-	if err := s.syncSessionStatus(ctx, session); err != nil {
-
-	}
-
-	return session, nil
-}
 
 func (s *Service) ListSessions(ctx context.Context, limit, offset int) ([]*Session, error) {
 
@@ -129,19 +114,7 @@ func (s *Service) ListConnectedSessions(ctx context.Context) ([]*Session, error)
 	return sessions, nil
 }
 
-func (s *Service) GetAllSessionNames(ctx context.Context) ([]string, error) {
-	sessions, err := s.repository.List(ctx, 1000, 0)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list sessions: %w", err)
-	}
 
-	names := make([]string, len(sessions))
-	for i, session := range sessions {
-		names[i] = session.Name
-	}
-
-	return names, nil
-}
 
 func (s *Service) ConnectSession(ctx context.Context, id uuid.UUID) error {
 	session, err := s.repository.GetByID(ctx, id)
@@ -448,10 +421,10 @@ func NewSessionEventHandler(service *Service) *SessionEventHandler {
 	}
 }
 
-func (h *SessionEventHandler) OnSessionConnected(sessionName string, deviceInfo *DeviceInfo) {
+func (h *SessionEventHandler) OnSessionConnected(sessionId uuid.UUID, deviceInfo *DeviceInfo) {
 	ctx := context.Background()
 
-	session, err := h.service.repository.GetByName(ctx, sessionName)
+	session, err := h.service.repository.GetByID(ctx, sessionId)
 	if err != nil {
 		return
 	}
@@ -463,10 +436,10 @@ func (h *SessionEventHandler) OnSessionConnected(sessionName string, deviceInfo 
 	_ = h.service.repository.Update(ctx, session)
 }
 
-func (h *SessionEventHandler) OnSessionDisconnected(sessionName string, reason string) {
+func (h *SessionEventHandler) OnSessionDisconnected(sessionId uuid.UUID, reason string) {
 	ctx := context.Background()
 
-	session, err := h.service.repository.GetByName(ctx, sessionName)
+	session, err := h.service.repository.GetByID(ctx, sessionId)
 	if err != nil {
 		return
 	}
