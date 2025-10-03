@@ -18,11 +18,10 @@ type WebhookHandler struct {
 
 func NewWebhookHandler(
 	sessionService *services.SessionService,
-	resolver session.SessionResolver,
 	logger *logger.Logger,
 ) *WebhookHandler {
 	return &WebhookHandler{
-		BaseHandler:    shared.NewBaseHandler(logger, resolver),
+		BaseHandler:    shared.NewBaseHandler(logger),
 		sessionService: sessionService,
 	}
 }

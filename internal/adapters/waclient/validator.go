@@ -6,197 +6,248 @@ import (
 	"strings"
 
 	"go.mau.fi/whatsmeow/types"
-
-	"zpwoot/internal/core/session"
+	"zpwoot/platform/logger"
 )
 
-type Validator struct{}
-
-func NewValidator() *Validator {
-	return &Validator{}
+// Validator provides validation functions for WhatsApp data
+type Validator struct {
+	logger *logger.Logger
 }
 
+// NewValidator creates a new validator instance
+func NewValidator(logger *logger.Logger) *Validator {
+	return &Validator{
+		logger: logger,
+	}
+}
+
+// parseJID parses and validates a JID string, based on wuzapi implementation
+func parseJID(arg string) (types.JID, bool) {
+	// Remove leading + if present
+	if len(arg) > 0 && arg[0] == '+' {
+		arg = arg[1:]
+	}
+
+	// If no @ symbol, assume it's a phone number for default user server
+	if !strings.ContainsRune(arg, '@') {
+		return types.NewJID(arg, types.DefaultUserServer), true
+	}
+
+	// Parse as full JID
+	recipient, err := types.ParseJID(arg)
+	if err != nil {
+		return recipient, false
+	}
+
+	// Validate that user part is not empty
+	if recipient.User == "" {
+		return recipient, false
+	}
+
+	return recipient, true
+}
+
+// ParseJID parses and validates a JID string (public method)
+func (v *Validator) ParseJID(jid string) (types.JID, error) {
+	parsedJID, valid := parseJID(jid)
+	if !valid {
+		v.logger.ErrorWithFields("Invalid JID format", map[string]interface{}{
+			"jid": jid,
+		})
+		return types.JID{}, fmt.Errorf("invalid JID format: %s", jid)
+	}
+
+	v.logger.DebugWithFields("JID parsed successfully", map[string]interface{}{
+		"original_jid": jid,
+		"parsed_jid":   parsedJID.String(),
+		"user":         parsedJID.User,
+		"server":       parsedJID.Server,
+	})
+
+	return parsedJID, nil
+}
+
+// ValidatePhoneNumber validates a phone number format
+func (v *Validator) ValidatePhoneNumber(phone string) error {
+	// Remove common prefixes and formatting
+	cleaned := strings.TrimSpace(phone)
+	cleaned = strings.TrimPrefix(cleaned, "+")
+	cleaned = strings.ReplaceAll(cleaned, " ", "")
+	cleaned = strings.ReplaceAll(cleaned, "-", "")
+	cleaned = strings.ReplaceAll(cleaned, "(", "")
+	cleaned = strings.ReplaceAll(cleaned, ")", "")
+
+	// Check if it's all digits
+	if !regexp.MustCompile(`^\d+$`).MatchString(cleaned) {
+		return fmt.Errorf("phone number must contain only digits: %s", phone)
+	}
+
+	// Check minimum length (international format)
+	if len(cleaned) < 7 {
+		return fmt.Errorf("phone number too short: %s", phone)
+	}
+
+	// Check maximum length
+	if len(cleaned) > 15 {
+		return fmt.Errorf("phone number too long: %s", phone)
+	}
+
+	v.logger.DebugWithFields("Phone number validated", map[string]interface{}{
+		"original": phone,
+		"cleaned":  cleaned,
+	})
+
+	return nil
+}
+
+// NormalizePhoneNumber normalizes a phone number to WhatsApp format
+func (v *Validator) NormalizePhoneNumber(phone string) (string, error) {
+	err := v.ValidatePhoneNumber(phone)
+	if err != nil {
+		return "", err
+	}
+
+	// Clean the phone number
+	cleaned := strings.TrimSpace(phone)
+	cleaned = strings.TrimPrefix(cleaned, "+")
+	cleaned = strings.ReplaceAll(cleaned, " ", "")
+	cleaned = strings.ReplaceAll(cleaned, "-", "")
+	cleaned = strings.ReplaceAll(cleaned, "(", "")
+	cleaned = strings.ReplaceAll(cleaned, ")", "")
+
+	return cleaned, nil
+}
+
+// IsValidJID checks if a JID string is valid
+func (v *Validator) IsValidJID(jid string) bool {
+	_, valid := parseJID(jid)
+	return valid
+}
+
+// IsGroupJID checks if a JID represents a group
+func (v *Validator) IsGroupJID(jid string) bool {
+	parsedJID, valid := parseJID(jid)
+	if !valid {
+		return false
+	}
+	return parsedJID.Server == types.GroupServer
+}
+
+// IsUserJID checks if a JID represents a user
+func (v *Validator) IsUserJID(jid string) bool {
+	parsedJID, valid := parseJID(jid)
+	if !valid {
+		return false
+	}
+	return parsedJID.Server == types.DefaultUserServer
+}
+
+// IsBroadcastJID checks if a JID represents a broadcast list
+func (v *Validator) IsBroadcastJID(jid string) bool {
+	parsedJID, valid := parseJID(jid)
+	if !valid {
+		return false
+	}
+	return parsedJID.Server == types.BroadcastServer
+}
+
+// ValidateSessionName validates a session name format
 func (v *Validator) ValidateSessionName(name string) error {
 	if name == "" {
 		return fmt.Errorf("session name cannot be empty")
 	}
 
 	if len(name) > 100 {
-		return fmt.Errorf("session name too long (max 100 characters)")
+		return fmt.Errorf("session name too long (max 100 characters): %s", name)
 	}
 
-	validName := regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
-	if !validName.MatchString(name) {
-		return fmt.Errorf("session name contains invalid characters (only alphanumeric, hyphen, and underscore allowed)")
+	// Check for valid characters (alphanumeric, underscore, hyphen)
+	if !regexp.MustCompile(`^[a-zA-Z0-9_-]+$`).MatchString(name) {
+		return fmt.Errorf("session name contains invalid characters (only alphanumeric, underscore, and hyphen allowed): %s", name)
+	}
+
+	v.logger.DebugWithFields("Session name validated", map[string]interface{}{
+		"session_name": name,
+	})
+
+	return nil
+}
+
+// ExtractPhoneFromJID extracts phone number from a JID
+func (v *Validator) ExtractPhoneFromJID(jid string) (string, error) {
+	parsedJID, valid := parseJID(jid)
+	if !valid {
+		return "", fmt.Errorf("invalid JID: %s", jid)
+	}
+
+	// For user JIDs, the user part is the phone number
+	if parsedJID.Server == types.DefaultUserServer {
+		return parsedJID.User, nil
+	}
+
+	return "", fmt.Errorf("JID is not a user JID: %s", jid)
+}
+
+// FormatJIDForDisplay formats a JID for display purposes
+func (v *Validator) FormatJIDForDisplay(jid string) string {
+	parsedJID, valid := parseJID(jid)
+	if !valid {
+		return jid // Return original if invalid
+	}
+
+	switch parsedJID.Server {
+	case types.DefaultUserServer:
+		// Format phone number with +
+		return "+" + parsedJID.User
+	case types.GroupServer:
+		// Return group JID as-is
+		return parsedJID.String()
+	case types.BroadcastServer:
+		// Return broadcast JID as-is
+		return parsedJID.String()
+	default:
+		return parsedJID.String()
+	}
+}
+
+// ValidateMessageContent validates message content
+func (v *Validator) ValidateMessageContent(content string) error {
+	if content == "" {
+		return fmt.Errorf("message content cannot be empty")
+	}
+
+	// Check maximum length (WhatsApp limit is around 65536 characters)
+	if len(content) > 65536 {
+		return fmt.Errorf("message content too long (max 65536 characters)")
 	}
 
 	return nil
 }
 
-func (v *Validator) ValidatePhoneNumber(phoneNumber string) error {
-	if phoneNumber == "" {
-		return fmt.Errorf("phone number cannot be empty")
-	}
-
-	cleanNumber := v.CleanPhoneNumber(phoneNumber)
-
-	if len(cleanNumber) < 10 {
-		return fmt.Errorf("phone number too short (minimum 10 digits)")
-	}
-
-	if len(cleanNumber) > 15 {
-		return fmt.Errorf("phone number too long (maximum 15 digits)")
-	}
-
-	for _, char := range cleanNumber {
-		if char < '0' || char > '9' {
-			return fmt.Errorf("phone number contains invalid characters")
-		}
-	}
-
-	return nil
+// SanitizeInput sanitizes user input to prevent injection attacks
+func (v *Validator) SanitizeInput(input string) string {
+	// Remove null bytes
+	sanitized := strings.ReplaceAll(input, "\x00", "")
+	
+	// Trim whitespace
+	sanitized = strings.TrimSpace(sanitized)
+	
+	return sanitized
 }
 
-func (v *Validator) ValidateJID(jid string) error {
-	if jid == "" {
-		return fmt.Errorf("JID cannot be empty")
+// ValidateQRCode validates QR code format
+func (v *Validator) ValidateQRCode(qrCode string) error {
+	if qrCode == "" {
+		return fmt.Errorf("QR code cannot be empty")
 	}
 
-	parsedJID, err := types.ParseJID(jid)
-	if err != nil {
-		return fmt.Errorf("invalid JID format: %w", err)
+	// Basic validation - QR codes should be reasonable length
+	if len(qrCode) < 10 {
+		return fmt.Errorf("QR code too short")
 	}
 
-	if parsedJID.Server != types.DefaultUserServer &&
-		parsedJID.Server != types.GroupServer &&
-		parsedJID.Server != types.BroadcastServer {
-		return fmt.Errorf("invalid WhatsApp JID server: %s", parsedJID.Server)
-	}
-
-	return nil
-}
-
-func (v *Validator) ValidateProxyConfig(config *session.ProxyConfig) error {
-	if config == nil {
-		return nil
-	}
-
-	if config.Host == "" {
-		return fmt.Errorf("proxy host cannot be empty")
-	}
-
-	if config.Port <= 0 || config.Port > 65535 {
-		return fmt.Errorf("proxy port must be between 1 and 65535")
-	}
-
-	validTypes := []string{"http", "https", "socks5"}
-	validType := false
-	for _, validT := range validTypes {
-		if config.Type == validT {
-			validType = true
-			break
-		}
-	}
-
-	if !validType {
-		return fmt.Errorf("invalid proxy type: %s (allowed: http, https, socks5)", config.Type)
-	}
-
-	if config.Username != "" && config.Password == "" {
-		return fmt.Errorf("proxy password is required when username is provided")
-	}
-
-	return nil
-}
-
-func (v *Validator) CleanPhoneNumber(phoneNumber string) string {
-	cleaned := strings.ReplaceAll(phoneNumber, "+", "")
-	cleaned = strings.ReplaceAll(cleaned, "-", "")
-	cleaned = strings.ReplaceAll(cleaned, " ", "")
-	cleaned = strings.ReplaceAll(cleaned, "(", "")
-	cleaned = strings.ReplaceAll(cleaned, ")", "")
-	cleaned = strings.ReplaceAll(cleaned, ".", "")
-	return cleaned
-}
-
-func (v *Validator) IsValidWhatsAppNumber(phoneNumber string) bool {
-	err := v.ValidatePhoneNumber(phoneNumber)
-	return err == nil
-}
-
-func (v *Validator) IsValidJID(jid string) bool {
-	err := v.ValidateJID(jid)
-	return err == nil
-}
-
-func (v *Validator) IsGroupJID(jid string) bool {
-	parsedJID, err := types.ParseJID(jid)
-	if err != nil {
-		return false
-	}
-	return parsedJID.Server == types.GroupServer
-}
-
-func (v *Validator) IsBroadcastJID(jid string) bool {
-	parsedJID, err := types.ParseJID(jid)
-	if err != nil {
-		return false
-	}
-	return parsedJID.Server == types.BroadcastServer
-}
-
-func (v *Validator) IsUserJID(jid string) bool {
-	parsedJID, err := types.ParseJID(jid)
-	if err != nil {
-		return false
-	}
-	return parsedJID.Server == types.DefaultUserServer
-}
-
-func (v *Validator) GetJIDType(jid string) string {
-	if v.IsUserJID(jid) {
-		return "user"
-	}
-	if v.IsGroupJID(jid) {
-		return "group"
-	}
-	if v.IsBroadcastJID(jid) {
-		return "broadcast"
-	}
-	return "unknown"
-}
-
-func (v *Validator) ValidateMessageContent(content string, messageType string) error {
-	if content == "" && messageType == "text" {
-		return fmt.Errorf("text message content cannot be empty")
-	}
-
-	if len(content) > 65000 {
-		return fmt.Errorf("message content too long (max 65000 characters)")
-	}
-
-	return nil
-}
-
-func (v *Validator) ValidateMediaURL(url string) error {
-	if url == "" {
-		return fmt.Errorf("media URL cannot be empty")
-	}
-
-	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-		return fmt.Errorf("media URL must start with http:// or https://")
-	}
-
-	return nil
-}
-
-func (v *Validator) ValidateLocation(latitude, longitude float64) error {
-	if latitude < -90 || latitude > 90 {
-		return fmt.Errorf("latitude must be between -90 and 90")
-	}
-
-	if longitude < -180 || longitude > 180 {
-		return fmt.Errorf("longitude must be between -180 and 180")
+	if len(qrCode) > 2048 {
+		return fmt.Errorf("QR code too long")
 	}
 
 	return nil

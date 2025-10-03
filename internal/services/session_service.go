@@ -15,7 +15,6 @@ import (
 
 type SessionService struct {
 	coreService *session.Service
-	resolver    session.SessionResolver
 
 	logger    *logger.Logger
 	validator *validation.Validator
@@ -23,13 +22,11 @@ type SessionService struct {
 
 func NewSessionService(
 	coreService *session.Service,
-	resolver session.SessionResolver,
 	logger *logger.Logger,
 	validator *validation.Validator,
 ) *SessionService {
 	return &SessionService{
 		coreService: coreService,
-		resolver:    resolver,
 		logger:      logger,
 		validator:   validator,
 	}
@@ -140,9 +137,7 @@ func (s *SessionService) GetSession(ctx context.Context, sessionID string) (*con
 	return response, nil
 }
 
-func (s *SessionService) ResolveSessionID(ctx context.Context, idOrName string) (uuid.UUID, error) {
-	return s.resolver.ResolveToID(ctx, idOrName)
-}
+// ResolveSessionID removed - using sessionId directly
 
 func (s *SessionService) RestoreAllSessions(ctx context.Context) error {
 	s.logger.Info("Starting session restoration process")
@@ -159,37 +154,9 @@ func (s *SessionService) RestoreAllSessions(ctx context.Context) error {
 	return nil
 }
 
-func (s *SessionService) DeleteSessionByNameOrID(ctx context.Context, idOrName string) error {
+// DeleteSessionByNameOrID removed - using DeleteSession with sessionId directly
 
-	sessionID, err := s.ResolveSessionID(ctx, idOrName)
-	if err != nil {
-		return err
-	}
-
-	return s.DeleteSession(ctx, sessionID.String())
-}
-
-func (s *SessionService) GetSessionByNameOrID(ctx context.Context, identifier string) (*contracts.SessionInfoResponse, error) {
-
-	if id, err := uuid.Parse(identifier); err == nil {
-		return s.GetSession(ctx, id.String())
-	}
-
-	sess, err := s.coreService.GetSessionByName(ctx, identifier)
-	if err != nil {
-		s.logger.ErrorWithFields("Failed to get session by name", map[string]interface{}{
-			"session_name": identifier,
-			"error":        err.Error(),
-		})
-		return nil, fmt.Errorf("failed to get session: %w", err)
-	}
-
-	response := &contracts.SessionInfoResponse{
-		Session: s.sessionToDTO(sess),
-	}
-
-	return response, nil
-}
+// GetSessionByNameOrID removed - using GetSession with sessionId directly
 
 func (s *SessionService) ListSessions(ctx context.Context, req *contracts.ListSessionsRequest) (*contracts.ListSessionsResponse, error) {
 
@@ -254,6 +221,7 @@ func (s *SessionService) ConnectSession(ctx context.Context, sessionID string) (
 	if err != nil {
 		if err == session.ErrSessionAlreadyConnected {
 			response.Message = "Session is already connected and active"
+			return response, nil
 		} else {
 			s.logger.ErrorWithFields("Failed to connect session", map[string]interface{}{
 				"session_id": sessionID,
@@ -261,23 +229,47 @@ func (s *SessionService) ConnectSession(ctx context.Context, sessionID string) (
 			})
 			return nil, fmt.Errorf("failed to connect session: %w", err)
 		}
+	}
+
+	// Wait for QR code to be generated (up to 5 seconds)
+	qrResponse, qrErr := s.waitForQRCode(ctx, id, 5*time.Second)
+	if qrErr == nil && qrResponse != nil {
+		response.QRCode = qrResponse.QRCode
+		response.QRCodeImage = qrResponse.QRCodeImage
+		response.Message = "QR code generated - scan with WhatsApp to connect"
 	} else {
 		response.Message = "Session connection initiated successfully"
 	}
 
-	qrResponse, qrErr := s.coreService.GetQRCode(ctx, id)
-	if qrErr == nil && qrResponse != nil {
-		response.QRCode = qrResponse.QRCode
-		response.QRCodeImage = qrResponse.QRCode
+	return response, nil
+}
 
-		if err != nil && response.Message == "Session is already connected and active" {
-			response.Message = "Session is connected"
-		} else {
-			response.Message = "QR code generated - scan with WhatsApp to connect"
+// waitForQRCode waits for QR code to be generated for a session
+func (s *SessionService) waitForQRCode(ctx context.Context, sessionID uuid.UUID, timeout time.Duration) (*contracts.QRCodeResponse, error) {
+	// Create a context with timeout
+	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	// Poll for QR code every 200ms
+	ticker := time.NewTicker(200 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-timeoutCtx.Done():
+			return nil, fmt.Errorf("timeout waiting for QR code")
+		case <-ticker.C:
+			qrResponse, err := s.coreService.GetQRCode(ctx, sessionID)
+			if err == nil && qrResponse != nil && qrResponse.QRCode != "" {
+				// Convert from session.QRCodeResponse to contracts.QRCodeResponse
+				return &contracts.QRCodeResponse{
+					QRCode:      qrResponse.QRCode,
+					QRCodeImage: qrResponse.QRCodeImage,
+					ExpiresAt:   qrResponse.ExpiresAt,
+				}, nil
+			}
 		}
 	}
-
-	return response, nil
 }
 
 func (s *SessionService) DisconnectSession(ctx context.Context, sessionID string) error {

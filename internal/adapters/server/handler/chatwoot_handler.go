@@ -21,11 +21,10 @@ type ChatwootHandler struct {
 func NewChatwootHandler(
 	messageService *services.MessageService,
 	sessionService *services.SessionService,
-	resolver session.SessionResolver,
 	logger *logger.Logger,
 ) *ChatwootHandler {
 	return &ChatwootHandler{
-		BaseHandler:    shared.NewBaseHandler(logger, resolver),
+		BaseHandler:    shared.NewBaseHandler(logger),
 		messageService: messageService,
 		sessionService: sessionService,
 	}

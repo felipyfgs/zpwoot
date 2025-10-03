@@ -25,11 +25,10 @@ type MessageHandler struct {
 func NewMessageHandler(
 	messageService *services.MessageService,
 	sessionService *services.SessionService,
-	resolver session.SessionResolver,
 	logger *logger.Logger,
 ) *MessageHandler {
 	return &MessageHandler{
-		BaseHandler:    shared.NewBaseHandler(logger, resolver),
+		BaseHandler:    shared.NewBaseHandler(logger),
 		messageService: messageService,
 		sessionService: sessionService,
 	}

@@ -15,16 +15,16 @@ func setupSessionRoutes(r chi.Router, sessionService *services.SessionService, s
 	r.Post("/create", sessionHandler.CreateSession)
 	r.Get("/list", sessionHandler.ListSessions)
 
-	r.Get("/{sessionName}/info", sessionHandler.GetSessionInfo)
-	r.Delete("/{sessionName}/delete", sessionHandler.DeleteSession)
+	r.Get("/{sessionId}/info", sessionHandler.GetSessionInfo)
+	r.Delete("/{sessionId}/delete", sessionHandler.DeleteSession)
 
-	r.Post("/{sessionName}/connect", sessionHandler.ConnectSession)
-	r.Post("/{sessionName}/logout", sessionHandler.LogoutSession)
-	r.Get("/{sessionName}/qr", sessionHandler.GetQRCode)
-	r.Post("/{sessionName}/pair", sessionHandler.PairPhone)
+	r.Post("/{sessionId}/connect", sessionHandler.ConnectSession)
+	r.Post("/{sessionId}/logout", sessionHandler.LogoutSession)
+	r.Get("/{sessionId}/qr", sessionHandler.GetQRCode)
+	r.Post("/{sessionId}/pair", sessionHandler.PairPhone)
 
-	r.Post("/{sessionName}/proxy/set", sessionHandler.SetProxy)
-	r.Get("/{sessionName}/proxy/find", sessionHandler.GetProxy)
+	r.Post("/{sessionId}/proxy/set", sessionHandler.SetProxy)
+	r.Get("/{sessionId}/proxy/find", sessionHandler.GetProxy)
 
-	r.Get("/{sessionName}/stats", sessionHandler.GetSessionStats)
+	r.Get("/{sessionId}/stats", sessionHandler.GetSessionStats)
 }

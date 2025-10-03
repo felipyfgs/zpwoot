@@ -19,26 +19,14 @@ type SessionHandler struct {
 	sessionService *services.SessionService
 }
 
-func NewSessionHandler(sessionService *services.SessionService, resolver session.SessionResolver, logger *logger.Logger) *SessionHandler {
+func NewSessionHandler(sessionService *services.SessionService, logger *logger.Logger) *SessionHandler {
 	return &SessionHandler{
-		BaseHandler:    shared.NewBaseHandler(logger, resolver),
+		BaseHandler:    shared.NewBaseHandler(logger),
 		sessionService: sessionService,
 	}
 }
 
-func (h *SessionHandler) resolveSessionIdentifier(r *http.Request) (uuid.UUID, string, error) {
-	sessionName := chi.URLParam(r, "sessionName")
-	if sessionName == "" {
-		return uuid.Nil, "", fmt.Errorf("session name is required")
-	}
-
-	sessionID, err := h.ResolveSessionID(r)
-	if err != nil {
-		return uuid.Nil, sessionName, fmt.Errorf("session not found: %w", err)
-	}
-
-	return sessionID, sessionName, nil
-}
+// resolveSessionIdentifier removed - using GetSessionIDFromURL directly
 
 // @Summary Create new session
 // @Description Create a new WhatsApp session with optional proxy configuration. If qrCode is true, returns QR code immediately for connection.
@@ -147,7 +135,7 @@ func (h *SessionHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
 func (h *SessionHandler) GetSessionInfo(w http.ResponseWriter, r *http.Request) {
 	h.LogRequest(r, "get session info")
 
-	sessionID, sessionIdentifier, err := h.resolveSessionIdentifier(r)
+	sessionID, err := h.GetSessionIDFromURL(r)
 	if err != nil {
 		h.GetWriter().WriteBadRequest(w, "Session not found", err.Error())
 		return
@@ -160,8 +148,7 @@ func (h *SessionHandler) GetSessionInfo(w http.ResponseWriter, r *http.Request) 
 	}
 
 	h.LogSuccess("get session info", map[string]interface{}{
-		"session_identifier": sessionIdentifier,
-		"session_id":         sessionID.String(),
+		"session_id": sessionID.String(),
 	})
 
 	h.GetWriter().WriteSuccess(w, response, "Session information retrieved successfully")
@@ -180,20 +167,19 @@ func (h *SessionHandler) GetSessionInfo(w http.ResponseWriter, r *http.Request) 
 func (h *SessionHandler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 	h.LogRequest(r, "delete session")
 
-	sessionID, sessionIdentifier, err := h.resolveSessionIdentifier(r)
+	sessionID, err := h.GetSessionIDFromURL(r)
 	if err != nil {
 		h.GetWriter().WriteBadRequest(w, "Session not found", err.Error())
 		return
 	}
 
-	if err := h.sessionService.DeleteSessionByNameOrID(r.Context(), sessionIdentifier); err != nil {
+	if err := h.sessionService.DeleteSession(r.Context(), sessionID.String()); err != nil {
 		h.HandleError(w, err, "delete session")
 		return
 	}
 
 	h.LogSuccess("delete session", map[string]interface{}{
-		"session_identifier": sessionIdentifier,
-		"session_id":         sessionID.String(),
+		"session_id": sessionID.String(),
 	})
 
 	h.GetWriter().WriteSuccess(w, nil, "Session deleted successfully")
@@ -212,7 +198,7 @@ func (h *SessionHandler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 func (h *SessionHandler) ConnectSession(w http.ResponseWriter, r *http.Request) {
 	h.LogRequest(r, "connect session")
 
-	sessionID, sessionIdentifier, err := h.resolveSessionIdentifier(r)
+	sessionID, err := h.GetSessionIDFromURL(r)
 	if err != nil {
 		h.GetWriter().WriteBadRequest(w, "Session not found", err.Error())
 		return
@@ -225,10 +211,9 @@ func (h *SessionHandler) ConnectSession(w http.ResponseWriter, r *http.Request) 
 	}
 
 	h.LogSuccess("connect session", map[string]interface{}{
-		"session_identifier": sessionIdentifier,
-		"session_id":         sessionID.String(),
-		"success":            response.Success,
-		"has_qr":             response.QRCode != "",
+		"session_id": sessionID.String(),
+		"success":    response.Success,
+		"has_qr":     response.QRCode != "",
 	})
 
 	h.GetWriter().WriteSuccess(w, response, response.Message)

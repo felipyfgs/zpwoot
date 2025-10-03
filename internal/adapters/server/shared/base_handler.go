@@ -9,7 +9,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
-	"zpwoot/internal/core/session"
 	"zpwoot/internal/services/shared/validation"
 	"zpwoot/platform/logger"
 )
@@ -18,15 +17,13 @@ type BaseHandler struct {
 	logger    *logger.Logger
 	writer    *ResponseWriter
 	validator *validation.Validator
-	resolver  session.SessionResolver
 }
 
-func NewBaseHandler(logger *logger.Logger, resolver session.SessionResolver) *BaseHandler {
+func NewBaseHandler(logger *logger.Logger) *BaseHandler {
 	return &BaseHandler{
 		logger:    logger,
 		writer:    NewResponseWriter(logger),
 		validator: validation.New(),
-		resolver:  resolver,
 	}
 }
 
@@ -49,48 +46,14 @@ func (h *BaseHandler) GetSessionIDFromURL(r *http.Request) (uuid.UUID, error) {
 	}
 
 	sessionID, err := uuid.Parse(sessionIDStr)
-	if err == nil {
-		return sessionID, nil
-	}
-
-	return uuid.Nil, fmt.Errorf("session_name:%s", sessionIDStr)
-}
-
-func (h *BaseHandler) ResolveSession(r *http.Request) (*session.Session, error) {
-	sessionName := chi.URLParam(r, "sessionName")
-	if sessionName == "" {
-		return nil, fmt.Errorf("session name is required")
-	}
-
-	resolved, err := h.resolver.Resolve(r.Context(), sessionName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve session: %w", err)
-	}
-
-	return resolved.Session, nil
-}
-
-func (h *BaseHandler) ResolveSessionID(r *http.Request) (uuid.UUID, error) {
-	sessionName := chi.URLParam(r, "sessionName")
-	if sessionName == "" {
-		return uuid.Nil, fmt.Errorf("session name is required")
-	}
-
-	sessionID, err := h.resolver.ResolveToID(r.Context(), sessionName)
-	if err != nil {
-		return uuid.Nil, fmt.Errorf("failed to resolve session: %w", err)
+		return uuid.Nil, fmt.Errorf("invalid session ID format: %w", err)
 	}
 
 	return sessionID, nil
 }
 
-func (h *BaseHandler) GetSessionNameFromURL(r *http.Request) (string, error) {
-	sessionName := chi.URLParam(r, "sessionName")
-	if sessionName == "" {
-		return "", fmt.Errorf("session name is required")
-	}
-	return sessionName, nil
-}
+// Session resolution methods removed - using sessionId directly
 
 func (h *BaseHandler) GetStringParam(r *http.Request, paramName string) (string, error) {
 	value := chi.URLParam(r, paramName)

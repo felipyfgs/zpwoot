@@ -96,11 +96,9 @@ func (c *Container) initialize() error {
 		return fmt.Errorf("failed to create WhatsApp container: %w", err)
 	}
 
-	c.whatsappGateway = waclient.NewGateway(waContainer, c.logger)
-
-	if gateway, ok := c.whatsappGateway.(*waclient.Gateway); ok {
-		gateway.SetDatabase(c.database.DB)
-	}
+	gateway := waclient.NewGateway(waContainer, c.logger)
+	gateway.SetDatabase(c.database.DB)
+	c.whatsappGateway = gateway
 
 	qrGenerator := waclient.NewQRGenerator(c.logger)
 
@@ -117,10 +115,6 @@ func (c *Container) initialize() error {
 	validator := validation.New()
 
 	c.sessionResolver = services.NewSessionResolver(c.sessionRepo)
-
-	if gateway, ok := c.whatsappGateway.(*waclient.Gateway); ok {
-		gateway.SetSessionResolver(c.sessionResolver)
-	}
 
 	c.sessionService = services.NewSessionService(
 		c.sessionCore,
@@ -147,13 +141,9 @@ func (c *Container) initialize() error {
 		validator,
 	)
 
-	sessionServiceAdapter := &sessionServiceAdapter{service: c.sessionService}
-	if gateway, ok := c.whatsappGateway.(*waclient.Gateway); ok {
-		gateway.SetSessionService(sessionServiceAdapter)
-
-		sessionEventHandler := session.NewSessionEventHandler(c.sessionCore)
-		gateway.SetEventHandler(sessionEventHandler)
-	}
+	// Set event handler for WhatsApp gateway
+	sessionEventHandler := session.NewSessionEventHandler(c.sessionCore)
+	c.whatsappGateway.SetEventHandler(sessionEventHandler)
 
 	c.logger.Debug("Container initialized successfully")
 	return nil
@@ -236,20 +226,7 @@ func (a *sessionServiceAdapter) ClearQRCode(ctx context.Context, id uuid.UUID) e
 	return nil
 }
 
-func (a *sessionServiceAdapter) GetSession(ctx context.Context, sessionID string) (*waclient.SessionInfoResponse, error) {
-	response, err := a.service.GetSession(ctx, sessionID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &waclient.SessionInfoResponse{
-		Session: &waclient.SessionDTO{
-			ID:        response.Session.ID,
-			Name:      response.Session.Name,
-			DeviceJID: &response.Session.DeviceJID,
-		},
-	}, nil
-}
+// GetSession method removed - not needed for connection-focused implementation
 
 func (c *Container) GetGroupService() *services.GroupService {
 	return c.groupService

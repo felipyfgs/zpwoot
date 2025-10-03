@@ -12,7 +12,7 @@ import (
 func setupGroupRoutes(r chi.Router, groupService *services.GroupService, sessionService *services.SessionService, sessionResolver session.SessionResolver, appLogger *logger.Logger) {
 	groupHandler := handler.NewGroupHandler(groupService, sessionService, sessionResolver, appLogger)
 
-	r.Route("/{sessionName}/groups", func(r chi.Router) {
+	r.Route("/{sessionId}/groups", func(r chi.Router) {
 
 		r.Post("/", groupHandler.CreateGroup)
 		r.Get("/", groupHandler.ListGroups)

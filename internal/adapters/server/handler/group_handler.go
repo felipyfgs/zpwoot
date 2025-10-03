@@ -21,11 +21,10 @@ type GroupHandler struct {
 func NewGroupHandler(
 	groupService *services.GroupService,
 	sessionService *services.SessionService,
-	resolver session.SessionResolver,
 	logger *logger.Logger,
 ) *GroupHandler {
 	return &GroupHandler{
-		BaseHandler:    shared.NewBaseHandler(logger, resolver),
+		BaseHandler:    shared.NewBaseHandler(logger),
 		groupService:   groupService,
 		sessionService: sessionService,
 	}

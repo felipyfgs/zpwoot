@@ -12,7 +12,7 @@ import (
 func setupChatwootRoutes(r chi.Router, messageService *services.MessageService, sessionService *services.SessionService, sessionResolver session.SessionResolver, appLogger *logger.Logger) {
 	chatwootHandler := handler.NewChatwootHandler(messageService, sessionService, sessionResolver, appLogger)
 
-	r.Route("/{sessionName}/chatwoot", func(r chi.Router) {
+	r.Route("/{sessionId}/chatwoot", func(r chi.Router) {
 
 		r.Post("/set", chatwootHandler.CreateConfig)
 		r.Get("/find", chatwootHandler.FindConfig)

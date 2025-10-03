@@ -17,7 +17,7 @@ func setupMessageRoutes(r chi.Router, messageService *services.MessageService, s
 		appLogger,
 	)
 
-	r.Route("/{sessionName}/messages", func(r chi.Router) {
+	r.Route("/{sessionId}/messages", func(r chi.Router) {
 
 		r.Post("/send/text", messageHandler.SendTextMessage)
 		r.Post("/send/media", messageHandler.SendMediaMessage)

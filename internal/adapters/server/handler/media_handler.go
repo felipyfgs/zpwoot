@@ -18,11 +18,10 @@ type MediaHandler struct {
 
 func NewMediaHandler(
 	sessionService *services.SessionService,
-	resolver session.SessionResolver,
 	logger *logger.Logger,
 ) *MediaHandler {
 	return &MediaHandler{
-		BaseHandler:    shared.NewBaseHandler(logger, resolver),
+		BaseHandler:    shared.NewBaseHandler(logger),
 		sessionService: sessionService,
 	}
 }
