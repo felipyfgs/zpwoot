@@ -46,7 +46,6 @@ const (
 )
 
 func main() {
-
 	cfg, err := config.Load()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to load configuration: %v\n", err)
@@ -233,7 +232,7 @@ func reconnectSessionsSequential(ctx context.Context, sessions []sessionInfo, se
 	for _, session := range sessions {
 		select {
 		case <-ctx.Done():
-			logger.Warn("Auto-reconnect cancelled due to timeout")
+			logger.Warn("Auto-reconnect canceled due to timeout")
 			return stats
 		default:
 		}

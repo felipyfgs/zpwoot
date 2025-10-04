@@ -5,8 +5,9 @@ import (
 	"regexp"
 	"strings"
 
-	"go.mau.fi/whatsmeow/types"
 	"zpwoot/platform/logger"
+
+	"go.mau.fi/whatsmeow/types"
 )
 
 type Validator struct {

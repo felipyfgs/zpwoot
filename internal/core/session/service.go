@@ -306,11 +306,11 @@ func (s *Service) validateCreateRequest(req *CreateSessionRequest) error {
 	}
 
 	if req.Name == "" {
-		return ErrInvalidsessionID
+		return ErrInvalidSessionID
 	}
 
 	if len(req.Name) > 100 {
-		return ErrsessionIDTooLong
+		return ErrSessionIDTooLong
 	}
 
 	if !isValidsessionID(req.Name) {

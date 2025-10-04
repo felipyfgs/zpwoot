@@ -53,7 +53,7 @@ func setupHealthRoutes(r *chi.Mux) {
 	})
 }
 
-func setupGlobalRoutes(r *chi.Mux, appLogger *logger.Logger) {
+func setupGlobalRoutes(r *chi.Mux, _ *logger.Logger) {
 
 	r.Get("/webhook/events", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

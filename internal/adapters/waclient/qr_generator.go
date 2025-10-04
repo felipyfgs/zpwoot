@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/skip2/go-qrcode"
 	"zpwoot/internal/core/session"
 	"zpwoot/platform/logger"
+
+	"github.com/google/uuid"
+	"github.com/skip2/go-qrcode"
 )
 
 type QRGenerator struct {

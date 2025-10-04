@@ -83,7 +83,7 @@ const (
 	StatusPending   Status = "pending"
 	StatusCompleted Status = "completed"
 	StatusFailed    Status = "failed"
-	StatusCancelled Status = "cancelled"
+	StatusCanceled Status = "canceled"
 )
 
 type MessageType string

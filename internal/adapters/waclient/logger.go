@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	waLog "go.mau.fi/whatsmeow/util/log"
 	"zpwoot/platform/logger"
+
+	waLog "go.mau.fi/whatsmeow/util/log"
 )
 
 type WhatsmeowLogger struct {
