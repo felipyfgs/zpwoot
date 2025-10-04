@@ -38,7 +38,7 @@ Cria uma nova sessão WhatsApp.
 **Request Body:**
 ```json
 {
-  "sessionName": "my-session",
+  "sessionID": "my-session",
   "qrCode": true,
   "proxy": {
     "host": "proxy.example.com",

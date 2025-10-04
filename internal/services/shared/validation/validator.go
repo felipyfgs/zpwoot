@@ -94,14 +94,14 @@ func (v *Validator) getErrorMessage(fieldError validator.FieldError) string {
 
 func registerCustomValidations(validate *validator.Validate) {
 
-	validate.RegisterValidation("session_name", validateSessionName)
+	validate.RegisterValidation("session_name", validatesessionID)
 
 	validate.RegisterValidation("proxy_type", validateProxyType)
 
 	validate.RegisterValidation("e164", validateE164)
 }
 
-func validateSessionName(fl validator.FieldLevel) bool {
+func validatesessionID(fl validator.FieldLevel) bool {
 	name := fl.Field().String()
 	if name == "" {
 		return false
@@ -145,7 +145,7 @@ func validateE164(fl validator.FieldLevel) bool {
 	return true
 }
 
-func IsValidSessionName(name string) bool {
+func IsValidsessionID(name string) bool {
 	validator := New()
 	return validator.ValidateVar(name, "session_name") == nil
 }

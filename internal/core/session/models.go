@@ -131,11 +131,11 @@ func (s *Session) GetStatus() SessionStatus {
 
 func (s *Session) Validate() error {
 	if s.Name == "" {
-		return ErrInvalidSessionName
+		return ErrInvalidsessionID
 	}
 
 	if len(s.Name) > 100 {
-		return ErrSessionNameTooLong
+		return ErrsessionIDTooLong
 	}
 
 	return nil

@@ -189,7 +189,7 @@ func (h *BaseHandler) getStatusCodeFromError(err error) int {
 		return http.StatusConflict
 	case err == session.ErrSessionAlreadyConnected:
 		return http.StatusConflict
-	case err == session.ErrInvalidSessionName:
+	case err == session.ErrInvalidsessionID:
 		return http.StatusBadRequest
 	case err == session.ErrInvalidProxyConfig:
 		return http.StatusBadRequest
@@ -219,7 +219,7 @@ func (h *BaseHandler) getMessageFromError(err error, operation string) string {
 		return "Session already exists"
 	case err == session.ErrSessionAlreadyConnected:
 		return "Session is already connected"
-	case err == session.ErrInvalidSessionName:
+	case err == session.ErrInvalidsessionID:
 		return "Invalid session name"
 	case err == session.ErrInvalidProxyConfig:
 		return "Invalid proxy configuration"

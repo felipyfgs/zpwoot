@@ -306,14 +306,14 @@ func (s *Service) validateCreateRequest(req *CreateSessionRequest) error {
 	}
 
 	if req.Name == "" {
-		return ErrInvalidSessionName
+		return ErrInvalidsessionID
 	}
 
 	if len(req.Name) > 100 {
-		return ErrSessionNameTooLong
+		return ErrsessionIDTooLong
 	}
 
-	if !isValidSessionName(req.Name) {
+	if !isValidsessionID(req.Name) {
 		return fmt.Errorf("session name contains invalid characters (only alphanumeric, dash and underscore allowed)")
 	}
 
@@ -386,7 +386,7 @@ func (s *Service) syncSessionStatus(ctx context.Context, session *Session) error
 	return nil
 }
 
-func isValidSessionName(name string) bool {
+func isValidsessionID(name string) bool {
 	if name == "" {
 		return false
 	}

@@ -26,8 +26,9 @@ type Gateway struct {
 	mapper       *Mapper
 	qrGenerator  *QRGenerator
 
-	sessions map[uuid.UUID]*MyClient
-	mutex    sync.RWMutex
+	sessions     map[uuid.UUID]*MyClient
+	sessionUUIDs map[uuid.UUID]uuid.UUID
+	mutex        sync.RWMutex
 
 	killChannels map[uuid.UUID]chan bool
 }
@@ -40,6 +41,7 @@ func NewGateway(container *sqlstore.Container, logger *logger.Logger) *Gateway {
 		mapper:       NewMapper(logger),
 		qrGenerator:  NewQRGenerator(logger).(*QRGenerator),
 		sessions:     make(map[uuid.UUID]*MyClient),
+		sessionUUIDs: make(map[uuid.UUID]uuid.UUID),
 		killChannels: make(map[uuid.UUID]chan bool),
 	}
 }
@@ -92,7 +94,7 @@ func (g *Gateway) ConnectSession(ctx context.Context, sessionId uuid.UUID) error
 		"session_id": sessionId.String(),
 	})
 
-	go g.startClient(sessionId)
+	go g.startClient(sessionId, sessionId)
 
 	return nil
 }
@@ -105,7 +107,7 @@ func (g *Gateway) DisconnectSession(ctx context.Context, sessionId uuid.UUID) er
 		"session_name": sessionId,
 	})
 
-	if killChan, exists := g.killChannels[sessionName]; exists {
+	if killChan, exists := g.killChannels[sessionId]; exists {
 		select {
 		case killChan <- true:
 			g.logger.InfoWithFields("Kill signal sent to session", map[string]interface{}{
@@ -149,17 +151,17 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionId uuid.UUID) error
 		"session_name": sessionId,
 	})
 
-	sessionID, exists := g.sessionUUIDs[sessionName]
+	sessionUUID, exists := g.sessionUUIDs[sessionId]
 	if !exists {
 		return fmt.Errorf("session UUID not registered: %s", sessionId)
 	}
 
 	var deviceJID string
 	query := `SELECT COALESCE("deviceJid", '') FROM "zpSessions" WHERE id = $1`
-	err := g.db.Get(&deviceJID, query, sessionID.String())
+	err := g.db.Get(&deviceJID, query, sessionUUID.String())
 	if err != nil {
 		g.logger.ErrorWithFields("Failed to get device JID from database", map[string]interface{}{
-			"session_id":   sessionID.String(),
+			"session_id":   sessionUUID.String(),
 			"session_name": sessionId,
 			"error":        err.Error(),
 		})
@@ -201,20 +203,30 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionId uuid.UUID) error
 	return nil
 }
 
-func (g *Gateway) RestoreAllSessions(ctx context.Context, sessionNames []string) error {
+func (g *Gateway) RestoreAllSessions(ctx context.Context, sessionIDs []string) error {
 	g.logger.InfoWithFields("Restoring all WhatsApp sessions", map[string]interface{}{
-		"session_count": len(sessionNames),
+		"session_count": len(sessionIDs),
 	})
 
 	var errors []error
-	for _, sessionName := range sessionNames {
-		err := g.RestoreSession(ctx, sessionId)
+	for _, sessionIDStr := range sessionIDs {
+		sessionID, err := uuid.Parse(sessionIDStr)
+		if err != nil {
+			g.logger.ErrorWithFields("Invalid session ID format", map[string]interface{}{
+				"session_id": sessionIDStr,
+				"error":      err.Error(),
+			})
+			errors = append(errors, fmt.Errorf("session %s: invalid UUID format: %w", sessionIDStr, err))
+			continue
+		}
+
+		err = g.RestoreSession(ctx, sessionID)
 		if err != nil {
 			g.logger.ErrorWithFields("Failed to restore session", map[string]interface{}{
-				"session_name": sessionId,
-				"error":        err.Error(),
+				"session_id": sessionIDStr,
+				"error":      err.Error(),
 			})
-			errors = append(errors, fmt.Errorf("session %s: %w", sessionId, err))
+			errors = append(errors, fmt.Errorf("session %s: %w", sessionIDStr, err))
 		}
 	}
 
@@ -239,7 +251,7 @@ func (g *Gateway) RegisterSessionUUID(sessionId, sessionUUID string) {
 		return
 	}
 
-	g.sessionUUIDs[sessionName] = sessionID
+	g.sessionUUIDs[sessionID] = sessionID
 	g.logger.InfoWithFields("Session UUID registered for WhatsApp connection", map[string]interface{}{
 		"session_name": sessionId,
 		"session_id":   sessionID.String(),
@@ -250,12 +262,12 @@ func (g *Gateway) SessionExists(sessionId uuid.UUID) bool {
 	g.mutex.RLock()
 	defer g.mutex.RUnlock()
 
-	_, exists := g.sessions[sessionName]
+	_, exists := g.sessions[sessionID]
 	if exists {
 		return true
 	}
 
-	_, uuidExists := g.sessionUUIDs[sessionName]
+	_, uuidExists := g.sessionUUIDs[sessionID]
 	return uuidExists
 }
 
@@ -263,10 +275,10 @@ func (g *Gateway) IsSessionConnected(ctx context.Context, sessionId uuid.UUID) (
 	g.mutex.RLock()
 	defer g.mutex.RUnlock()
 
-	client, exists := g.sessions[sessionName]
+	client, exists := g.sessions[sessionID]
 	if !exists {
 
-		_, uuidExists := g.sessionUUIDs[sessionName]
+		_, uuidExists := g.sessionUUIDs[sessionID]
 		if uuidExists {
 
 			return false, nil
@@ -281,7 +293,7 @@ func (g *Gateway) GetSessionInfo(ctx context.Context, sessionId uuid.UUID) (*ses
 	g.mutex.RLock()
 	defer g.mutex.RUnlock()
 
-	client, exists := g.sessions[sessionName]
+	client, exists := g.sessions[sessionID]
 	if !exists {
 		return nil, fmt.Errorf("session not found: %s", sessionId)
 	}
@@ -398,7 +410,7 @@ func (g *Gateway) startClient(sessionID uuid.UUID, sessionId uuid.UUID) {
 	myClient := NewMyClient(sessionID, sessionId, client, g.db, g, g.logger)
 
 	g.mutex.Lock()
-	g.sessions[sessionName] = myClient
+	g.sessions[sessionID] = myClient
 	g.mutex.Unlock()
 
 	clientManager := GetClientManager(g.logger)
@@ -472,7 +484,7 @@ func (g *Gateway) handleQRCodePairing(myClient *MyClient) {
 				clientManager.DeleteMyClient(myClient.sessionID)
 				clientManager.DeleteWhatsmeowClient(myClient.sessionID)
 
-				if killChan, exists := g.killChannels[myClient.sessionName]; exists {
+				if killChan, exists := g.killChannels[myClient.sessionID]; exists {
 					select {
 					case killChan <- true:
 					default:
@@ -497,7 +509,7 @@ func (g *Gateway) handleQRCodePairing(myClient *MyClient) {
 }
 
 func (g *Gateway) keepClientAlive(sessionID uuid.UUID, sessionId uuid.UUID, myClient *MyClient) {
-	killChan, exists := g.killChannels[sessionName]
+	killChan, exists := g.killChannels[sessionID]
 	if !exists {
 		g.logger.ErrorWithFields("No kill channel found for session", map[string]interface{}{
 			"session_id":   sessionID.String(),

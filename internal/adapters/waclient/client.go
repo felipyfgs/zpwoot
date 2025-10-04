@@ -131,7 +131,7 @@ func (mc *MyClient) GetSessionID() uuid.UUID {
 }
 
 func (mc *MyClient) GetSessionName() string {
-	return mc.sessionName
+	return mc.sessionID.String()
 }
 
 func (mc *MyClient) Disconnect() {

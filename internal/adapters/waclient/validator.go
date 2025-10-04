@@ -134,7 +134,7 @@ func (v *Validator) IsBroadcastJID(jid string) bool {
 	return parsedJID.Server == types.BroadcastServer
 }
 
-func (v *Validator) ValidateSessionName(name string) error {
+func (v *Validator) ValidatesessionID(name string) error {
 	if name == "" {
 		return fmt.Errorf("session name cannot be empty")
 	}

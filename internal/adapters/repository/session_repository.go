@@ -64,7 +64,7 @@ func (r *SessionRepository) Create(ctx context.Context, sess *session.Session) e
 			switch pqErr.Code {
 			case "23505":
 				if pqErr.Constraint == "zpSessions_name_key" {
-					return errors.ErrSessionNameAlreadyExists
+					return errors.ErrsessionIDAlreadyExists
 				}
 			}
 		}
@@ -118,7 +118,7 @@ func (r *SessionRepository) Update(ctx context.Context, sess *session.Session) e
 			switch pqErr.Code {
 			case "23505":
 				if pqErr.Constraint == "zpSessions_name_key" {
-					return errors.ErrSessionNameAlreadyExists
+					return errors.ErrsessionIDAlreadyExists
 				}
 			}
 		}

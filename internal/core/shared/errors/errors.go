@@ -16,7 +16,7 @@ var (
 
 var (
 	ErrSessionNotFound          = errors.New("session not found")
-	ErrSessionNameAlreadyExists = errors.New("session name already exists")
+	ErrsessionIDAlreadyExists = errors.New("session name already exists")
 	ErrSessionAlreadyConnected  = errors.New("session already connected")
 	ErrSessionNotConnected      = errors.New("session not connected")
 	ErrSessionInvalidState      = errors.New("session in invalid state")

@@ -255,10 +255,9 @@ func (m *Mapper) GetEventPriority(evt interface{}) string {
 	}
 }
 
-func (m *Mapper) CreateEventContext(evt interface{}, sessionID string, sessionName string) map[string]interface{} {
+func (m *Mapper) CreateEventContext(evt interface{}, sessionID string) map[string]interface{} {
 	context := map[string]interface{}{
 		"session_id":   sessionID,
-		"session_name": sessionName,
 		"event_type":   m.MapEventTypeToString(evt),
 		"priority":     m.GetEventPriority(evt),
 		"timestamp":    time.Now(),
