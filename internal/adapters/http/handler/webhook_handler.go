@@ -6,7 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"zpwoot/internal/adapters/http/shared"
-	"zpwoot/internal/services"
+	"zpwoot/internal/usecases"
 	"zpwoot/platform/logger"
 )
 

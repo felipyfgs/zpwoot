@@ -11,19 +11,19 @@ import (
 
 	"zpwoot/internal/adapters/http/contracts"
 	"zpwoot/internal/adapters/http/shared"
-	"zpwoot/internal/services"
+	"zpwoot/internal/usecases"
 	"zpwoot/platform/logger"
 )
 
 type MessageHandler struct {
 	*shared.BaseHandler
-	messageService *services.MessageService
-	sessionService *services.SessionService
+	messageService *usecases.MessageService
+	sessionService *usecases.SessionService
 }
 
 func NewMessageHandler(
-	messageService *services.MessageService,
-	sessionService *services.SessionService,
+	messageService *usecases.MessageService,
+	sessionService *usecases.SessionService,
 	logger *logger.Logger,
 ) *MessageHandler {
 	return &MessageHandler{

@@ -15,8 +15,8 @@ import (
 	"zpwoot/internal/core/messaging"
 	"zpwoot/internal/core/session"
 
-	"zpwoot/internal/services"
-	"zpwoot/internal/services/shared/validation"
+	"zpwoot/internal/usecases"
+	"zpwoot/internal/usecases/shared/validation"
 
 	"zpwoot/internal/adapters/repository"
 	"zpwoot/internal/adapters/http"
@@ -35,9 +35,9 @@ type Container struct {
 	sessionCore   *session.Service
 	messagingCore *messaging.Service
 
-	sessionService   *services.SessionService
-	messagingService *services.MessageService
-	groupService     *services.GroupService
+	sessionService   *usecases.SessionService
+	messagingService *usecases.MessageService
+	groupService     *usecases.GroupService
 
 	sessionRepo     session.Repository
 	messageRepo     messaging.Repository
@@ -113,13 +113,13 @@ func (c *Container) initialize() error {
 
 	validator := validation.New()
 
-	c.sessionService = services.NewSessionService(
+	c.sessionService = usecases.NewSessionService(
 		c.sessionCore,
 		c.logger,
 		validator,
 	)
 
-	c.messagingService = services.NewMessageService(
+	c.messagingService = usecases.NewMessageService(
 		c.messagingCore,
 		c.sessionCore,
 		c.logger,
@@ -128,7 +128,7 @@ func (c *Container) initialize() error {
 
 	groupCore := group.NewService(nil)
 
-	c.groupService = services.NewGroupService(
+	c.groupService = usecases.NewGroupService(
 		groupCore,
 		nil,
 		nil,
@@ -159,11 +159,11 @@ func (c *Container) GetDatabase() *database.Database {
 	return c.database
 }
 
-func (c *Container) GetSessionService() *services.SessionService {
+func (c *Container) GetSessionService() *usecases.SessionService {
 	return c.sessionService
 }
 
-func (c *Container) GetMessageService() *services.MessageService {
+func (c *Container) GetMessageService() *usecases.MessageService {
 	return c.messagingService
 }
 
@@ -201,7 +201,7 @@ func (c *Container) Handler() http.Handler {
 }
 
 type sessionServiceAdapter struct {
-	service *services.SessionService
+	service *usecases.SessionService
 }
 
 func (a *sessionServiceAdapter) UpdateDeviceJID(ctx context.Context, id uuid.UUID, deviceJID string) error {

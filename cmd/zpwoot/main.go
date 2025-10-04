@@ -31,7 +31,7 @@ import (
 	"time"
 
 	"zpwoot/internal/adapters/http/contracts"
-	"zpwoot/internal/services"
+	"zpwoot/internal/usecases"
 	"zpwoot/platform/config"
 	"zpwoot/platform/container"
 	"zpwoot/platform/database"
@@ -177,7 +177,7 @@ func connectOnStartup(container *container.Container, logger *logger.Logger) {
 	logger.Info("Auto-reconnection is handled automatically during session restoration")
 }
 
-func getExistingSessions(ctx context.Context, sessionService *services.SessionService, limit int, logger *logger.Logger) []sessionInfo {
+func getExistingSessions(ctx context.Context, sessionService *usecases.SessionService, limit int, logger *logger.Logger) []sessionInfo {
 	req := &contracts.ListSessionsRequest{
 		Limit:  limit,
 		Offset: 0,
@@ -214,7 +214,7 @@ func getExistingSessions(ctx context.Context, sessionService *services.SessionSe
 	return sessionsWithCredentials
 }
 
-func reconnectSessions(ctx context.Context, sessions []sessionInfo, sessionService *services.SessionService, logger *logger.Logger, delay time.Duration) reconnectStats {
+func reconnectSessions(ctx context.Context, sessions []sessionInfo, sessionService *usecases.SessionService, logger *logger.Logger, delay time.Duration) reconnectStats {
 	if len(sessions) == 0 {
 		return reconnectStats{}
 	}
@@ -226,7 +226,7 @@ func reconnectSessions(ctx context.Context, sessions []sessionInfo, sessionServi
 	return reconnectSessionsParallel(ctx, sessions, sessionService, logger)
 }
 
-func reconnectSessionsSequential(ctx context.Context, sessions []sessionInfo, sessionService *services.SessionService, logger *logger.Logger, delay time.Duration) reconnectStats {
+func reconnectSessionsSequential(ctx context.Context, sessions []sessionInfo, sessionService *usecases.SessionService, logger *logger.Logger, delay time.Duration) reconnectStats {
 	stats := reconnectStats{}
 
 	for _, session := range sessions {
@@ -260,7 +260,7 @@ func reconnectSessionsSequential(ctx context.Context, sessions []sessionInfo, se
 	return stats
 }
 
-func reconnectSessionsParallel(ctx context.Context, sessions []sessionInfo, sessionService *services.SessionService, logger *logger.Logger) reconnectStats {
+func reconnectSessionsParallel(ctx context.Context, sessions []sessionInfo, sessionService *usecases.SessionService, logger *logger.Logger) reconnectStats {
 	const maxConcurrency = 5
 
 	semaphore := make(chan struct{}, maxConcurrency)
