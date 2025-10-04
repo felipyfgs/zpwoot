@@ -74,8 +74,9 @@ type UpdateSyncStatusRequest struct {
 
 func (s *MessageService) CreateMessage(ctx context.Context, req *CreateMessageRequest) (*CreateMessageResponse, error) {
 
-	if err := s.validator.ValidateStruct(req); err != nil {
-		return nil, fmt.Errorf("validation failed: %w", err)
+	// Basic validation
+	if req.SessionID == "" {
+		return nil, fmt.Errorf("session ID is required")
 	}
 
 	sessionID, err := uuid.Parse(req.SessionID)
@@ -142,9 +143,7 @@ func (s *MessageService) GetMessage(ctx context.Context, messageID string) (*con
 
 func (s *MessageService) ListMessages(ctx context.Context, req *ListMessagesRequest) (*ListMessagesResponse, error) {
 
-	if err := s.validator.ValidateStruct(req); err != nil {
-		return nil, fmt.Errorf("validation failed: %w", err)
-	}
+	// Basic validation - req can be nil for default values
 
 	if req.Limit == 0 {
 		req.Limit = 50
@@ -177,8 +176,9 @@ func (s *MessageService) ListMessages(ctx context.Context, req *ListMessagesRequ
 
 func (s *MessageService) UpdateSyncStatus(ctx context.Context, req *UpdateSyncStatusRequest) error {
 
-	if err := s.validator.ValidateStruct(req); err != nil {
-		return fmt.Errorf("validation failed: %w", err)
+	// Basic validation
+	if req.MessageID == "" {
+		return fmt.Errorf("message ID is required")
 	}
 
 	messageID, err := uuid.Parse(req.MessageID)

@@ -9,26 +9,22 @@ import (
 
 	"zpwoot/internal/adapters/http/contracts"
 	"zpwoot/internal/core/session"
-	"zpwoot/internal/usecases/shared/validation"
 	"zpwoot/platform/logger"
 )
 
 type SessionService struct {
 	coreService *session.Service
 
-	logger    *logger.Logger
-	validator *validation.Validator
+	logger *logger.Logger
 }
 
 func NewSessionService(
 	coreService *session.Service,
 	logger *logger.Logger,
-	validator *validation.Validator,
 ) *SessionService {
 	return &SessionService{
 		coreService: coreService,
 		logger:      logger,
-		validator:   validator,
 	}
 }
 
@@ -40,11 +36,12 @@ func (s *SessionService) CreateSession(ctx context.Context, req *contracts.Creat
 		"has_proxy": req.ProxyConfig != nil,
 	})
 
-	if err := s.validator.ValidateStruct(req); err != nil {
+	// Basic validation
+	if req.Name == "" {
 		s.logger.WarnWithFields("Invalid create session request", map[string]interface{}{
-			"error": err.Error(),
+			"error": "session name is required",
 		})
-		return nil, fmt.Errorf("validation failed: %w", err)
+		return nil, fmt.Errorf("session name is required")
 	}
 
 	coreReq := &session.CreateSessionRequest{
