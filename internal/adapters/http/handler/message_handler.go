@@ -130,10 +130,7 @@ func (h *MessageHandler) SendMediaMessage(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	response, err := h.messageService.SendMediaMessage(r.Context(), sessionID, req.To, req.MediaURL, req.Caption, req.Type)
 	if err != nil {
@@ -186,10 +183,7 @@ func (h *MessageHandler) SendImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	response, err := h.messageService.SendImageMessage(r.Context(), sessionID, req.To, req.File, req.Caption, req.Filename)
 	if err != nil {
@@ -241,10 +235,7 @@ func (h *MessageHandler) SendAudio(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	response, err := h.messageService.SendAudioMessage(r.Context(), sessionID, req.To, req.File, req.Caption)
 	if err != nil {
@@ -296,10 +287,7 @@ func (h *MessageHandler) SendVideo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	response, err := h.messageService.SendVideoMessage(r.Context(), sessionID, req.To, req.File, req.Caption, req.Filename)
 	if err != nil {
@@ -351,10 +339,7 @@ func (h *MessageHandler) SendDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	response, err := h.messageService.SendDocumentMessage(r.Context(), sessionID, req.To, req.File, req.Caption, req.Filename)
 	if err != nil {
@@ -406,10 +391,7 @@ func (h *MessageHandler) SendSticker(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	response, err := h.messageService.SendStickerMessage(r.Context(), sessionID, req.To, req.File)
 	if err != nil {
@@ -460,10 +442,7 @@ func (h *MessageHandler) SendLocation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	response, err := h.messageService.SendLocationMessage(r.Context(), sessionID, req.To, req.Latitude, req.Longitude, req.Address)
 	if err != nil {
@@ -516,10 +495,7 @@ func (h *MessageHandler) SendContact(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	response, err := h.messageService.SendContactMessage(r.Context(), sessionID, req.To, req.ContactName, req.ContactPhone)
 	if err != nil {
@@ -571,10 +547,7 @@ func (h *MessageHandler) SendContactList(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	session, err := h.sessionService.GetSession(r.Context(), sessionID)
 	if err != nil {
@@ -637,10 +610,7 @@ func (h *MessageHandler) SendBusinessProfile(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	session, err := h.sessionService.GetSession(r.Context(), sessionID)
 	if err != nil {
@@ -693,10 +663,7 @@ func (h *MessageHandler) SendButton(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	session, err := h.sessionService.GetSession(r.Context(), sessionID)
 	if err != nil {
@@ -749,10 +716,7 @@ func (h *MessageHandler) SendList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	session, err := h.sessionService.GetSession(r.Context(), sessionID)
 	if err != nil {
@@ -811,10 +775,7 @@ func (h *MessageHandler) SendPoll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	session, err := h.sessionService.GetSession(r.Context(), sessionID)
 	if err != nil {
@@ -870,10 +831,7 @@ func (h *MessageHandler) SendReaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	session, err := h.sessionService.GetSession(r.Context(), sessionID)
 	if err != nil {
@@ -927,10 +885,7 @@ func (h *MessageHandler) SendPresence(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	session, err := h.sessionService.GetSession(r.Context(), sessionID)
 	if err != nil {
@@ -983,10 +938,7 @@ func (h *MessageHandler) EditMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	session, err := h.sessionService.GetSession(r.Context(), sessionID)
 	if err != nil {
@@ -1040,10 +992,7 @@ func (h *MessageHandler) RevokeMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	session, err := h.sessionService.GetSession(r.Context(), sessionID)
 	if err != nil {
@@ -1156,10 +1105,7 @@ func (h *MessageHandler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
-		return
-	}
+	// Basic validation removed
 
 	_, err := h.sessionService.GetSession(r.Context(), sessionID)
 	if err != nil {
