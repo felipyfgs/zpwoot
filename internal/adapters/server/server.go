@@ -47,7 +47,6 @@ func (s *Server) Start(ctx context.Context) error {
 		s.sessionService,
 		s.messageService,
 		s.groupService,
-		s.sessionResolver,
 	)
 
 	s.httpServer = &http.Server{

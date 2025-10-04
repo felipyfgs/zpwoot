@@ -173,7 +173,7 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionId uuid.UUID) error
 		jid, err := g.validator.ParseJID(deviceJID)
 		if err != nil {
 			g.logger.ErrorWithFields("Invalid device JID in database", map[string]interface{}{
-				"session_id":   sessionID.String(),
+				"session_id":   sessionUUID.String(),
 				"session_name": sessionId,
 				"device_jid":   deviceJID,
 				"error":        err.Error(),
@@ -184,7 +184,7 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionId uuid.UUID) error
 		_, err = g.container.GetDevice(ctx, jid)
 		if err != nil {
 			g.logger.ErrorWithFields("Failed to get device store", map[string]interface{}{
-				"session_id":   sessionID.String(),
+				"session_id":   sessionUUID.String(),
 				"session_name": sessionId,
 				"device_jid":   deviceJID,
 				"error":        err.Error(),
@@ -193,7 +193,7 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionId uuid.UUID) error
 		}
 
 		g.logger.InfoWithFields("Device store validated", map[string]interface{}{
-			"session_id":   sessionID.String(),
+			"session_id":   sessionUUID.String(),
 			"session_name": sessionId,
 			"device_jid":   deviceJID,
 		})
@@ -203,30 +203,20 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionId uuid.UUID) error
 	return nil
 }
 
-func (g *Gateway) RestoreAllSessions(ctx context.Context, sessionIDs []string) error {
+func (g *Gateway) RestoreAllSessions(ctx context.Context, sessionIDs []uuid.UUID) error {
 	g.logger.InfoWithFields("Restoring all WhatsApp sessions", map[string]interface{}{
 		"session_count": len(sessionIDs),
 	})
 
 	var errors []error
-	for _, sessionIDStr := range sessionIDs {
-		sessionID, err := uuid.Parse(sessionIDStr)
-		if err != nil {
-			g.logger.ErrorWithFields("Invalid session ID format", map[string]interface{}{
-				"session_id": sessionIDStr,
-				"error":      err.Error(),
-			})
-			errors = append(errors, fmt.Errorf("session %s: invalid UUID format: %w", sessionIDStr, err))
-			continue
-		}
-
-		err = g.RestoreSession(ctx, sessionID)
+	for _, sessionID := range sessionIDs {
+		err := g.RestoreSession(ctx, sessionID)
 		if err != nil {
 			g.logger.ErrorWithFields("Failed to restore session", map[string]interface{}{
-				"session_id": sessionIDStr,
+				"session_id": sessionID.String(),
 				"error":      err.Error(),
 			})
-			errors = append(errors, fmt.Errorf("session %s: %w", sessionIDStr, err))
+			errors = append(errors, fmt.Errorf("session %s: %w", sessionID.String(), err))
 		}
 	}
 
@@ -262,12 +252,12 @@ func (g *Gateway) SessionExists(sessionId uuid.UUID) bool {
 	g.mutex.RLock()
 	defer g.mutex.RUnlock()
 
-	_, exists := g.sessions[sessionID]
+	_, exists := g.sessions[sessionId]
 	if exists {
 		return true
 	}
 
-	_, uuidExists := g.sessionUUIDs[sessionID]
+	_, uuidExists := g.sessionUUIDs[sessionId]
 	return uuidExists
 }
 
@@ -275,10 +265,10 @@ func (g *Gateway) IsSessionConnected(ctx context.Context, sessionId uuid.UUID) (
 	g.mutex.RLock()
 	defer g.mutex.RUnlock()
 
-	client, exists := g.sessions[sessionID]
+	client, exists := g.sessions[sessionId]
 	if !exists {
 
-		_, uuidExists := g.sessionUUIDs[sessionID]
+		_, uuidExists := g.sessionUUIDs[sessionId]
 		if uuidExists {
 
 			return false, nil
@@ -293,7 +283,7 @@ func (g *Gateway) GetSessionInfo(ctx context.Context, sessionId uuid.UUID) (*ses
 	g.mutex.RLock()
 	defer g.mutex.RUnlock()
 
-	client, exists := g.sessions[sessionID]
+	client, exists := g.sessions[sessionId]
 	if !exists {
 		return nil, fmt.Errorf("session not found: %s", sessionId)
 	}
@@ -340,9 +330,9 @@ func (g *Gateway) Stop(ctx context.Context) error {
 		}
 	}
 
-	g.sessions = make(map[string]*MyClient)
-	g.sessionUUIDs = make(map[string]uuid.UUID)
-	g.killChannels = make(map[string]chan bool)
+	g.sessions = make(map[uuid.UUID]*MyClient)
+	g.sessionUUIDs = make(map[uuid.UUID]uuid.UUID)
+	g.killChannels = make(map[uuid.UUID]chan bool)
 
 	return nil
 }
@@ -407,7 +397,7 @@ func (g *Gateway) startClient(sessionID uuid.UUID, sessionId uuid.UUID) {
 		return
 	}
 
-	myClient := NewMyClient(sessionID, sessionId, client, g.db, g, g.logger)
+	myClient := NewMyClient(sessionID, client, g.db, g, g.logger)
 
 	g.mutex.Lock()
 	g.sessions[sessionID] = myClient
