@@ -33,8 +33,6 @@ func (h *BaseHandler) GetWriter() *ResponseWriter {
 	return h.writer
 }
 
-
-
 func (h *BaseHandler) GetSessionIDFromURL(r *http.Request) (uuid.UUID, error) {
 	sessionIDStr := chi.URLParam(r, "sessionId")
 	if sessionIDStr == "" {
