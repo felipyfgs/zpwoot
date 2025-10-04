@@ -559,19 +559,19 @@ func (g *Gateway) SetProxy(ctx context.Context, sessionId uuid.UUID, proxy *sess
 	return fmt.Errorf("proxy configuration not implemented yet")
 }
 
-func (g *Gateway) SendTextMessage(ctx context.Context, sessionId, to, content string) (*session.MessageSendResult, error) {
+func (g *Gateway) SendTextMessage(ctx context.Context, sessionId uuid.UUID, to, content string) (*session.MessageSendResult, error) {
 	g.logger.InfoWithFields("Send text message requested", map[string]interface{}{
-		"session_name": sessionId,
-		"to":           to,
-		"content_len":  len(content),
+		"session_id": sessionId.String(),
+		"to":         to,
+		"content_len": len(content),
 	})
 
 	return nil, fmt.Errorf("text message sending not implemented yet - focus is on connection only")
 }
 
-func (g *Gateway) SendMediaMessage(ctx context.Context, sessionId, to, mediaURL, caption, mediaType string) (*session.MessageSendResult, error) {
+func (g *Gateway) SendMediaMessage(ctx context.Context, sessionId uuid.UUID, to, mediaURL, caption, mediaType string) (*session.MessageSendResult, error) {
 	g.logger.InfoWithFields("Send media message requested", map[string]interface{}{
-		"session_name": sessionId,
+		"session_id":   sessionId.String(),
 		"to":           to,
 		"media_type":   mediaType,
 		"has_caption":  caption != "",
@@ -580,21 +580,21 @@ func (g *Gateway) SendMediaMessage(ctx context.Context, sessionId, to, mediaURL,
 	return nil, fmt.Errorf("media message sending not implemented yet - focus is on connection only")
 }
 
-func (g *Gateway) SendLocationMessage(ctx context.Context, sessionId, to string, latitude, longitude float64, address string) (*session.MessageSendResult, error) {
+func (g *Gateway) SendLocationMessage(ctx context.Context, sessionId uuid.UUID, to string, latitude, longitude float64, address string) (*session.MessageSendResult, error) {
 	g.logger.InfoWithFields("Send location message requested", map[string]interface{}{
-		"session_name": sessionId,
-		"to":           to,
-		"latitude":     latitude,
-		"longitude":    longitude,
-		"address":      address,
+		"session_id": sessionId.String(),
+		"to":         to,
+		"latitude":   latitude,
+		"longitude":  longitude,
+		"address":    address,
 	})
 
 	return nil, fmt.Errorf("location message sending not implemented yet - focus is on connection only")
 }
 
-func (g *Gateway) SendContactMessage(ctx context.Context, sessionId, to, contactName, contactPhone string) (*session.MessageSendResult, error) {
+func (g *Gateway) SendContactMessage(ctx context.Context, sessionId uuid.UUID, to, contactName, contactPhone string) (*session.MessageSendResult, error) {
 	g.logger.InfoWithFields("Send contact message requested", map[string]interface{}{
-		"session_name":  sessionId,
+		"session_id":    sessionId.String(),
 		"to":            to,
 		"contact_name":  contactName,
 		"contact_phone": contactPhone,
