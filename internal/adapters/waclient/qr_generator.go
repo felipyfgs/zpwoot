@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/skip2/go-qrcode"
 	"zpwoot/internal/core/session"
 	"zpwoot/platform/logger"
@@ -21,9 +22,9 @@ func NewQRGenerator(logger *logger.Logger) session.QRCodeGenerator {
 	}
 }
 
-func (qr *QRGenerator) Generate(ctx context.Context, sessionName string) (*session.QRCodeResponse, error) {
+func (qr *QRGenerator) Generate(ctx context.Context, sessionId uuid.UUID) (*session.QRCodeResponse, error) {
 	qr.logger.InfoWithFields("Generating QR code", map[string]interface{}{
-		"session_name": sessionName,
+		"session_id": sessionId.String(),
 	})
 
 	expiresAt := time.Now().Add(2 * time.Minute)

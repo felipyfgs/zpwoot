@@ -9,7 +9,6 @@ import (
 
 	"zpwoot/internal/adapters/server/contracts"
 	"zpwoot/internal/adapters/server/shared"
-	"zpwoot/internal/core/session"
 	"zpwoot/internal/services"
 	"zpwoot/platform/logger"
 )

@@ -17,7 +17,6 @@ type MyClient struct {
 	WAClient       *whatsmeow.Client
 	eventHandlerID uint32
 	sessionID      uuid.UUID
-	sessionName    string
 	subscriptions  []string
 	db             *sqlx.DB
 	gateway        *Gateway
@@ -98,11 +97,10 @@ func (cm *ClientManager) DeleteHTTPClient(sessionID uuid.UUID) {
 	delete(cm.httpClients, sessionID)
 }
 
-func NewMyClient(sessionID uuid.UUID, sessionName string, client *whatsmeow.Client, db *sqlx.DB, gateway *Gateway, logger *logger.Logger) *MyClient {
+func NewMyClient(sessionID uuid.UUID, client *whatsmeow.Client, db *sqlx.DB, gateway *Gateway, logger *logger.Logger) *MyClient {
 	mycli := &MyClient{
 		WAClient:      client,
 		sessionID:     sessionID,
-		sessionName:   sessionName,
 		db:            db,
 		gateway:       gateway,
 		logger:        logger,

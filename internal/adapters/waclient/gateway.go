@@ -97,61 +97,61 @@ func (g *Gateway) ConnectSession(ctx context.Context, sessionId uuid.UUID) error
 	return nil
 }
 
-func (g *Gateway) DisconnectSession(ctx context.Context, sessionName string) error {
+func (g *Gateway) DisconnectSession(ctx context.Context, sessionId uuid.UUID) error {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
 
 	g.logger.InfoWithFields("Disconnecting WhatsApp session", map[string]interface{}{
-		"session_name": sessionName,
+		"session_name": sessionId,
 	})
 
 	if killChan, exists := g.killChannels[sessionName]; exists {
 		select {
 		case killChan <- true:
 			g.logger.InfoWithFields("Kill signal sent to session", map[string]interface{}{
-				"session_name": sessionName,
+				"session_name": sessionId,
 			})
 		default:
 			g.logger.WarnWithFields("Kill channel full or closed", map[string]interface{}{
-				"session_name": sessionName,
+				"session_name": sessionId,
 			})
 		}
 	}
 
-	delete(g.sessions, sessionName)
-	delete(g.killChannels, sessionName)
+	delete(g.sessions, sessionId)
+	delete(g.killChannels, sessionId)
 
 	return nil
 }
 
-func (g *Gateway) DeleteSession(ctx context.Context, sessionName string) error {
+func (g *Gateway) DeleteSession(ctx context.Context, sessionId uuid.UUID) error {
 	g.logger.InfoWithFields("Deleting WhatsApp session", map[string]interface{}{
-		"session_name": sessionName,
+		"session_name": sessionId,
 	})
 
-	err := g.DisconnectSession(ctx, sessionName)
+	err := g.DisconnectSession(ctx, sessionId)
 	if err != nil {
 		g.logger.WarnWithFields("Error disconnecting session during delete", map[string]interface{}{
-			"session_name": sessionName,
+			"session_name": sessionId,
 			"error":        err.Error(),
 		})
 	}
 
 	g.mutex.Lock()
-	delete(g.sessionUUIDs, sessionName)
+	delete(g.sessionUUIDs, sessionId)
 	g.mutex.Unlock()
 
 	return nil
 }
 
-func (g *Gateway) RestoreSession(ctx context.Context, sessionName string) error {
+func (g *Gateway) RestoreSession(ctx context.Context, sessionId uuid.UUID) error {
 	g.logger.InfoWithFields("Restoring WhatsApp session", map[string]interface{}{
-		"session_name": sessionName,
+		"session_name": sessionId,
 	})
 
 	sessionID, exists := g.sessionUUIDs[sessionName]
 	if !exists {
-		return fmt.Errorf("session UUID not registered: %s", sessionName)
+		return fmt.Errorf("session UUID not registered: %s", sessionId)
 	}
 
 	var deviceJID string
@@ -160,7 +160,7 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionName string) error 
 	if err != nil {
 		g.logger.ErrorWithFields("Failed to get device JID from database", map[string]interface{}{
 			"session_id":   sessionID.String(),
-			"session_name": sessionName,
+			"session_name": sessionId,
 			"error":        err.Error(),
 		})
 		return fmt.Errorf("failed to get device JID: %w", err)
@@ -172,7 +172,7 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionName string) error 
 		if err != nil {
 			g.logger.ErrorWithFields("Invalid device JID in database", map[string]interface{}{
 				"session_id":   sessionID.String(),
-				"session_name": sessionName,
+				"session_name": sessionId,
 				"device_jid":   deviceJID,
 				"error":        err.Error(),
 			})
@@ -183,7 +183,7 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionName string) error 
 		if err != nil {
 			g.logger.ErrorWithFields("Failed to get device store", map[string]interface{}{
 				"session_id":   sessionID.String(),
-				"session_name": sessionName,
+				"session_name": sessionId,
 				"device_jid":   deviceJID,
 				"error":        err.Error(),
 			})
@@ -192,7 +192,7 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionName string) error 
 
 		g.logger.InfoWithFields("Device store validated", map[string]interface{}{
 			"session_id":   sessionID.String(),
-			"session_name": sessionName,
+			"session_name": sessionId,
 			"device_jid":   deviceJID,
 		})
 
@@ -208,13 +208,13 @@ func (g *Gateway) RestoreAllSessions(ctx context.Context, sessionNames []string)
 
 	var errors []error
 	for _, sessionName := range sessionNames {
-		err := g.RestoreSession(ctx, sessionName)
+		err := g.RestoreSession(ctx, sessionId)
 		if err != nil {
 			g.logger.ErrorWithFields("Failed to restore session", map[string]interface{}{
-				"session_name": sessionName,
+				"session_name": sessionId,
 				"error":        err.Error(),
 			})
-			errors = append(errors, fmt.Errorf("session %s: %w", sessionName, err))
+			errors = append(errors, fmt.Errorf("session %s: %w", sessionId, err))
 		}
 	}
 
@@ -225,14 +225,14 @@ func (g *Gateway) RestoreAllSessions(ctx context.Context, sessionNames []string)
 	return nil
 }
 
-func (g *Gateway) RegisterSessionUUID(sessionName, sessionUUID string) {
+func (g *Gateway) RegisterSessionUUID(sessionId, sessionUUID string) {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
 
 	sessionID, err := uuid.Parse(sessionUUID)
 	if err != nil {
 		g.logger.ErrorWithFields("Invalid session UUID", map[string]interface{}{
-			"session_name": sessionName,
+			"session_name": sessionId,
 			"session_uuid": sessionUUID,
 			"error":        err.Error(),
 		})
@@ -241,12 +241,12 @@ func (g *Gateway) RegisterSessionUUID(sessionName, sessionUUID string) {
 
 	g.sessionUUIDs[sessionName] = sessionID
 	g.logger.InfoWithFields("Session UUID registered for WhatsApp connection", map[string]interface{}{
-		"session_name": sessionName,
+		"session_name": sessionId,
 		"session_id":   sessionID.String(),
 	})
 }
 
-func (g *Gateway) SessionExists(sessionName string) bool {
+func (g *Gateway) SessionExists(sessionId uuid.UUID) bool {
 	g.mutex.RLock()
 	defer g.mutex.RUnlock()
 
@@ -259,7 +259,7 @@ func (g *Gateway) SessionExists(sessionName string) bool {
 	return uuidExists
 }
 
-func (g *Gateway) IsSessionConnected(ctx context.Context, sessionName string) (bool, error) {
+func (g *Gateway) IsSessionConnected(ctx context.Context, sessionId uuid.UUID) (bool, error) {
 	g.mutex.RLock()
 	defer g.mutex.RUnlock()
 
@@ -271,23 +271,23 @@ func (g *Gateway) IsSessionConnected(ctx context.Context, sessionName string) (b
 
 			return false, nil
 		}
-		return false, fmt.Errorf("session not found: %s", sessionName)
+		return false, fmt.Errorf("session not found: %s", sessionId)
 	}
 
 	return client.IsConnected(), nil
 }
 
-func (g *Gateway) GetSessionInfo(ctx context.Context, sessionName string) (*session.DeviceInfo, error) {
+func (g *Gateway) GetSessionInfo(ctx context.Context, sessionId uuid.UUID) (*session.DeviceInfo, error) {
 	g.mutex.RLock()
 	defer g.mutex.RUnlock()
 
 	client, exists := g.sessions[sessionName]
 	if !exists {
-		return nil, fmt.Errorf("session not found: %s", sessionName)
+		return nil, fmt.Errorf("session not found: %s", sessionId)
 	}
 
 	if client.WAClient == nil || client.WAClient.Store.ID == nil {
-		return nil, fmt.Errorf("session not initialized: %s", sessionName)
+		return nil, fmt.Errorf("session not initialized: %s", sessionId)
 	}
 
 	deviceInfo := g.mapper.MapDeviceInfoFromWhatsmeow(
@@ -299,12 +299,12 @@ func (g *Gateway) GetSessionInfo(ctx context.Context, sessionName string) (*sess
 	return deviceInfo, nil
 }
 
-func (g *Gateway) GenerateQRCode(ctx context.Context, sessionName string) (*session.QRCodeResponse, error) {
+func (g *Gateway) GenerateQRCode(ctx context.Context, sessionId uuid.UUID) (*session.QRCodeResponse, error) {
 	g.logger.InfoWithFields("Generating QR code for session", map[string]interface{}{
-		"session_name": sessionName,
+		"session_name": sessionId,
 	})
 
-	return g.qrGenerator.Generate(ctx, sessionName)
+	return g.qrGenerator.Generate(ctx, sessionId)
 }
 
 func (g *Gateway) Stop(ctx context.Context) error {
@@ -315,15 +315,15 @@ func (g *Gateway) Stop(ctx context.Context) error {
 		"active_sessions": len(g.sessions),
 	})
 
-	for sessionName, killChan := range g.killChannels {
+	for sessionId, killChan := range g.killChannels {
 		select {
 		case killChan <- true:
 			g.logger.DebugWithFields("Kill signal sent", map[string]interface{}{
-				"session_name": sessionName,
+				"session_name": sessionId,
 			})
 		default:
 			g.logger.WarnWithFields("Kill channel full or closed", map[string]interface{}{
-				"session_name": sessionName,
+				"session_name": sessionId,
 			})
 		}
 	}
@@ -335,10 +335,10 @@ func (g *Gateway) Stop(ctx context.Context) error {
 	return nil
 }
 
-func (g *Gateway) startClient(sessionID uuid.UUID, sessionName string) {
+func (g *Gateway) startClient(sessionID uuid.UUID, sessionId uuid.UUID) {
 	g.logger.InfoWithFields("Starting WhatsApp client", map[string]interface{}{
 		"session_id":   sessionID.String(),
-		"session_name": sessionName,
+		"session_name": sessionId,
 	})
 
 	var deviceStore *store.Device
@@ -395,7 +395,7 @@ func (g *Gateway) startClient(sessionID uuid.UUID, sessionName string) {
 		return
 	}
 
-	myClient := NewMyClient(sessionID, sessionName, client, g.db, g, g.logger)
+	myClient := NewMyClient(sessionID, sessionId, client, g.db, g, g.logger)
 
 	g.mutex.Lock()
 	g.sessions[sessionName] = myClient
@@ -424,7 +424,7 @@ func (g *Gateway) startClient(sessionID uuid.UUID, sessionName string) {
 		}
 	}
 
-	g.keepClientAlive(sessionID, sessionName, myClient)
+	g.keepClientAlive(sessionID, sessionId, myClient)
 }
 
 func (g *Gateway) handleQRCodePairing(myClient *MyClient) {
@@ -496,19 +496,19 @@ func (g *Gateway) handleQRCodePairing(myClient *MyClient) {
 	}
 }
 
-func (g *Gateway) keepClientAlive(sessionID uuid.UUID, sessionName string, myClient *MyClient) {
+func (g *Gateway) keepClientAlive(sessionID uuid.UUID, sessionId uuid.UUID, myClient *MyClient) {
 	killChan, exists := g.killChannels[sessionName]
 	if !exists {
 		g.logger.ErrorWithFields("No kill channel found for session", map[string]interface{}{
 			"session_id":   sessionID.String(),
-			"session_name": sessionName,
+			"session_name": sessionId,
 		})
 		return
 	}
 
 	g.logger.InfoWithFields("Client keep-alive started", map[string]interface{}{
 		"session_id":   sessionID.String(),
-		"session_name": sessionName,
+		"session_name": sessionId,
 	})
 
 	for {
@@ -516,7 +516,7 @@ func (g *Gateway) keepClientAlive(sessionID uuid.UUID, sessionName string, myCli
 		case <-killChan:
 			g.logger.InfoWithFields("Received kill signal", map[string]interface{}{
 				"session_id":   sessionID.String(),
-				"session_name": sessionName,
+				"session_name": sessionId,
 			})
 
 			if myClient.WAClient != nil {
@@ -546,9 +546,9 @@ func (g *Gateway) getDeviceJIDFromDB(sessionID uuid.UUID) (string, error) {
 	return deviceJID, err
 }
 
-func (g *Gateway) SetProxy(ctx context.Context, sessionName string, proxy *session.ProxyConfig) error {
+func (g *Gateway) SetProxy(ctx context.Context, sessionId uuid.UUID, proxy *session.ProxyConfig) error {
 	g.logger.InfoWithFields("Setting proxy for session", map[string]interface{}{
-		"session_name": sessionName,
+		"session_name": sessionId,
 		"proxy_type":   proxy.Type,
 		"proxy_host":   proxy.Host,
 		"proxy_port":   proxy.Port,
@@ -557,9 +557,9 @@ func (g *Gateway) SetProxy(ctx context.Context, sessionName string, proxy *sessi
 	return fmt.Errorf("proxy configuration not implemented yet")
 }
 
-func (g *Gateway) SendTextMessage(ctx context.Context, sessionName, to, content string) (*session.MessageSendResult, error) {
+func (g *Gateway) SendTextMessage(ctx context.Context, sessionId, to, content string) (*session.MessageSendResult, error) {
 	g.logger.InfoWithFields("Send text message requested", map[string]interface{}{
-		"session_name": sessionName,
+		"session_name": sessionId,
 		"to":           to,
 		"content_len":  len(content),
 	})
@@ -567,9 +567,9 @@ func (g *Gateway) SendTextMessage(ctx context.Context, sessionName, to, content 
 	return nil, fmt.Errorf("text message sending not implemented yet - focus is on connection only")
 }
 
-func (g *Gateway) SendMediaMessage(ctx context.Context, sessionName, to, mediaURL, caption, mediaType string) (*session.MessageSendResult, error) {
+func (g *Gateway) SendMediaMessage(ctx context.Context, sessionId, to, mediaURL, caption, mediaType string) (*session.MessageSendResult, error) {
 	g.logger.InfoWithFields("Send media message requested", map[string]interface{}{
-		"session_name": sessionName,
+		"session_name": sessionId,
 		"to":           to,
 		"media_type":   mediaType,
 		"has_caption":  caption != "",
@@ -578,9 +578,9 @@ func (g *Gateway) SendMediaMessage(ctx context.Context, sessionName, to, mediaUR
 	return nil, fmt.Errorf("media message sending not implemented yet - focus is on connection only")
 }
 
-func (g *Gateway) SendLocationMessage(ctx context.Context, sessionName, to string, latitude, longitude float64, address string) (*session.MessageSendResult, error) {
+func (g *Gateway) SendLocationMessage(ctx context.Context, sessionId, to string, latitude, longitude float64, address string) (*session.MessageSendResult, error) {
 	g.logger.InfoWithFields("Send location message requested", map[string]interface{}{
-		"session_name": sessionName,
+		"session_name": sessionId,
 		"to":           to,
 		"latitude":     latitude,
 		"longitude":    longitude,
@@ -590,9 +590,9 @@ func (g *Gateway) SendLocationMessage(ctx context.Context, sessionName, to strin
 	return nil, fmt.Errorf("location message sending not implemented yet - focus is on connection only")
 }
 
-func (g *Gateway) SendContactMessage(ctx context.Context, sessionName, to, contactName, contactPhone string) (*session.MessageSendResult, error) {
+func (g *Gateway) SendContactMessage(ctx context.Context, sessionId, to, contactName, contactPhone string) (*session.MessageSendResult, error) {
 	g.logger.InfoWithFields("Send contact message requested", map[string]interface{}{
-		"session_name":  sessionName,
+		"session_name":  sessionId,
 		"to":            to,
 		"contact_name":  contactName,
 		"contact_phone": contactPhone,

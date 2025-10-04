@@ -4,7 +4,6 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"zpwoot/internal/adapters/server/handler"
-	"zpwoot/internal/core/session"
 	"zpwoot/internal/services"
 	"zpwoot/platform/logger"
 )

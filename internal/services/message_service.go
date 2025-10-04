@@ -17,7 +17,6 @@ import (
 type MessageService struct {
 	messagingCore *messaging.Service
 	sessionCore   *session.Service
-	resolver      session.SessionResolver
 
 	logger    *logger.Logger
 	validator *validation.Validator
@@ -26,31 +25,18 @@ type MessageService struct {
 func NewMessageService(
 	messagingCore *messaging.Service,
 	sessionCore *session.Service,
-	resolver session.SessionResolver,
 	logger *logger.Logger,
 	validator *validation.Validator,
 ) *MessageService {
 	return &MessageService{
 		messagingCore: messagingCore,
 		sessionCore:   sessionCore,
-		resolver:      resolver,
 		logger:        logger,
 		validator:     validator,
 	}
 }
 
-func (s *MessageService) validateSession(ctx context.Context, sessionName string) (*session.Session, error) {
-	sessionInfo, err := s.sessionCore.GetSessionByName(ctx, sessionName)
-	if err != nil {
-		return nil, fmt.Errorf("session %s not found: %w", sessionName, err)
-	}
-
-	if !sessionInfo.IsConnected {
-		return nil, fmt.Errorf("session %s is not connected", sessionName)
-	}
-
-	return sessionInfo, nil
-}
+// validateSession removed - using sessionId directly
 
 type CreateMessageRequest struct {
 	SessionID   string `json:"session_id" validate:"required,uuid"`
@@ -262,7 +248,7 @@ func (s *MessageService) SendTextMessage(ctx context.Context, sessionName, to, c
 		return nil, fmt.Errorf("sessionName, to, and content are required")
 	}
 
-	_, err := s.validateSession(ctx, sessionName)
+	_, err := 
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +259,7 @@ func (s *MessageService) SendTextMessage(ctx context.Context, sessionName, to, c
 		"content_len":  len(content),
 	})
 
-	sessionID, err := s.resolver.ResolveToID(ctx, sessionName)
+	sessionID, err := 
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve session: %w", err)
 	}
@@ -305,7 +291,7 @@ func (s *MessageService) SendMediaMessage(ctx context.Context, sessionName, to, 
 		return nil, fmt.Errorf("sessionName, to, and mediaURL are required")
 	}
 
-	_, err := s.validateSession(ctx, sessionName)
+	_, err := 
 	if err != nil {
 		return nil, err
 	}
@@ -318,7 +304,7 @@ func (s *MessageService) SendMediaMessage(ctx context.Context, sessionName, to, 
 		"has_caption":  caption != "",
 	})
 
-	sessionID, err := s.resolver.ResolveToID(ctx, sessionName)
+	sessionID, err := 
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve session: %w", err)
 	}

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"zpwoot/internal/adapters/server/router"
-	"zpwoot/internal/core/session"
 	"zpwoot/internal/services"
 	"zpwoot/platform/config"
 	"zpwoot/platform/logger"
@@ -17,29 +16,26 @@ type Server struct {
 	config          *config.Config
 	logger          *logger.Logger
 	httpServer      *http.Server
-	sessionService  *services.SessionService
-	messageService  *services.MessageService
-	groupService    *services.GroupService
-	sessionResolver session.SessionResolver
+	sessionService *services.SessionService
+	messageService *services.MessageService
+	groupService   *services.GroupService
 }
 
 type Config struct {
-	Config          *config.Config
-	Logger          *logger.Logger
-	SessionService  *services.SessionService
-	MessageService  *services.MessageService
-	GroupService    *services.GroupService
-	SessionResolver session.SessionResolver
+	Config         *config.Config
+	Logger         *logger.Logger
+	SessionService *services.SessionService
+	MessageService *services.MessageService
+	GroupService   *services.GroupService
 }
 
 func New(cfg *Config) *Server {
 	return &Server{
 		config:          cfg.Config,
 		logger:          cfg.Logger,
-		sessionService:  cfg.SessionService,
-		messageService:  cfg.MessageService,
-		groupService:    cfg.GroupService,
-		sessionResolver: cfg.SessionResolver,
+		sessionService: cfg.SessionService,
+		messageService: cfg.MessageService,
+		groupService:   cfg.GroupService,
 	}
 }
 
@@ -112,7 +108,6 @@ func (s *Server) Handler() http.Handler {
 		s.sessionService,
 		s.messageService,
 		s.groupService,
-		s.sessionResolver,
 	)
 }
 

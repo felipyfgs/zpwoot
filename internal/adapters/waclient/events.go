@@ -110,7 +110,7 @@ func (mc *MyClient) handleConnected(evt *events.Connected) {
 			OSVersion:   "11",
 			AppVersion:  "2.23.24.76",
 		}
-		mc.gateway.eventHandler.OnSessionConnected(mc.sessionName, deviceInfo)
+		mc.gateway.eventHandler.OnSessionConnected(mc.sessionID, deviceInfo)
 	}
 }
 
@@ -139,7 +139,7 @@ func (mc *MyClient) handlePushNameSetting(evt *events.PushNameSetting) {
 func (mc *MyClient) handlePairSuccess(evt *events.PairSuccess) {
 	mc.logger.InfoWithFields("QR Pair Success", map[string]interface{}{
 		"session_id":    mc.sessionID.String(),
-		"session_name":  mc.sessionName,
+		"session_name":  mc.sessionID,
 		"jid":           evt.ID.String(),
 		"business_name": evt.BusinessName,
 		"platform":      evt.Platform,
@@ -169,7 +169,7 @@ func (mc *MyClient) handlePairSuccess(evt *events.PairSuccess) {
 			OSVersion:   "11",
 			AppVersion:  "2.23.24.76",
 		}
-		mc.gateway.eventHandler.OnSessionConnected(mc.sessionName, deviceInfo)
+		mc.gateway.eventHandler.OnSessionConnected(mc.sessionID, deviceInfo)
 	}
 }
 
@@ -203,7 +203,7 @@ func (mc *MyClient) handleLoggedOut(evt *events.LoggedOut) {
 	}
 
 	if mc.gateway != nil && mc.gateway.eventHandler != nil {
-		mc.gateway.eventHandler.OnSessionDisconnected(mc.sessionName, evt.Reason.String())
+		mc.gateway.eventHandler.OnSessionDisconnected(mc.sessionID, evt.Reason.String())
 	}
 
 	clientManager := GetClientManager(mc.logger)
@@ -226,7 +226,7 @@ func (mc *MyClient) handleDisconnected(evt *events.Disconnected) {
 	}
 
 	if mc.gateway != nil && mc.gateway.eventHandler != nil {
-		mc.gateway.eventHandler.OnSessionDisconnected(mc.sessionName, "disconnected")
+		mc.gateway.eventHandler.OnSessionDisconnected(mc.sessionID, "disconnected")
 	}
 }
 
@@ -245,7 +245,7 @@ func (mc *MyClient) handleConnectFailure(evt *events.ConnectFailure) {
 	}
 
 	if mc.gateway != nil && mc.gateway.eventHandler != nil {
-		mc.gateway.eventHandler.OnConnectionError(mc.sessionName, fmt.Errorf("connection failed: %+v", evt))
+		mc.gateway.eventHandler.OnConnectionError(mc.sessionID, fmt.Errorf("connection failed: %+v", evt))
 	}
 }
 
@@ -279,7 +279,7 @@ func (mc *MyClient) handleQRCode(qrCode string) error {
 	fmt.Println("QR code:", qrCode)
 
 	if mc.gateway != nil && mc.gateway.eventHandler != nil {
-		mc.gateway.eventHandler.OnQRCodeGenerated(mc.sessionName, base64QRCode, expiresAt)
+		mc.gateway.eventHandler.OnQRCodeGenerated(mc.sessionID, base64QRCode, expiresAt)
 	}
 
 	return nil

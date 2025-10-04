@@ -89,20 +89,7 @@ func (r *SessionRepository) GetByID(ctx context.Context, id uuid.UUID) (*session
 	return r.fromModel(&model)
 }
 
-func (r *SessionRepository) GetByName(ctx context.Context, name string) (*session.Session, error) {
-	var model sessionModel
-	query := `SELECT * FROM "zpSessions" WHERE name = $1`
-
-	err := r.db.GetContext(ctx, &model, query, name)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, errors.ErrSessionNotFound
-		}
-		return nil, fmt.Errorf("failed to get session by name: %w", err)
-	}
-
-	return r.fromModel(&model)
-}
+// GetByName removed - using GetByID with sessionId directly
 
 func (r *SessionRepository) Update(ctx context.Context, sess *session.Session) error {
 	model, err := r.toModel(sess)

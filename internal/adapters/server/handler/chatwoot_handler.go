@@ -7,7 +7,6 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"zpwoot/internal/adapters/server/shared"
-	"zpwoot/internal/core/session"
 	"zpwoot/internal/services"
 	"zpwoot/platform/logger"
 )
@@ -83,7 +82,7 @@ func (h *ChatwootHandler) ReceiveWebhook(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err := h.sessionService.GetSessionByNameOrID(r.Context(), sessionID)
+	_, err := h.sessionService.GetSession(r.Context(), sessionID)
 	if err != nil {
 		h.GetWriter().WriteNotFound(w, "Session not found")
 		return
@@ -276,7 +275,7 @@ func (h *ChatwootHandler) GetStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := h.sessionService.GetSessionByNameOrID(r.Context(), sessionID)
+	_, err := h.sessionService.GetSession(r.Context(), sessionID)
 	if err != nil {
 		h.GetWriter().WriteNotFound(w, "Session not found")
 		return
