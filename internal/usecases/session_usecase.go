@@ -377,8 +377,11 @@ func (s *SessionService) SetProxy(ctx context.Context, sessionID string, req *co
 	}
 
 	// Basic validation
-	if req.ProxyConfig == nil {
-		return fmt.Errorf("proxy config is required")
+	if req.ProxyConfig.Type == "" {
+		return fmt.Errorf("proxy type is required")
+	}
+	if req.ProxyConfig.Host == "" {
+		return fmt.Errorf("proxy host is required")
 	}
 
 	s.logger.InfoWithFields("Setting proxy for session", map[string]interface{}{

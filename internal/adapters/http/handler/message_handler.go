@@ -75,8 +75,9 @@ func (h *MessageHandler) SendTextMessage(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := h.GetValidator().ValidateStruct(&req); err != nil {
-		h.GetWriter().WriteBadRequest(w, "Validation failed", err.Error())
+	// Basic validation
+	if req.RemoteJID == "" {
+		h.GetWriter().WriteBadRequest(w, "Validation failed", "remote_jid is required")
 		return
 	}
 
