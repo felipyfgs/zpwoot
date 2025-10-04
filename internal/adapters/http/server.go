@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"zpwoot/internal/adapters/server/router"
+	"zpwoot/internal/adapters/http/router"
 	"zpwoot/internal/services"
 	"zpwoot/platform/config"
 	"zpwoot/platform/logger"

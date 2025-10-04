@@ -3,8 +3,8 @@ package handler
 import (
 	"net/http"
 
-	"zpwoot/internal/adapters/server/contracts"
-	"zpwoot/internal/adapters/server/shared"
+	"zpwoot/internal/adapters/http/contracts"
+	"zpwoot/internal/adapters/http/shared"
 	"zpwoot/internal/services"
 	"zpwoot/platform/logger"
 )

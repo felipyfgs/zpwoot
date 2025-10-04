@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"zpwoot/internal/adapters/server/contracts"
+	"zpwoot/internal/adapters/http/contracts"
 	"zpwoot/internal/core/group"
 	"zpwoot/internal/services/shared/validation"
 	"zpwoot/platform/logger"

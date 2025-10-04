@@ -7,7 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"zpwoot/internal/adapters/server/contracts"
+	"zpwoot/internal/adapters/http/contracts"
 	"zpwoot/internal/core/session"
 	"zpwoot/internal/services/shared/validation"
 	"zpwoot/platform/logger"

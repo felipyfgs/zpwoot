@@ -30,7 +30,7 @@ import (
 	"syscall"
 	"time"
 
-	"zpwoot/internal/adapters/server/contracts"
+	"zpwoot/internal/adapters/http/contracts"
 	"zpwoot/internal/services"
 	"zpwoot/platform/config"
 	"zpwoot/platform/container"

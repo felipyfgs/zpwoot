@@ -19,7 +19,7 @@ import (
 	"zpwoot/internal/services/shared/validation"
 
 	"zpwoot/internal/adapters/repository"
-	"zpwoot/internal/adapters/server"
+	"zpwoot/internal/adapters/http"
 	"zpwoot/internal/adapters/waclient"
 
 	"zpwoot/platform/config"

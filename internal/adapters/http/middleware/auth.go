@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"zpwoot/internal/adapters/server/shared"
+	"zpwoot/internal/adapters/http/shared"
 	"zpwoot/platform/config"
 	"zpwoot/platform/logger"
 )
