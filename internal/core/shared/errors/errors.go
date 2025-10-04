@@ -15,11 +15,11 @@ var (
 )
 
 var (
-	ErrSessionNotFound          = errors.New("session not found")
-	ErrsessionIDAlreadyExists = errors.New("session name already exists")
-	ErrSessionAlreadyConnected  = errors.New("session already connected")
-	ErrSessionNotConnected      = errors.New("session not connected")
-	ErrSessionInvalidState      = errors.New("session in invalid state")
+	ErrSessionNotFound         = errors.New("session not found")
+	ErrsessionIDAlreadyExists  = errors.New("session name already exists")
+	ErrSessionAlreadyConnected = errors.New("session already connected")
+	ErrSessionNotConnected     = errors.New("session not connected")
+	ErrSessionInvalidState     = errors.New("session in invalid state")
 )
 
 type DomainError struct {

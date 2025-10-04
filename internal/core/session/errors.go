@@ -3,8 +3,8 @@ package session
 import "errors"
 
 var (
-	ErrInvalidsessionID = errors.New("session name is required")
-	ErrsessionIDTooLong = errors.New("session name is too long (max 100 characters)")
+	ErrInvalidsessionID   = errors.New("session name is required")
+	ErrsessionIDTooLong   = errors.New("session name is too long (max 100 characters)")
 	ErrInvalidDeviceJID   = errors.New("invalid device JID format")
 	ErrInvalidProxyConfig = errors.New("invalid proxy configuration")
 

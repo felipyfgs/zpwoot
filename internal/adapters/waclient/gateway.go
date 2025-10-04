@@ -567,8 +567,8 @@ func (g *Gateway) SetProxy(ctx context.Context, sessionId uuid.UUID, proxy *sess
 
 func (g *Gateway) SendTextMessage(ctx context.Context, sessionId uuid.UUID, to, content string) (*session.MessageSendResult, error) {
 	g.logger.InfoWithFields("Send text message requested", map[string]interface{}{
-		"session_id": sessionId.String(),
-		"to":         to,
+		"session_id":  sessionId.String(),
+		"to":          to,
 		"content_len": len(content),
 	})
 
@@ -577,10 +577,10 @@ func (g *Gateway) SendTextMessage(ctx context.Context, sessionId uuid.UUID, to, 
 
 func (g *Gateway) SendMediaMessage(ctx context.Context, sessionId uuid.UUID, to, mediaURL, caption, mediaType string) (*session.MessageSendResult, error) {
 	g.logger.InfoWithFields("Send media message requested", map[string]interface{}{
-		"session_id":   sessionId.String(),
-		"to":           to,
-		"media_type":   mediaType,
-		"has_caption":  caption != "",
+		"session_id":  sessionId.String(),
+		"to":          to,
+		"media_type":  mediaType,
+		"has_caption": caption != "",
 	})
 
 	return nil, fmt.Errorf("media message sending not implemented yet - focus is on connection only")

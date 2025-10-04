@@ -13,9 +13,9 @@ import (
 )
 
 type Server struct {
-	config          *config.Config
-	logger          *logger.Logger
-	httpServer      *http.Server
+	config         *config.Config
+	logger         *logger.Logger
+	httpServer     *http.Server
 	sessionService *services.SessionService
 	messageService *services.MessageService
 	groupService   *services.GroupService
@@ -31,8 +31,8 @@ type Config struct {
 
 func New(cfg *Config) *Server {
 	return &Server{
-		config:          cfg.Config,
-		logger:          cfg.Logger,
+		config:         cfg.Config,
+		logger:         cfg.Logger,
 		sessionService: cfg.SessionService,
 		messageService: cfg.MessageService,
 		groupService:   cfg.GroupService,

@@ -254,8 +254,8 @@ func (s *MessageService) SendTextMessage(ctx context.Context, sessionID, to, con
 	}
 
 	s.logger.InfoWithFields("Sending text message via WhatsApp", map[string]interface{}{
-		"session_id": sessionID,
-		"to":         to,
+		"session_id":  sessionID,
+		"to":          to,
 		"content_len": len(content),
 	})
 
@@ -292,11 +292,11 @@ func (s *MessageService) SendMediaMessage(ctx context.Context, sessionID, to, me
 	}
 
 	s.logger.InfoWithFields("Sending media message via WhatsApp", map[string]interface{}{
-		"session_id":   sessionID,
-		"to":           to,
-		"media_url":    mediaURL,
-		"media_type":   mediaType,
-		"has_caption":  caption != "",
+		"session_id":  sessionID,
+		"to":          to,
+		"media_url":   mediaURL,
+		"media_type":  mediaType,
+		"has_caption": caption != "",
 	})
 
 	result, err := s.sessionCore.SendMediaMessage(ctx, sessionUUID, to, mediaURL, caption, mediaType)
