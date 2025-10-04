@@ -4,11 +4,11 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"zpwoot/internal/adapters/http/handler"
-	"zpwoot/internal/services"
+	"zpwoot/internal/usecases"
 	"zpwoot/platform/logger"
 )
 
-func setupChatwootRoutes(r chi.Router, messageService *services.MessageService, sessionService *services.SessionService, appLogger *logger.Logger) {
+func setupChatwootRoutes(r chi.Router, messageService *usecases.MessageService, sessionService *usecases.SessionService, appLogger *logger.Logger) {
 	chatwootHandler := handler.NewChatwootHandler(messageService, sessionService, appLogger)
 
 	r.Route("/{sessionId}/chatwoot", func(r chi.Router) {

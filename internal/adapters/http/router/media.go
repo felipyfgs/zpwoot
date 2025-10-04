@@ -4,11 +4,11 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"zpwoot/internal/adapters/http/handler"
-	"zpwoot/internal/services"
+	"zpwoot/internal/usecases"
 	"zpwoot/platform/logger"
 )
 
-func setupMediaRoutes(r chi.Router, sessionService *services.SessionService, appLogger *logger.Logger) {
+func setupMediaRoutes(r chi.Router, sessionService *usecases.SessionService, appLogger *logger.Logger) {
 	mediaHandler := handler.NewMediaHandler(sessionService, appLogger)
 
 	r.Route("/{sessionId}/media", func(r chi.Router) {

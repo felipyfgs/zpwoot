@@ -6,17 +6,17 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"zpwoot/internal/adapters/http/shared"
-	"zpwoot/internal/services"
+	"zpwoot/internal/usecases"
 	"zpwoot/platform/logger"
 )
 
 type MediaHandler struct {
 	*shared.BaseHandler
-	sessionService *services.SessionService
+	sessionService *usecases.SessionService
 }
 
 func NewMediaHandler(
-	sessionService *services.SessionService,
+	sessionService *usecases.SessionService,
 	logger *logger.Logger,
 ) *MediaHandler {
 	return &MediaHandler{

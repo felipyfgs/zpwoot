@@ -4,11 +4,11 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"zpwoot/internal/adapters/http/handler"
-	"zpwoot/internal/services"
+	"zpwoot/internal/usecases"
 	"zpwoot/platform/logger"
 )
 
-func setupMessageRoutes(r chi.Router, messageService *services.MessageService, sessionService *services.SessionService, appLogger *logger.Logger) {
+func setupMessageRoutes(r chi.Router, messageService *usecases.MessageService, sessionService *usecases.SessionService, appLogger *logger.Logger) {
 	messageHandler := handler.NewMessageHandler(
 		messageService,
 		sessionService,

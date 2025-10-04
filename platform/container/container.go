@@ -219,7 +219,7 @@ func (a *sessionServiceAdapter) ClearQRCode(ctx context.Context, id uuid.UUID) e
 	return nil
 }
 
-func (c *Container) GetGroupService() *services.GroupService {
+func (c *Container) GetGroupService() *usecases.GroupService {
 	return c.groupService
 }
 

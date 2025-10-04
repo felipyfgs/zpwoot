@@ -1,4 +1,4 @@
-package services
+package usecases
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 
 	"zpwoot/internal/adapters/http/contracts"
 	"zpwoot/internal/core/group"
-	"zpwoot/internal/services/shared/validation"
+	"zpwoot/internal/usecases/shared/validation"
 	"zpwoot/platform/logger"
 )
 

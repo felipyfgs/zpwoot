@@ -186,7 +186,7 @@ func IsValidConnectionStatus(status string) bool {
 
 func IsValidStatus(status string) bool {
 	switch Status(status) {
-	case StatusActive, StatusInactive, StatusPending, StatusCompleted, StatusFailed, StatusCancelled:
+	case StatusActive, StatusInactive, StatusPending, StatusCompleted, StatusFailed, StatusCanceled:
 		return true
 	default:
 		return false

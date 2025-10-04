@@ -7,12 +7,12 @@ import (
 	"github.com/go-chi/cors"
 
 	"zpwoot/internal/adapters/http/middleware"
-	"zpwoot/internal/services"
+	"zpwoot/internal/usecases"
 	"zpwoot/platform/config"
 	"zpwoot/platform/logger"
 )
 
-func SetupRoutes(cfg *config.Config, logger *logger.Logger, sessionService *services.SessionService, messageService *services.MessageService, groupService *services.GroupService) http.Handler {
+func SetupRoutes(cfg *config.Config, logger *logger.Logger, sessionService *usecases.SessionService, messageService *usecases.MessageService, groupService *usecases.GroupService) http.Handler {
 	r := chi.NewRouter()
 
 	setupMiddlewares(r, cfg, logger)
@@ -26,7 +26,7 @@ func SetupRoutes(cfg *config.Config, logger *logger.Logger, sessionService *serv
 	return r
 }
 
-func setupAllRoutes(r *chi.Mux, appLogger *logger.Logger, sessionService *services.SessionService, messageService *services.MessageService, groupService *services.GroupService) {
+func setupAllRoutes(r *chi.Mux, appLogger *logger.Logger, sessionService *usecases.SessionService, messageService *usecases.MessageService, groupService *usecases.GroupService) {
 	r.Route("/sessions", func(r chi.Router) {
 
 		setupSessionRoutes(r, sessionService, appLogger)

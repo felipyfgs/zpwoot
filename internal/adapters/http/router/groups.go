@@ -4,11 +4,11 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"zpwoot/internal/adapters/http/handler"
-	"zpwoot/internal/services"
+	"zpwoot/internal/usecases"
 	"zpwoot/platform/logger"
 )
 
-func setupGroupRoutes(r chi.Router, groupService *services.GroupService, sessionService *services.SessionService, appLogger *logger.Logger) {
+func setupGroupRoutes(r chi.Router, groupService *usecases.GroupService, sessionService *usecases.SessionService, appLogger *logger.Logger) {
 	groupHandler := handler.NewGroupHandler(groupService, sessionService, appLogger)
 
 	r.Route("/{sessionId}/groups", func(r chi.Router) {

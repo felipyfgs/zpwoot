@@ -12,11 +12,11 @@ import (
 
 type WebhookHandler struct {
 	*shared.BaseHandler
-	sessionService *services.SessionService
+	sessionService *usecases.SessionService
 }
 
 func NewWebhookHandler(
-	sessionService *services.SessionService,
+	sessionService *usecases.SessionService,
 	logger *logger.Logger,
 ) *WebhookHandler {
 	return &WebhookHandler{

@@ -11,7 +11,6 @@ import (
 	"github.com/lib/pq"
 
 	"zpwoot/internal/core/messaging"
-	"zpwoot/internal/core/shared/errors"
 	"zpwoot/platform/logger"
 )
 
@@ -72,7 +71,7 @@ func (r *MessageRepository) Create(ctx context.Context, message *messaging.Messa
 			switch pqErr.Code {
 			case "23505":
 				if pqErr.Constraint == "idx_zp_message_unique_zp" {
-					return errors.ErrAlreadyExists
+					return messaging.ErrMessageAlreadyExists
 				}
 			case "23503":
 				return fmt.Errorf("session not found")
@@ -96,7 +95,7 @@ func (r *MessageRepository) GetByID(ctx context.Context, id uuid.UUID) (*messagi
 	err := r.db.GetContext(ctx, &model, query, id.String())
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.ErrNotFound
+			return nil, messaging.ErrMessageNotFound
 		}
 		return nil, fmt.Errorf("failed to get message by ID: %w", err)
 	}
@@ -111,7 +110,7 @@ func (r *MessageRepository) GetByZpMessageID(ctx context.Context, sessionID uuid
 	err := r.db.GetContext(ctx, &model, query, sessionID.String(), zpMessageID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.ErrNotFound
+			return nil, messaging.ErrMessageNotFound
 		}
 		return nil, fmt.Errorf("failed to get message by zp message ID: %w", err)
 	}
@@ -162,7 +161,7 @@ func (r *MessageRepository) Update(ctx context.Context, message *messaging.Messa
 	}
 
 	if rowsAffected == 0 {
-		return errors.ErrNotFound
+		return messaging.ErrMessageNotFound
 	}
 
 	return nil
@@ -181,7 +180,7 @@ func (r *MessageRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	}
 
 	if rowsAffected == 0 {
-		return errors.ErrNotFound
+		return messaging.ErrMessageNotFound
 	}
 
 	return nil
@@ -271,7 +270,7 @@ func (r *MessageRepository) GetByCwMessageID(ctx context.Context, cwMessageID in
 	err := r.db.GetContext(ctx, &model, query, cwMessageID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.ErrNotFound
+			return nil, messaging.ErrMessageNotFound
 		}
 		return nil, fmt.Errorf("failed to get message by cw message ID: %w", err)
 	}
@@ -360,7 +359,7 @@ func (r *MessageRepository) UpdateSyncStatus(ctx context.Context, id uuid.UUID, 
 	}
 
 	if rowsAffected == 0 {
-		return errors.ErrNotFound
+		return messaging.ErrMessageNotFound
 	}
 
 	return nil
@@ -442,7 +441,7 @@ func (r *MessageRepository) MarkAsSynced(ctx context.Context, id uuid.UUID, cwMe
 	}
 
 	if rowsAffected == 0 {
-		return errors.ErrNotFound
+		return messaging.ErrMessageNotFound
 	}
 
 	return nil
@@ -469,7 +468,7 @@ func (r *MessageRepository) MarkAsFailed(ctx context.Context, id uuid.UUID, erro
 	}
 
 	if rowsAffected == 0 {
-		return errors.ErrNotFound
+		return messaging.ErrMessageNotFound
 	}
 
 	return nil

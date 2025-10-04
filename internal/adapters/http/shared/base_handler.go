@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"zpwoot/internal/core/session"
-	"zpwoot/internal/services/shared/validation"
+	"zpwoot/internal/usecases/shared/validation"
 	"zpwoot/platform/logger"
 )
 

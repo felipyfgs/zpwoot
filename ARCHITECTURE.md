@@ -35,10 +35,10 @@ zpwoot/
 │   │   ├── group/               # Group domain (WhatsApp groups)
 │   │   ├── contact/             # Contact domain (Contact management)
 │   │   └── shared/              # Shared domain concepts
-│   ├── services/                # 🔧 Application Layer (Use Cases)
-│   │   ├── session_service.go   # Session orchestration
-│   │   ├── message_service.go   # Message orchestration
-│   │   ├── group_service.go     # Group orchestration
+│   ├── usecases/                # 🔧 Application Layer (Use Cases)
+│   │   ├── session_usecase.go   # Session orchestration
+│   │   ├── message_usecase.go   # Message orchestration
+│   │   ├── group_usecase.go     # Group orchestration
 │   │   └── shared/              # Shared application services
 │   └── adapters/                # 🔌 Infrastructure Layer
 │       ├── repository/          # Data persistence implementations
@@ -185,29 +185,29 @@ func (s *Service) CreateSession(req *CreateSessionRequest) (*Session, error) {
 **Imports Válidos/Inválidos:**
 ```go
 // ✅ PERMITIDO
-import "zpwoot/internal/core/shared/errors"
 import "zpwoot/internal/core/session"
+import "zpwoot/internal/core/messaging"
 import "github.com/google/uuid"           // Bibliotecas básicas OK
 
 // ❌ PROIBIDO
 import "zpwoot/internal/adapters/repository"
-import "zpwoot/internal/services"
+import "zpwoot/internal/usecases"
 import "zpwoot/platform/database"
 import "github.com/gin-gonic/gin"         // Frameworks externos
 import "github.com/jmoiron/sqlx"          // Bibliotecas de infraestrutura
 ```
 
-### 🔧 **SERVICES - Application Layer (Camada de Aplicação)**
+### 🔧 **USECASES - Application Layer (Camada de Aplicação)**
 
 **Responsabilidade:** Orquestra use cases, coordena operações entre múltiplos domínios, gerencia transações e implementa a lógica de aplicação. Atua como uma fachada entre a interface externa e o core domain.
 
 **Estrutura Detalhada:**
 ```
-internal/services/
-├── session_service.go          # 📱 Session use cases orchestration
-├── message_service.go          # 💬 Message use cases orchestration
-├── group_service.go            # 👥 Group use cases orchestration
-├── chatwoot_service.go         # 🔗 Chatwoot integration orchestration
+internal/usecases/
+├── session_usecase.go          # 📱 Session use cases orchestration
+├── message_usecase.go          # 💬 Message use cases orchestration
+├── group_usecase.go            # 👥 Group use cases orchestration
+├── chatwoot_usecase.go         # 🔗 Chatwoot integration orchestration
 └── shared/                     # 🔗 Shared application services
     ├── validation/             # Input validation logic
     │   └── validator.go        # Struct validation, custom rules
@@ -219,30 +219,30 @@ internal/services/
         └── response_contracts.go # Common response formats
 ```
 
-### **Services Implementados (Application Services)**
+### **Use Cases Implementados (Application Services)**
 
-#### **1. SessionService** 📱
+#### **1. SessionUseCase** 📱
 **Responsabilidade**: Orquestração completa de use cases de sessão
 - **Use Cases**: CreateSession, ConnectSession, DisconnectSession, GetSession
 - **Coordenação**: Session domain + WhatsApp gateway
 - **Validação**: Session name, proxy config, connection parameters
 - **Observabilidade**: Logging estruturado de todas as operações
 
-#### **2. MessageService** 💬
+#### **2. MessageUseCase** 💬
 **Responsabilidade**: Orquestração de mensagens e sincronização
 - **Use Cases**: SendMessage, GetMessages, SyncWithChatwoot
 - **Coordenação**: Messaging domain + Session domain + Chatwoot integration
 - **Tipos Suportados**: Text, Media, Document, Interactive messages
 - **Sync Logic**: Bidirectional sync com Chatwoot
 
-#### **3. GroupService** 👥
+#### **3. GroupUseCase** 👥
 **Responsabilidade**: Orquestração de operações de grupo
 - **Use Cases**: CreateGroup, ManageParticipants, UpdateSettings
 - **Coordenação**: Group domain + Session domain
 - **Validação**: Permissions, participant limits, group settings
 - **Business Logic**: Admin permissions, participant management
 
-#### **4. ChatwootService** 🔗
+#### **4. ChatwootUseCase** 🔗
 **Responsabilidade**: Integração completa com Chatwoot
 - **Use Cases**: ConfigureIntegration, SyncMessages, ManageConversations
 - **Coordenação**: Messaging domain + external Chatwoot API
@@ -279,7 +279,7 @@ internal/services/
 
 **Exemplo de Implementação:**
 ```go
-// ✅ CORRETO - Application Service
+// ✅ CORRETO - Application Use Case
 type SessionService struct {
     sessionCore *session.Service     // Core domain service
     logger      *logger.Logger       // Observability
@@ -692,28 +692,28 @@ cmd → platform → adapters → services → core
 ### ✅ **Imports Permitidos**
 
 ```go
-// Core pode importar
-import "zpwoot/internal/core/shared"
+// Core pode importar outros módulos do core
 import "zpwoot/internal/core/session"
+import "zpwoot/internal/core/messaging"
 
-// Services pode importar
+// UseCases pode importar
 import "zpwoot/internal/core/session"
-import "zpwoot/internal/core/shared"
+import "zpwoot/internal/core/messaging"
 
 // Adapters pode importar
 import "zpwoot/internal/core/session"
-import "zpwoot/internal/services"
+import "zpwoot/internal/usecases"
 import "github.com/gin-gonic/gin"
 
 // Platform pode importar
 import "zpwoot/internal/adapters"
-import "zpwoot/internal/services"
+import "zpwoot/internal/usecases"
 import "zpwoot/internal/core"
 
 // CMD pode importar
 import "zpwoot/platform"
 import "zpwoot/internal/adapters"
-import "zpwoot/internal/services"
+import "zpwoot/internal/usecases"
 import "zpwoot/internal/core"
 ```
 
@@ -721,12 +721,12 @@ import "zpwoot/internal/core"
 
 ```go
 // Core NÃO pode importar
-import "zpwoot/internal/services"        // ❌
+import "zpwoot/internal/usecases"        // ❌
 import "zpwoot/internal/adapters"        // ❌
 import "zpwoot/platform"                 // ❌
 import "github.com/gin-gonic/gin"        // ❌
 
-// Services NÃO pode importar
+// UseCases NÃO pode importar
 import "zpwoot/internal/adapters"        // ❌
 import "zpwoot/platform"                 // ❌
 
@@ -738,7 +738,7 @@ import "zpwoot/platform"                 // ❌ (exceto para DI)
 
 ### **Testes Unitários**
 - **Core:** Testa lógica de negócio isoladamente
-- **Services:** Testa orquestração com mocks
+- **UseCases:** Testa orquestração com mocks
 - **Adapters:** Testa implementações específicas
 
 ### **Testes de Integração**
@@ -758,9 +758,9 @@ type Container struct {
     // Core
     SessionService *session.Service
     
-    // Services
-    SessionAppService *services.SessionService
-    
+    // UseCases
+    SessionAppService *usecases.SessionService
+
     // Adapters
     SessionRepo session.Repository
     WhatsAppGW  session.WhatsAppGateway
@@ -778,7 +778,7 @@ func NewContainer() *Container {
     sessionCore := session.NewService(sessionRepo, whatsappGW)
     
     // 3. Criar application services
-    sessionApp := services.NewSessionService(sessionCore)
+    sessionApp := usecases.NewSessionService(sessionCore)
     
     return &Container{...}
 }
@@ -788,8 +788,8 @@ func NewContainer() *Container {
 
 ### **Acoplamento**
 - Core: 0 dependências externas
-- Services: Apenas core
-- Adapters: Core + Services (via DI)
+- UseCases: Apenas core
+- Adapters: Core + UseCases (via DI)
 
 ### **Coesão**
 - Cada módulo tem responsabilidade única
@@ -819,7 +819,7 @@ func (h *HTTPHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
 }
 ```
 
-3. **Services acessando adapters diretamente**
+3. **UseCases acessando adapters diretamente**
 ```go
 // ❌ ERRADO
 func (s *SessionService) CreateSession() {
@@ -830,7 +830,7 @@ func (s *SessionService) CreateSession() {
 ## ✅ **Checklist de Conformidade**
 
 - [ ] Core não importa nenhuma camada externa
-- [ ] Services só importa core
+- [ ] UseCases só importa core
 - [ ] Adapters implementam interfaces do core
 - [ ] Todas as dependências são injetadas
 - [ ] Lógica de negócio está no core
@@ -889,9 +889,9 @@ type Repository interface {
 }
 ```
 
-2. **Criar service de aplicação:**
+2. **Criar use case de aplicação:**
 ```go
-// services/newsletter_service.go
+// usecases/newsletter_usecase.go
 type NewsletterService struct {
     newsletterCore *newsletter.Service
 }
@@ -916,7 +916,7 @@ type NewsletterHandler struct {
 2. **Extrair para core**
 3. **Criar interfaces**
 4. **Implementar adapters**
-5. **Criar services**
+5. **Criar use cases**
 6. **Atualizar DI**
 
 ## 🎓 Treinamento da Equipe

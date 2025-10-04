@@ -4,11 +4,11 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"zpwoot/internal/adapters/http/handler"
-	"zpwoot/internal/services"
+	"zpwoot/internal/usecases"
 	"zpwoot/platform/logger"
 )
 
-func setupWebhookRoutes(r chi.Router, sessionService *services.SessionService, appLogger *logger.Logger) {
+func setupWebhookRoutes(r chi.Router, sessionService *usecases.SessionService, appLogger *logger.Logger) {
 	webhookHandler := handler.NewWebhookHandler(sessionService, appLogger)
 
 	r.Route("/{sessionId}/webhook", func(r chi.Router) {

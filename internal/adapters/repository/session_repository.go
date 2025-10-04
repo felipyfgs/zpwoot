@@ -12,7 +12,6 @@ import (
 	"github.com/lib/pq"
 
 	"zpwoot/internal/core/session"
-	"zpwoot/internal/core/shared/errors"
 )
 
 type SessionRepository struct {
@@ -64,7 +63,7 @@ func (r *SessionRepository) Create(ctx context.Context, sess *session.Session) e
 			switch pqErr.Code {
 			case "23505":
 				if pqErr.Constraint == "zpSessions_name_key" {
-					return errors.ErrSessionIDAlreadyExists
+					return session.ErrSessionAlreadyExists
 				}
 			}
 		}
@@ -81,7 +80,7 @@ func (r *SessionRepository) GetByID(ctx context.Context, id uuid.UUID) (*session
 	err := r.db.GetContext(ctx, &model, query, id.String())
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.ErrSessionNotFound
+			return nil, session.ErrSessionNotFound
 		}
 		return nil, fmt.Errorf("failed to get session by ID: %w", err)
 	}
@@ -118,7 +117,7 @@ func (r *SessionRepository) Update(ctx context.Context, sess *session.Session) e
 			switch pqErr.Code {
 			case "23505":
 				if pqErr.Constraint == "zpSessions_name_key" {
-					return errors.ErrSessionIDAlreadyExists
+					return session.ErrSessionAlreadyExists
 				}
 			}
 		}
@@ -131,7 +130,7 @@ func (r *SessionRepository) Update(ctx context.Context, sess *session.Session) e
 	}
 
 	if rowsAffected == 0 {
-		return errors.ErrSessionNotFound
+		return session.ErrSessionNotFound
 	}
 
 	return nil
@@ -151,7 +150,7 @@ func (r *SessionRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	}
 
 	if rowsAffected == 0 {
-		return errors.ErrSessionNotFound
+		return session.ErrSessionNotFound
 	}
 
 	return nil
@@ -245,7 +244,7 @@ func (r *SessionRepository) UpdateConnectionStatus(ctx context.Context, id uuid.
 	}
 
 	if rowsAffected == 0 {
-		return errors.ErrSessionNotFound
+		return session.ErrSessionNotFound
 	}
 
 	return nil
@@ -265,7 +264,7 @@ func (r *SessionRepository) UpdateLastSeen(ctx context.Context, id uuid.UUID, la
 	}
 
 	if rowsAffected == 0 {
-		return errors.ErrSessionNotFound
+		return session.ErrSessionNotFound
 	}
 
 	return nil
@@ -291,7 +290,7 @@ func (r *SessionRepository) UpdateQRCode(ctx context.Context, id uuid.UUID, qrCo
 	}
 
 	if rowsAffected == 0 {
-		return errors.ErrSessionNotFound
+		return session.ErrSessionNotFound
 	}
 
 	return nil
@@ -321,7 +320,7 @@ func (r *SessionRepository) UpdateDeviceJID(ctx context.Context, id uuid.UUID, d
 	}
 
 	if rowsAffected == 0 {
-		return errors.ErrSessionNotFound
+		return session.ErrSessionNotFound
 	}
 
 	return nil
@@ -347,7 +346,7 @@ func (r *SessionRepository) ClearQRCode(ctx context.Context, id uuid.UUID) error
 	}
 
 	if rowsAffected == 0 {
-		return errors.ErrSessionNotFound
+		return session.ErrSessionNotFound
 	}
 
 	return nil

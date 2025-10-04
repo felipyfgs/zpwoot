@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"zpwoot/internal/adapters/http/router"
-	"zpwoot/internal/services"
+	"zpwoot/internal/usecases"
 	"zpwoot/platform/config"
 	"zpwoot/platform/logger"
 )
@@ -16,17 +16,17 @@ type Server struct {
 	config         *config.Config
 	logger         *logger.Logger
 	httpServer     *http.Server
-	sessionService *services.SessionService
-	messageService *services.MessageService
-	groupService   *services.GroupService
+	sessionService *usecases.SessionService
+	messageService *usecases.MessageService
+	groupService   *usecases.GroupService
 }
 
 type Config struct {
 	Config         *config.Config
 	Logger         *logger.Logger
-	SessionService *services.SessionService
-	MessageService *services.MessageService
-	GroupService   *services.GroupService
+	SessionService *usecases.SessionService
+	MessageService *usecases.MessageService
+	GroupService   *usecases.GroupService
 }
 
 func New(cfg *Config) *Server {

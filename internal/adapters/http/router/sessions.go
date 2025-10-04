@@ -4,11 +4,11 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"zpwoot/internal/adapters/http/handler"
-	"zpwoot/internal/services"
+	"zpwoot/internal/usecases"
 	"zpwoot/platform/logger"
 )
 
-func setupSessionRoutes(r chi.Router, sessionService *services.SessionService, appLogger *logger.Logger) {
+func setupSessionRoutes(r chi.Router, sessionService *usecases.SessionService, appLogger *logger.Logger) {
 	sessionHandler := handler.NewSessionHandler(sessionService, appLogger)
 
 	r.Post("/create", sessionHandler.CreateSession)
