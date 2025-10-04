@@ -77,6 +77,10 @@ func (g *Gateway) CreateSession(ctx context.Context, sessionId uuid.UUID) error 
 		return fmt.Errorf("failed to create WhatsApp client for session: %s", sessionId.String())
 	}
 
+	// Create MyClient and register it
+	myClient := NewMyClient(sessionId, client, g.db, g, g.logger)
+	g.sessions[sessionId] = myClient
+	g.sessionUUIDs[sessionId] = sessionId
 	g.killChannels[sessionId] = make(chan bool, 1)
 
 	g.logger.InfoWithFields("WhatsApp session created successfully", map[string]interface{}{
@@ -151,17 +155,19 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionId uuid.UUID) error
 		"session_name": sessionId,
 	})
 
-	sessionUUID, exists := g.sessionUUIDs[sessionId]
-	if !exists {
-		return fmt.Errorf("session UUID not registered: %s", sessionId)
+	// Register session UUID if not exists
+	g.mutex.Lock()
+	if _, exists := g.sessionUUIDs[sessionId]; !exists {
+		g.sessionUUIDs[sessionId] = sessionId
 	}
+	g.mutex.Unlock()
 
 	var deviceJID string
 	query := `SELECT COALESCE("deviceJid", '') FROM "zpSessions" WHERE id = $1`
-	err := g.db.Get(&deviceJID, query, sessionUUID.String())
+	err := g.db.Get(&deviceJID, query, sessionId.String())
 	if err != nil {
 		g.logger.ErrorWithFields("Failed to get device JID from database", map[string]interface{}{
-			"session_id":   sessionUUID.String(),
+			"session_id":   sessionId.String(),
 			"session_name": sessionId,
 			"error":        err.Error(),
 		})
@@ -173,7 +179,7 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionId uuid.UUID) error
 		jid, err := g.validator.ParseJID(deviceJID)
 		if err != nil {
 			g.logger.ErrorWithFields("Invalid device JID in database", map[string]interface{}{
-				"session_id":   sessionUUID.String(),
+				"session_id":   sessionId.String(),
 				"session_name": sessionId,
 				"device_jid":   deviceJID,
 				"error":        err.Error(),
@@ -184,7 +190,7 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionId uuid.UUID) error
 		_, err = g.container.GetDevice(ctx, jid)
 		if err != nil {
 			g.logger.ErrorWithFields("Failed to get device store", map[string]interface{}{
-				"session_id":   sessionUUID.String(),
+				"session_id":   sessionId.String(),
 				"session_name": sessionId,
 				"device_jid":   deviceJID,
 				"error":        err.Error(),
@@ -193,7 +199,7 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionId uuid.UUID) error
 		}
 
 		g.logger.InfoWithFields("Device store validated", map[string]interface{}{
-			"session_id":   sessionUUID.String(),
+			"session_id":   sessionId.String(),
 			"session_name": sessionId,
 			"device_jid":   deviceJID,
 		})
