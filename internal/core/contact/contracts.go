@@ -6,7 +6,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// Repository interface for contact data persistence
 type Repository interface {
 	Create(ctx context.Context, contact *Contact) error
 	GetByID(ctx context.Context, id uuid.UUID) (*Contact, error)
@@ -42,7 +41,6 @@ type Repository interface {
 	CleanupFailedContacts(ctx context.Context, olderThanHours int) (int64, error)
 }
 
-// ContactService interface for contact business logic
 type ContactService interface {
 	CreateContact(ctx context.Context, req *CreateContactRequest) (*Contact, error)
 	GetContact(ctx context.Context, id uuid.UUID) (*Contact, error)
@@ -64,7 +62,6 @@ type ContactService interface {
 	ReprocessFailedContacts(ctx context.Context, sessionID uuid.UUID) (int64, error)
 }
 
-// WhatsAppGateway interface for WhatsApp contact operations
 type WhatsAppGateway interface {
 	GetContactInfo(ctx context.Context, sessionID uuid.UUID, jid string) (*WhatsAppContact, error)
 	GetContactList(ctx context.Context, sessionID uuid.UUID) ([]*WhatsAppContact, error)
@@ -78,7 +75,6 @@ type WhatsAppGateway interface {
 	SyncFromChatwoot(ctx context.Context, cwContactID int) (*Contact, error)
 }
 
-// EventPublisher interface for contact events
 type EventPublisher interface {
 	PublishContactCreated(ctx context.Context, contact *Contact) error
 	PublishContactUpdated(ctx context.Context, contact *Contact) error
@@ -91,7 +87,6 @@ type EventPublisher interface {
 	PublishSyncFailed(ctx context.Context, sessionID uuid.UUID, reason string) error
 }
 
-// ContactValidator interface for contact validation
 type ContactValidator interface {
 	ValidateCreateRequest(req *CreateContactRequest) error
 	ValidateUpdateRequest(req *UpdateContactRequest) error
@@ -102,19 +97,17 @@ type ContactValidator interface {
 	ValidateSyncStatus(status string) error
 }
 
-// WhatsAppContact represents contact data from WhatsApp
 type WhatsAppContact struct {
-	JID       string `json:"jid"`
-	Name      string `json:"name"`
-	PushName  string `json:"push_name"`
-	ShortName string `json:"short_name"`
-	Avatar    string `json:"avatar"`
-	IsGroup   bool   `json:"is_group"`
-	IsBusiness bool  `json:"is_business"`
-	IsBlocked bool   `json:"is_blocked"`
+	JID        string `json:"jid"`
+	Name       string `json:"name"`
+	PushName   string `json:"push_name"`
+	ShortName  string `json:"short_name"`
+	Avatar     string `json:"avatar"`
+	IsGroup    bool   `json:"is_group"`
+	IsBusiness bool   `json:"is_business"`
+	IsBlocked  bool   `json:"is_blocked"`
 }
 
-// ContactPresence represents contact presence information
 type ContactPresence struct {
 	JID        string `json:"jid"`
 	IsOnline   bool   `json:"is_online"`

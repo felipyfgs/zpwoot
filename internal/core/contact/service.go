@@ -10,13 +10,11 @@ import (
 	"github.com/google/uuid"
 )
 
-// Service implements ContactService interface
 type Service struct {
 	repository Repository
 	validator  ContactValidator
 }
 
-// NewService creates a new contact service
 func NewService(repo Repository, validator ContactValidator) *Service {
 	return &Service{
 		repository: repo,
@@ -24,13 +22,11 @@ func NewService(repo Repository, validator ContactValidator) *Service {
 	}
 }
 
-// CreateContact creates a new contact
 func (s *Service) CreateContact(ctx context.Context, req *CreateContactRequest) (*Contact, error) {
 	if err := s.validator.ValidateCreateRequest(req); err != nil {
 		return nil, fmt.Errorf("invalid create request: %w", err)
 	}
 
-	// Check if contact already exists
 	exists, err := s.repository.ExistsByZpJID(ctx, req.SessionID, req.ZpJID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check contact existence: %w", err)
@@ -64,7 +60,6 @@ func (s *Service) CreateContact(ctx context.Context, req *CreateContactRequest) 
 	return contact, nil
 }
 
-// GetContact retrieves a contact by ID
 func (s *Service) GetContact(ctx context.Context, id uuid.UUID) (*Contact, error) {
 	contact, err := s.repository.GetByID(ctx, id)
 	if err != nil {
@@ -74,7 +69,6 @@ func (s *Service) GetContact(ctx context.Context, id uuid.UUID) (*Contact, error
 	return contact, nil
 }
 
-// UpdateContact updates an existing contact
 func (s *Service) UpdateContact(ctx context.Context, req *UpdateContactRequest) (*Contact, error) {
 	if err := s.validator.ValidateUpdateRequest(req); err != nil {
 		return nil, fmt.Errorf("invalid update request: %w", err)
@@ -85,7 +79,6 @@ func (s *Service) UpdateContact(ctx context.Context, req *UpdateContactRequest) 
 		return nil, fmt.Errorf("failed to get contact: %w", err)
 	}
 
-	// Update fields
 	contact.ZpName = req.ZpName
 	contact.ZpPushName = req.ZpPushName
 	contact.ZpShortName = req.ZpShortName
@@ -104,7 +97,6 @@ func (s *Service) UpdateContact(ctx context.Context, req *UpdateContactRequest) 
 	return contact, nil
 }
 
-// DeleteContact deletes a contact
 func (s *Service) DeleteContact(ctx context.Context, id uuid.UUID) error {
 	if err := s.repository.Delete(ctx, id); err != nil {
 		return fmt.Errorf("failed to delete contact: %w", err)
@@ -113,7 +105,6 @@ func (s *Service) DeleteContact(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-// UpdateSyncStatus updates the sync status of a contact
 func (s *Service) UpdateSyncStatus(ctx context.Context, id uuid.UUID, status SyncStatus, cwContactID, cwConversationID *int) error {
 	if !IsValidSyncStatus(string(status)) {
 		return ErrInvalidSyncStatusValue(string(status))
@@ -126,7 +117,6 @@ func (s *Service) UpdateSyncStatus(ctx context.Context, id uuid.UUID, status Syn
 	return nil
 }
 
-// MarkAsSynced marks a contact as synced
 func (s *Service) MarkAsSynced(ctx context.Context, id uuid.UUID, cwContactID, cwConversationID int) error {
 	if err := s.repository.MarkAsSynced(ctx, id, cwContactID, cwConversationID); err != nil {
 		return fmt.Errorf("failed to mark contact as synced: %w", err)
@@ -135,7 +125,6 @@ func (s *Service) MarkAsSynced(ctx context.Context, id uuid.UUID, cwContactID, c
 	return nil
 }
 
-// MarkAsFailed marks a contact sync as failed
 func (s *Service) MarkAsFailed(ctx context.Context, id uuid.UUID, errorReason string) error {
 	if err := s.repository.MarkAsFailed(ctx, id, errorReason); err != nil {
 		return fmt.Errorf("failed to mark contact as failed: %w", err)
@@ -144,7 +133,6 @@ func (s *Service) MarkAsFailed(ctx context.Context, id uuid.UUID, errorReason st
 	return nil
 }
 
-// ListContacts lists contacts with filtering
 func (s *Service) ListContacts(ctx context.Context, req *ListContactsRequest) ([]*Contact, int64, error) {
 	if err := s.validateListRequest(req); err != nil {
 		return nil, 0, fmt.Errorf("invalid list request: %w", err)
@@ -158,7 +146,6 @@ func (s *Service) ListContacts(ctx context.Context, req *ListContactsRequest) ([
 	return contacts, total, nil
 }
 
-// GetPendingSyncContacts gets contacts pending sync
 func (s *Service) GetPendingSyncContacts(ctx context.Context, sessionID uuid.UUID, limit int) ([]*Contact, error) {
 	contacts, err := s.repository.GetPendingSyncContacts(ctx, sessionID, limit)
 	if err != nil {
@@ -168,7 +155,6 @@ func (s *Service) GetPendingSyncContacts(ctx context.Context, sessionID uuid.UUI
 	return contacts, nil
 }
 
-// GetStats gets contact statistics
 func (s *Service) GetStats(ctx context.Context) (*ContactStats, error) {
 	stats, err := s.repository.GetStats(ctx)
 	if err != nil {
@@ -178,7 +164,6 @@ func (s *Service) GetStats(ctx context.Context) (*ContactStats, error) {
 	return stats, nil
 }
 
-// GetStatsBySession gets contact statistics by session
 func (s *Service) GetStatsBySession(ctx context.Context, sessionID uuid.UUID) (*ContactStats, error) {
 	stats, err := s.repository.GetStatsBySession(ctx, sessionID)
 	if err != nil {
@@ -188,7 +173,6 @@ func (s *Service) GetStatsBySession(ctx context.Context, sessionID uuid.UUID) (*
 	return stats, nil
 }
 
-// validateListRequest validates list contacts request
 func (s *Service) validateListRequest(req *ListContactsRequest) error {
 	if req.Limit <= 0 {
 		req.Limit = 50
@@ -209,15 +193,12 @@ func (s *Service) validateListRequest(req *ListContactsRequest) error {
 	return nil
 }
 
-// DefaultValidator implements ContactValidator interface
 type DefaultValidator struct{}
 
-// NewDefaultValidator creates a new default validator
 func NewDefaultValidator() ContactValidator {
 	return &DefaultValidator{}
 }
 
-// ValidateCreateRequest validates create contact request
 func (v *DefaultValidator) ValidateCreateRequest(req *CreateContactRequest) error {
 	if req == nil {
 		return NewContactError(ErrCodeInvalidContactData, "request cannot be nil", nil)
@@ -246,7 +227,6 @@ func (v *DefaultValidator) ValidateCreateRequest(req *CreateContactRequest) erro
 	return nil
 }
 
-// ValidateUpdateRequest validates update contact request
 func (v *DefaultValidator) ValidateUpdateRequest(req *UpdateContactRequest) error {
 	if req == nil {
 		return NewContactError(ErrCodeInvalidContactData, "request cannot be nil", nil)
@@ -265,7 +245,6 @@ func (v *DefaultValidator) ValidateUpdateRequest(req *UpdateContactRequest) erro
 	return nil
 }
 
-// ValidateContact validates contact entity
 func (v *DefaultValidator) ValidateContact(contact *Contact) error {
 	if contact == nil {
 		return NewContactError(ErrCodeInvalidContactData, "contact cannot be nil", nil)
@@ -292,16 +271,13 @@ func (v *DefaultValidator) ValidateContact(contact *Contact) error {
 	return nil
 }
 
-// ValidatePhoneNumber validates phone number format
 func (v *DefaultValidator) ValidatePhoneNumber(phone string) error {
 	if phone == "" {
-		return nil // Phone number is optional
+		return nil
 	}
 
-	// Remove all non-digit characters
 	cleaned := regexp.MustCompile(`\D`).ReplaceAllString(phone, "")
-	
-	// Check if it's a valid phone number (at least 10 digits, max 15)
+
 	if len(cleaned) < 10 || len(cleaned) > 15 {
 		return ErrInvalidPhoneNumberFormat(phone)
 	}
@@ -309,10 +285,9 @@ func (v *DefaultValidator) ValidatePhoneNumber(phone string) error {
 	return nil
 }
 
-// ValidateEmail validates email format
 func (v *DefaultValidator) ValidateEmail(email string) error {
 	if email == "" {
-		return nil // Email is optional
+		return nil
 	}
 
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
@@ -323,13 +298,11 @@ func (v *DefaultValidator) ValidateEmail(email string) error {
 	return nil
 }
 
-// ValidateZpJID validates WhatsApp JID format
 func (v *DefaultValidator) ValidateZpJID(jid string) error {
 	if jid == "" {
 		return NewContactValidationError("zp_jid", "WhatsApp JID is required")
 	}
 
-	// WhatsApp JID format: number@s.whatsapp.net or groupid@g.us
 	jidPattern := `^[0-9]+@(s\.whatsapp\.net|g\.us)$`
 	matched, err := regexp.MatchString(jidPattern, jid)
 	if err != nil {
@@ -343,7 +316,6 @@ func (v *DefaultValidator) ValidateZpJID(jid string) error {
 	return nil
 }
 
-// ValidateSyncStatus validates sync status value
 func (v *DefaultValidator) ValidateSyncStatus(status string) error {
 	if !IsValidSyncStatus(status) {
 		return ErrInvalidSyncStatusValue(status)

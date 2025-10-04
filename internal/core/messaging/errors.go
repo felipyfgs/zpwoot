@@ -5,7 +5,6 @@ import (
 	"fmt"
 )
 
-// Domain-specific errors for messaging module
 var (
 	ErrMessageNotFound         = errors.New("message not found")
 	ErrMessageAlreadyExists    = errors.New("message already exists")
@@ -24,7 +23,6 @@ var (
 	ErrInvalidRecipient        = errors.New("invalid recipient")
 )
 
-// MessageError represents a domain-specific error for messaging operations
 type MessageError struct {
 	Code    string
 	Message string
@@ -46,7 +44,6 @@ func (e *MessageError) Unwrap() error {
 	return e.Cause
 }
 
-// NewMessageError creates a new messaging domain error
 func NewMessageError(code, message string, cause error) *MessageError {
 	return &MessageError{
 		Code:    code,
@@ -55,7 +52,6 @@ func NewMessageError(code, message string, cause error) *MessageError {
 	}
 }
 
-// NewMessageValidationError creates a new message validation error
 func NewMessageValidationError(field, message string) *MessageError {
 	return &MessageError{
 		Code:    "VALIDATION_ERROR",
@@ -64,7 +60,6 @@ func NewMessageValidationError(field, message string) *MessageError {
 	}
 }
 
-// Error codes for messaging operations
 const (
 	ErrCodeMessageNotFound         = "MESSAGE_NOT_FOUND"
 	ErrCodeMessageAlreadyExists    = "MESSAGE_ALREADY_EXISTS"
@@ -83,7 +78,6 @@ const (
 	ErrCodeInvalidRecipient        = "INVALID_RECIPIENT"
 )
 
-// Helper functions to create specific errors
 func ErrMessageNotFoundWithID(id string) *MessageError {
 	return NewMessageError(ErrCodeMessageNotFound, fmt.Sprintf("message with ID %s not found", id), nil)
 }

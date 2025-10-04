@@ -5,7 +5,6 @@ import (
 	"fmt"
 )
 
-// Domain-specific errors for session module
 var (
 	ErrSessionNotFound         = errors.New("session not found")
 	ErrSessionAlreadyExists    = errors.New("session already exists")
@@ -34,7 +33,6 @@ var (
 	ErrOperationTimeout        = errors.New("operation timed out")
 )
 
-// SessionError represents a domain-specific error for session operations
 type SessionError struct {
 	Code    string
 	Message string
@@ -56,7 +54,6 @@ func (e *SessionError) Unwrap() error {
 	return e.Cause
 }
 
-// NewSessionError creates a new session domain error
 func NewSessionError(code, message string, cause error) *SessionError {
 	return &SessionError{
 		Code:    code,
@@ -65,7 +62,6 @@ func NewSessionError(code, message string, cause error) *SessionError {
 	}
 }
 
-// NewSessionValidationError creates a new session validation error
 func NewSessionValidationError(field, message string) *SessionError {
 	return &SessionError{
 		Code:    "VALIDATION_ERROR",
@@ -74,7 +70,6 @@ func NewSessionValidationError(field, message string) *SessionError {
 	}
 }
 
-// Error codes for session operations
 const (
 	ErrCodeSessionNotFound         = "SESSION_NOT_FOUND"
 	ErrCodeSessionAlreadyExists    = "SESSION_ALREADY_EXISTS"
@@ -96,7 +91,6 @@ const (
 	ErrCodeSessionTimeout          = "SESSION_TIMEOUT"
 )
 
-// Helper functions to create specific errors
 func ErrSessionNotFoundWithID(id string) *SessionError {
 	return NewSessionError(ErrCodeSessionNotFound, fmt.Sprintf("session with ID %s not found", id), nil)
 }

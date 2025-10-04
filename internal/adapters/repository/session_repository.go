@@ -88,8 +88,6 @@ func (r *SessionRepository) GetByID(ctx context.Context, id uuid.UUID) (*session
 	return r.fromModel(&model)
 }
 
-// GetByName removed - using GetByID with sessionId directly
-
 func (r *SessionRepository) Update(ctx context.Context, sess *session.Session) error {
 	model, err := r.toModel(sess)
 	if err != nil {

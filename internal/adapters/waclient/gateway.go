@@ -77,7 +77,6 @@ func (g *Gateway) CreateSession(ctx context.Context, sessionId uuid.UUID) error 
 		return fmt.Errorf("failed to create WhatsApp client for session: %s", sessionId.String())
 	}
 
-	// Create MyClient and register it
 	myClient := NewMyClient(sessionId, client, g.db, g, g.logger)
 	g.sessions[sessionId] = myClient
 	g.sessionUUIDs[sessionId] = sessionId
@@ -155,7 +154,6 @@ func (g *Gateway) RestoreSession(ctx context.Context, sessionId uuid.UUID) error
 		"session_name": sessionId,
 	})
 
-	// Register session UUID if not exists
 	g.mutex.Lock()
 	if _, exists := g.sessionUUIDs[sessionId]; !exists {
 		g.sessionUUIDs[sessionId] = sessionId

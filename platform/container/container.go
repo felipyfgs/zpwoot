@@ -18,8 +18,8 @@ import (
 	"zpwoot/internal/usecases"
 	"zpwoot/internal/usecases/shared/validation"
 
-	"zpwoot/internal/adapters/repository"
 	"zpwoot/internal/adapters/http"
+	"zpwoot/internal/adapters/repository"
 	"zpwoot/internal/adapters/waclient"
 
 	"zpwoot/platform/config"
@@ -222,5 +222,3 @@ func (a *sessionServiceAdapter) ClearQRCode(ctx context.Context, id uuid.UUID) e
 func (c *Container) GetGroupService() *usecases.GroupService {
 	return c.groupService
 }
-
-// GetSessionResolver removed - using sessionId directly

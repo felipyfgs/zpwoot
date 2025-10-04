@@ -10,7 +10,6 @@ import (
 	"zpwoot/internal/adapters/http/contracts"
 	"zpwoot/internal/core/messaging"
 	"zpwoot/internal/core/session"
-	"zpwoot/internal/usecases/shared/validation"
 	"zpwoot/platform/logger"
 )
 
@@ -18,25 +17,20 @@ type MessageService struct {
 	messagingCore *messaging.Service
 	sessionCore   *session.Service
 
-	logger    *logger.Logger
-	validator *validation.Validator
+	logger *logger.Logger
 }
 
 func NewMessageService(
 	messagingCore *messaging.Service,
 	sessionCore *session.Service,
 	logger *logger.Logger,
-	validator *validation.Validator,
 ) *MessageService {
 	return &MessageService{
 		messagingCore: messagingCore,
 		sessionCore:   sessionCore,
 		logger:        logger,
-		validator:     validator,
 	}
 }
-
-// validateSession removed - using sessionId directly
 
 type CreateMessageRequest struct {
 	SessionID   string `json:"session_id" validate:"required,uuid"`

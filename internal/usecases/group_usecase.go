@@ -21,14 +21,12 @@ func NewGroupService(
 	groupRepo group.Repository,
 	whatsappGateway group.WhatsAppGateway,
 	logger *logger.Logger,
-	validator *validation.Validator,
 ) *GroupService {
 	return &GroupService{
 		groupCore:       groupCore,
 		groupRepo:       groupRepo,
 		whatsappGateway: whatsappGateway,
 		logger:          logger,
-		validator:       validator,
 	}
 }
 
@@ -40,8 +38,8 @@ func (s *GroupService) CreateGroup(ctx context.Context, sessionID string, req *c
 		"has_description": req.Description != "",
 	})
 
-	if err := s.validator.ValidateStruct(req); err != nil {
-		return nil, fmt.Errorf("validation failed: %w", err)
+	if req.Name == "" {
+		return nil, fmt.Errorf("group name is required")
 	}
 
 	domainReq := &group.CreateGroupRequest{
@@ -183,8 +181,8 @@ func (s *GroupService) UpdateGroupParticipants(ctx context.Context, sessionID st
 		"participants": len(req.Participants),
 	})
 
-	if err := s.validator.ValidateStruct(req); err != nil {
-		return nil, fmt.Errorf("validation failed: %w", err)
+	if req.GroupJID == "" {
+		return nil, fmt.Errorf("group JID is required")
 	}
 
 	groupInfo, err := s.whatsappGateway.GetGroupInfo(ctx, sessionID, req.GroupJID)
@@ -244,8 +242,11 @@ func (s *GroupService) SetGroupName(ctx context.Context, sessionID string, req *
 		"new_name":   req.Name,
 	})
 
-	if err := s.validator.ValidateStruct(req); err != nil {
-		return nil, fmt.Errorf("validation failed: %w", err)
+	if req.GroupJID == "" {
+		return nil, fmt.Errorf("group JID is required")
+	}
+	if req.Name == "" {
+		return nil, fmt.Errorf("group name is required")
 	}
 
 	if err := s.groupCore.ValidateGroupName(req.Name); err != nil {
