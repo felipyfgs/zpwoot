@@ -226,6 +226,8 @@ issues:
 
 # Output configuration
 output:
+  # Enable sorting of results
+  sort-results: true
   # Order to use when sorting results
   sort-order:
     - linter
