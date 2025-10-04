@@ -6,7 +6,6 @@ import (
 
 	"zpwoot/internal/adapters/http/contracts"
 	"zpwoot/internal/core/group"
-	"zpwoot/internal/usecases/shared/validation"
 	"zpwoot/platform/logger"
 )
 
@@ -15,7 +14,6 @@ type GroupService struct {
 	groupRepo       group.Repository
 	whatsappGateway group.WhatsAppGateway
 	logger          *logger.Logger
-	validator       *validation.Validator
 }
 
 func NewGroupService(
