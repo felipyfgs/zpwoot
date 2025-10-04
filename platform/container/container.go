@@ -16,7 +16,6 @@ import (
 	"zpwoot/internal/core/session"
 
 	"zpwoot/internal/usecases"
-	"zpwoot/internal/usecases/shared/validation"
 
 	"zpwoot/internal/adapters/http"
 	"zpwoot/internal/adapters/repository"
@@ -111,19 +110,15 @@ func (c *Container) initialize() error {
 		c.messageRepo,
 	)
 
-	validator := validation.New()
-
 	c.sessionService = usecases.NewSessionService(
 		c.sessionCore,
 		c.logger,
-		validator,
 	)
 
 	c.messagingService = usecases.NewMessageService(
 		c.messagingCore,
 		c.sessionCore,
 		c.logger,
-		validator,
 	)
 
 	groupCore := group.NewService(nil)
@@ -133,7 +128,6 @@ func (c *Container) initialize() error {
 		nil,
 		nil,
 		c.logger,
-		validator,
 	)
 
 	sessionEventHandler := session.NewSessionEventHandler(c.sessionCore)

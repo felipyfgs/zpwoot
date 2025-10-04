@@ -10,21 +10,18 @@ import (
 	"github.com/google/uuid"
 
 	"zpwoot/internal/core/session"
-	"zpwoot/internal/usecases/shared/validation"
 	"zpwoot/platform/logger"
 )
 
 type BaseHandler struct {
-	logger    *logger.Logger
-	writer    *ResponseWriter
-	validator *validation.Validator
+	logger *logger.Logger
+	writer *ResponseWriter
 }
 
 func NewBaseHandler(logger *logger.Logger) *BaseHandler {
 	return &BaseHandler{
-		logger:    logger,
-		writer:    NewResponseWriter(logger),
-		validator: validation.New(),
+		logger: logger,
+		writer: NewResponseWriter(logger),
 	}
 }
 
@@ -36,9 +33,7 @@ func (h *BaseHandler) GetWriter() *ResponseWriter {
 	return h.writer
 }
 
-func (h *BaseHandler) GetValidator() *validation.Validator {
-	return h.validator
-}
+
 
 func (h *BaseHandler) GetSessionIDFromURL(r *http.Request) (uuid.UUID, error) {
 	sessionIDStr := chi.URLParam(r, "sessionId")
@@ -139,9 +134,7 @@ func (h *BaseHandler) ParseAndValidateJSON(r *http.Request, dest interface{}) er
 		return err
 	}
 
-	if err := h.validator.ValidateStruct(dest); err != nil {
-		return err
-	}
+	// Basic validation can be added here if needed
 
 	return nil
 }
