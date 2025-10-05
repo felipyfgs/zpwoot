@@ -191,3 +191,82 @@ type ContactInfo struct {
 	Phone string `json:"phone"`
 	VCard string `json:"vcard,omitempty"`
 }
+
+type SessionManagerAdapter struct {
+	client *WAClient
+}
+
+func NewSessionManagerAdapter(client *WAClient) *SessionManagerAdapter {
+	return &SessionManagerAdapter{
+		client: client,
+	}
+}
+
+func (s *SessionManagerAdapter) CreateSession(ctx context.Context, sessionID string) error {
+	config := &SessionConfig{
+		SessionID: sessionID,
+	}
+	_, err := s.client.CreateSession(ctx, config)
+	return err
+}
+
+func (s *SessionManagerAdapter) GetSessionStatus(ctx context.Context, sessionID string) (*output.SessionStatus, error) {
+	client, err := s.client.GetSession(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &output.SessionStatus{
+		SessionID:   client.SessionID,
+		Connected:   client.IsConnected(),
+		LoggedIn:    client.IsLoggedIn(),
+		DeviceJID:   client.GetDeviceJID(),
+		ConnectedAt: client.ConnectedAt,
+		LastSeen:    client.LastSeen,
+	}, nil
+}
+
+func (s *SessionManagerAdapter) DeleteSession(ctx context.Context, sessionID string) error {
+	return s.client.DeleteSession(ctx, sessionID)
+}
+
+func (s *SessionManagerAdapter) ConnectSession(ctx context.Context, sessionID string) error {
+	return s.client.ConnectSession(ctx, sessionID)
+}
+
+func (s *SessionManagerAdapter) DisconnectSession(ctx context.Context, sessionID string) error {
+	return s.client.DisconnectSession(ctx, sessionID)
+}
+
+func (s *SessionManagerAdapter) LogoutSession(ctx context.Context, sessionID string) error {
+	return s.client.LogoutSession(ctx, sessionID)
+}
+
+func (s *SessionManagerAdapter) IsConnected(ctx context.Context, sessionID string) bool {
+	client, err := s.client.GetSession(ctx, sessionID)
+	if err != nil {
+		return false
+	}
+	return client.IsConnected()
+}
+
+func (s *SessionManagerAdapter) IsLoggedIn(ctx context.Context, sessionID string) bool {
+	client, err := s.client.GetSession(ctx, sessionID)
+	if err != nil {
+		return false
+	}
+	return client.IsLoggedIn()
+}
+
+func (s *SessionManagerAdapter) GetQRCode(ctx context.Context, sessionID string) (*output.QRCodeInfo, error) {
+	qrEvent, err := s.client.GetQRCodeForSession(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &output.QRCodeInfo{
+		Code:      qrEvent.Code,
+		Base64:    qrEvent.Base64,
+		ExpiresAt: qrEvent.ExpiresAt,
+	}, nil
+}

@@ -55,7 +55,6 @@ type SessionUseCases interface {
 	RefreshQRCode(ctx context.Context, sessionID string) (*dto.QRCodeResponse, error)
 }
 
-// SessionManager defines the interface for session management at the adapter level
 type SessionManager interface {
 	CreateSession(ctx context.Context, sessionID string) error
 	GetSessionStatus(ctx context.Context, sessionID string) (*output.SessionStatus, error)
@@ -68,7 +67,6 @@ type SessionManager interface {
 	GetQRCode(ctx context.Context, sessionID string) (*output.QRCodeInfo, error)
 }
 
-// QRCodeInfo represents QR code information for input layer
 type QRCodeInfo struct {
 	Code      string    `json:"code"`
 	Base64    string    `json:"base64"`

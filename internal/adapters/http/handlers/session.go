@@ -4,25 +4,24 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"zpwoot/internal/adapters/logger"
-	"zpwoot/internal/adapters/waclient"
 	"zpwoot/internal/core/application/dto"
 	"zpwoot/internal/core/ports/input"
+	"zpwoot/internal/core/ports/output"
 
 	"github.com/go-chi/chi/v5"
 )
 
 type SessionHandler struct {
-	useCases input.SessionUseCases
-	waClient *waclient.WAClient
-	logger   *logger.Logger
+	useCases       input.SessionUseCases
+	sessionManager input.SessionManager
+	logger         output.Logger
 }
 
-func NewSessionHandler(useCases input.SessionUseCases, waClient *waclient.WAClient, logger *logger.Logger) *SessionHandler {
+func NewSessionHandler(useCases input.SessionUseCases, sessionManager input.SessionManager, logger output.Logger) *SessionHandler {
 	return &SessionHandler{
-		useCases: useCases,
-		waClient: waClient,
-		logger:   logger,
+		useCases:       useCases,
+		sessionManager: sessionManager,
+		logger:         logger,
 	}
 }
 

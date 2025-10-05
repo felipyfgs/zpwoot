@@ -8,14 +8,12 @@ import (
 	"zpwoot/internal/core/ports/output"
 )
 
-// Constants for QR code operations
 const (
 	QRWaitTimeout    = 1 * time.Second
 	QRRefreshTimeout = 10 * time.Second
 	QRCheckInterval  = 500 * time.Millisecond
 )
 
-// GetQRCodeForSession retrieves the QR code for a session
 func (wac *WAClient) GetQRCodeForSession(ctx context.Context, sessionID string) (*QREvent, error) {
 	client, err := wac.GetSession(ctx, sessionID)
 	if err != nil {
@@ -26,7 +24,6 @@ func (wac *WAClient) GetQRCodeForSession(ctx context.Context, sessionID string) 
 		return nil, &output.WhatsAppError{Code: "ALREADY_CONNECTED", Message: "session is already connected"}
 	}
 
-	// Return existing valid QR code if available
 	if wac.hasValidQRCode(client) {
 		return &QREvent{
 			Event:     "qr",
@@ -35,19 +32,16 @@ func (wac *WAClient) GetQRCodeForSession(ctx context.Context, sessionID string) 
 		}, nil
 	}
 
-	// Start connection process if not already in progress
 	if client.Status != session.StatusQRCode && client.Status != session.StatusConnecting {
 		if err := wac.ConnectSession(ctx, sessionID); err != nil {
 			return nil, err
 		}
 
-		// Wait briefly for QR code generation
 		if err := wac.waitForQRCode(ctx, sessionID); err != nil {
 			return nil, err
 		}
 	}
 
-	// Check if QR code is now available
 	if client, err = wac.GetSession(ctx, sessionID); err != nil {
 		return nil, err
 	}
@@ -63,7 +57,6 @@ func (wac *WAClient) GetQRCodeForSession(ctx context.Context, sessionID string) 
 	return nil, &output.WhatsAppError{Code: "QR_NOT_AVAILABLE", Message: "QR code not available, try connecting the session first"}
 }
 
-// RefreshQRCode forces a refresh of the QR code for a session
 func (wac *WAClient) RefreshQRCode(ctx context.Context, sessionID string) (*QREvent, error) {
 	client, err := wac.GetSession(ctx, sessionID)
 	if err != nil {
@@ -74,7 +67,6 @@ func (wac *WAClient) RefreshQRCode(ctx context.Context, sessionID string) (*QREv
 		return nil, &output.WhatsAppError{Code: "ALREADY_CONNECTED", Message: "session is already connected"}
 	}
 
-	// Disconnect if not already disconnected
 	if client.Status != session.StatusDisconnected {
 		if err = wac.DisconnectSession(ctx, sessionID); err != nil {
 			wac.logger.Warn().Err(err).Str("session_id", sessionID).Msg("Failed to disconnect session for QR refresh")
@@ -82,16 +74,13 @@ func (wac *WAClient) RefreshQRCode(ctx context.Context, sessionID string) (*QREv
 		wac.waitBriefly(ctx)
 	}
 
-	// Start new connection
 	if err = wac.ConnectSession(ctx, sessionID); err != nil {
 		return nil, err
 	}
 
-	// Wait for QR code generation with timeout
 	return wac.waitForQRCodeWithTimeout(ctx, sessionID)
 }
 
-// CleanupExpiredQRCodes removes expired QR codes from all sessions
 func (wac *WAClient) CleanupExpiredQRCodes(ctx context.Context) error {
 	sessions, err := wac.ListSessions(ctx)
 	if err != nil {
@@ -115,7 +104,6 @@ func (wac *WAClient) CleanupExpiredQRCodes(ctx context.Context) error {
 	return nil
 }
 
-// StartQRCleanupRoutine starts a background routine to clean up expired QR codes
 func (wac *WAClient) StartQRCleanupRoutine(ctx context.Context) {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
@@ -135,19 +123,14 @@ func (wac *WAClient) StartQRCleanupRoutine(ctx context.Context) {
 	}
 }
 
-// Helper functions
-
-// hasValidQRCode checks if the client has a valid, non-expired QR code
 func (wac *WAClient) hasValidQRCode(client *Client) bool {
 	return client.QRCode != "" && !client.QRExpiresAt.IsZero() && time.Now().Before(client.QRExpiresAt)
 }
 
-// isQRCodeExpired checks if the client's QR code is expired
 func (wac *WAClient) isQRCodeExpired(client *Client) bool {
 	return client.QRCode != "" && !client.QRExpiresAt.IsZero() && time.Now().After(client.QRExpiresAt)
 }
 
-// waitForQRCode waits briefly for QR code generation
 func (wac *WAClient) waitForQRCode(ctx context.Context, sessionID string) error {
 	timer := time.NewTimer(QRWaitTimeout)
 	defer timer.Stop()
@@ -160,7 +143,6 @@ func (wac *WAClient) waitForQRCode(ctx context.Context, sessionID string) error 
 	}
 }
 
-// waitBriefly waits for a short period
 func (wac *WAClient) waitBriefly(ctx context.Context) {
 	timer := time.NewTimer(QRCheckInterval)
 	defer timer.Stop()
@@ -171,7 +153,6 @@ func (wac *WAClient) waitBriefly(ctx context.Context) {
 	}
 }
 
-// waitForQRCodeWithTimeout waits for QR code generation with a longer timeout
 func (wac *WAClient) waitForQRCodeWithTimeout(ctx context.Context, sessionID string) (*QREvent, error) {
 	ticker := time.NewTicker(QRCheckInterval)
 	defer ticker.Stop()

@@ -9,9 +9,8 @@ import (
 	"zpwoot/internal/adapters/database/repository"
 	"zpwoot/internal/adapters/logger"
 	"zpwoot/internal/config"
-	"zpwoot/internal/core/application/usecase/message"
-	"zpwoot/internal/core/application/usecase/session"
 	domainSession "zpwoot/internal/core/domain/session"
+	"zpwoot/internal/core/ports/input"
 	"zpwoot/internal/core/ports/output"
 )
 
@@ -25,8 +24,8 @@ type Container struct {
 
 	whatsappClient output.WhatsAppClient
 
-	sessionUseCases *SessionUseCases
-	messageUseCases *MessageUseCases
+	sessionUseCases input.SessionUseCases
+	messageUseCases input.MessageUseCases
 }
 
 func NewContainer(cfg *config.Config) *Container {
@@ -124,49 +123,40 @@ func (c *Container) Handler() http.Handler {
 
 func (c *Container) initializeUseCases() {
 
-	c.sessionUseCases = &SessionUseCases{
-		Create:     session.NewCreateUseCase(c.sessionService, c.whatsappClient),
-		Get:        session.NewGetUseCase(c.sessionService, c.whatsappClient),
-		List:       session.NewListUseCase(c.sessionService, c.whatsappClient),
-		Connect:    session.NewConnectUseCase(c.sessionService, c.whatsappClient),
-		Disconnect: session.NewDisconnectUseCase(c.sessionService, c.whatsappClient),
-		Delete:     session.NewDeleteUseCase(c.sessionService, c.whatsappClient),
-		QR:         session.NewQRUseCase(c.sessionService, c.whatsappClient),
-	}
+	c.sessionUseCases = c.createSessionUseCases()
+	c.messageUseCases = c.createMessageUseCases()
+}
 
-	c.messageUseCases = &MessageUseCases{
-		Send:    message.NewSendUseCase(c.sessionService, c.whatsappClient),
-		Receive: message.NewReceiveUseCase(c.sessionService),
-	}
+func (c *Container) createSessionUseCases() input.SessionUseCases {
+
+	return nil
+}
+
+func (c *Container) createMessageUseCases() input.MessageUseCases {
+
+	return nil
 }
 
 func (c *Container) GetSessionService() *domainSession.Service {
 	return c.sessionService
 }
 
-func (c *Container) GetSessionUseCases() *SessionUseCases {
+func (c *Container) GetSessionUseCases() input.SessionUseCases {
 	return c.sessionUseCases
 }
 
-func (c *Container) GetMessageUseCases() *MessageUseCases {
+func (c *Container) GetMessageUseCases() input.MessageUseCases {
 	return c.messageUseCases
+}
+
+func (c *Container) SetSessionUseCases(useCases input.SessionUseCases) {
+	c.sessionUseCases = useCases
+}
+
+func (c *Container) SetMessageUseCases(useCases input.MessageUseCases) {
+	c.messageUseCases = useCases
 }
 
 func (c *Container) SetWhatsAppClient(client output.WhatsAppClient) {
 	c.whatsappClient = client
-}
-
-type SessionUseCases struct {
-	Create     *session.CreateUseCase
-	Get        *session.GetUseCase
-	List       *session.ListUseCase
-	Connect    *session.ConnectUseCase
-	Disconnect *session.DisconnectUseCase
-	Delete     *session.DeleteUseCase
-	QR         *session.QRUseCase
-}
-
-type MessageUseCases struct {
-	Send    *message.SendUseCase
-	Receive *message.ReceiveUseCase
 }

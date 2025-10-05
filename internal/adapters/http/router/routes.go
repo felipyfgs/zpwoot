@@ -9,7 +9,6 @@ import (
 	httpMiddleware "zpwoot/internal/adapters/http/middleware"
 	"zpwoot/internal/adapters/waclient"
 	"zpwoot/internal/container"
-	sessionUseCase "zpwoot/internal/core/application/usecase/session"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -60,27 +59,45 @@ type Handlers struct {
 
 func initializeHandlers(container *container.Container) *Handlers {
 
-	sessionRepository := repository.NewSessionRepository(container.GetDatabase().DB)
-
-	sessionRepo := repository.NewSessionRepo(sessionRepository)
-
-	waContainer := waclient.NewWAStoreContainer(container.GetDatabase().DB, container.GetLogger())
-
-	waClient := waclient.NewWAClient(waContainer, container.GetLogger(), sessionRepo)
-
-	waClientAdapter := waclient.NewWAClientAdapter(waClient)
-
-	sessionUseCases := sessionUseCase.NewUseCases(
-		container.GetSessionService(),
-		waClientAdapter,
-	)
-
-	messageSender := waclient.NewMessageSender(waClient)
+	sessionHandler := createSessionHandler(container)
+	messageHandler := createMessageHandler(container)
 
 	return &Handlers{
-		Session: handlers.NewSessionHandler(sessionUseCases, waClient, container.GetLogger()),
-		Message: handlers.NewMessageHandler(messageSender, container.GetLogger()),
+		Session: sessionHandler,
+		Message: messageHandler,
 	}
+}
+
+func createSessionHandler(container *container.Container) *handlers.SessionHandler {
+
+	sessionRepository := repository.NewSessionRepository(container.GetDatabase().DB)
+	sessionRepo := repository.NewSessionRepo(sessionRepository)
+	waContainer := waclient.NewWAStoreContainer(container.GetDatabase().DB, container.GetLogger())
+	waClient := waclient.NewWAClient(waContainer, container.GetLogger(), sessionRepo)
+
+	sessionManager := waclient.NewSessionManagerAdapter(waClient)
+
+	return handlers.NewSessionHandler(
+		container.GetSessionUseCases(),
+		sessionManager,
+		container.GetLogger(),
+	)
+}
+
+func createMessageHandler(container *container.Container) *handlers.MessageHandler {
+
+	sessionRepository := repository.NewSessionRepository(container.GetDatabase().DB)
+	sessionRepo := repository.NewSessionRepo(sessionRepository)
+	waContainer := waclient.NewWAStoreContainer(container.GetDatabase().DB, container.GetLogger())
+	waClient := waclient.NewWAClient(waContainer, container.GetLogger(), sessionRepo)
+
+	messageSender := waclient.NewMessageSender(waClient)
+	messageService := waclient.NewMessageServiceWrapper(messageSender)
+
+	return handlers.NewMessageHandler(
+		messageService,
+		container.GetLogger(),
+	)
 }
 
 func setupPublicRoutes(r *chi.Mux, container *container.Container) {

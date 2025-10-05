@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"zpwoot/internal/core/ports/input"
 	"zpwoot/internal/core/ports/output"
 
 	"go.mau.fi/whatsmeow/proto/waE2E"
@@ -227,14 +228,101 @@ func (ms *MessageSenderImpl) GetContacts(ctx context.Context, sessionID string) 
 	return contactList, nil
 }
 
-// GetChats retrieves all chats for a session
+func (ms *MessageSenderImpl) SendContactMessageFromInput(ctx context.Context, sessionID string, to string, contact *input.ContactInfo) error {
+
+	internalContact := &ContactInfo{
+		Name:  contact.Name,
+		Phone: contact.Phone,
+		VCard: contact.VCard,
+	}
+	return ms.SendContactMessage(ctx, sessionID, to, internalContact)
+}
+
+func (ms *MessageSenderImpl) GetChatInfoAsInput(ctx context.Context, sessionID, chatJID string) (*input.ChatInfo, error) {
+	chatInfo, err := ms.GetChatInfo(ctx, sessionID, chatJID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &input.ChatInfo{
+		JID:              chatInfo.JID,
+		Name:             chatInfo.Name,
+		Topic:            chatInfo.Topic,
+		IsGroup:          chatInfo.IsGroup,
+		ParticipantCount: chatInfo.ParticipantCount,
+	}, nil
+}
+
+func (ms *MessageSenderImpl) GetContactsAsInput(ctx context.Context, sessionID string) ([]*input.ContactInfo, error) {
+	contacts, err := ms.GetContacts(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	var inputContacts []*input.ContactInfo
+	for _, contact := range contacts {
+		inputContacts = append(inputContacts, &input.ContactInfo{
+			Name:  contact.Name,
+			Phone: contact.Phone,
+			VCard: contact.VCard,
+		})
+	}
+
+	return inputContacts, nil
+}
+
+func (ms *MessageSenderImpl) GetChatsAsInput(ctx context.Context, sessionID string) ([]*input.ChatInfo, error) {
+	chats, err := ms.GetChats(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	var inputChats []*input.ChatInfo
+	for _, chat := range chats {
+		inputChats = append(inputChats, &input.ChatInfo{
+			JID:              chat.JID,
+			Name:             chat.Name,
+			Topic:            chat.Topic,
+			IsGroup:          chat.IsGroup,
+			ParticipantCount: chat.ParticipantCount,
+		})
+	}
+
+	return inputChats, nil
+}
+
+type MessageServiceWrapper struct {
+	*MessageSenderImpl
+}
+
+func NewMessageServiceWrapper(messageSender *MessageSenderImpl) input.MessageService {
+	return &MessageServiceWrapper{
+		MessageSenderImpl: messageSender,
+	}
+}
+
+func (w *MessageServiceWrapper) SendContactMessage(ctx context.Context, sessionID string, to string, contact *input.ContactInfo) error {
+	return w.SendContactMessageFromInput(ctx, sessionID, to, contact)
+}
+
+func (w *MessageServiceWrapper) GetChatInfo(ctx context.Context, sessionID, chatJID string) (*input.ChatInfo, error) {
+	return w.GetChatInfoAsInput(ctx, sessionID, chatJID)
+}
+
+func (w *MessageServiceWrapper) GetContacts(ctx context.Context, sessionID string) ([]*input.ContactInfo, error) {
+	return w.GetContactsAsInput(ctx, sessionID)
+}
+
+func (w *MessageServiceWrapper) GetChats(ctx context.Context, sessionID string) ([]*input.ChatInfo, error) {
+	return w.GetChatsAsInput(ctx, sessionID)
+}
+
 func (ms *MessageSenderImpl) GetChats(ctx context.Context, sessionID string) ([]*ChatInfo, error) {
 	_, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: Implement chat retrieval from WhatsApp store
 	var chatList []*ChatInfo
 
 	return chatList, nil

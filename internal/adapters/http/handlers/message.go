@@ -3,7 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
+	"zpwoot/internal/core/application/dto"
 	"zpwoot/internal/core/ports/input"
 	"zpwoot/internal/core/ports/output"
 
@@ -29,13 +31,11 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req SendMessageRequest
+	var req dto.SendMessageRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.writeError(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
 		return
 	}
-
-	req.SessionID = sessionID
 
 	if req.To == "" {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "to is required")
@@ -63,13 +63,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 			h.writeError(w, http.StatusBadRequest, "validation_error", "media is required for media messages")
 			return
 		}
-		mediaData := &output.MediaData{
-			MimeType: req.Media.MimeType,
-			Data:     req.Media.Data,
-			FileName: req.Media.FileName,
-			Caption:  req.Media.Caption,
-		}
-		err = h.messageService.SendMediaMessage(r.Context(), sessionID, req.To, mediaData)
+		err = h.messageService.SendMediaMessage(r.Context(), sessionID, req.To, req.Media.ToInterfacesMediaData())
 
 	case "location":
 		if req.Location == nil {
@@ -86,7 +80,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		}
 		contactInfo := &input.ContactInfo{
 			Name:  req.Contact.Name,
-			Phone: req.Contact.PhoneNumber,
+			Phone: req.Contact.Phone,
 		}
 		err = h.messageService.SendContactMessage(r.Context(), sessionID, req.To, contactInfo)
 
@@ -116,9 +110,10 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &MessageResponse{
-		Success:   true,
+	response := &dto.SendMessageResponse{
 		MessageID: messageID,
+		Status:    "sent",
+		SentAt:    time.Now(),
 	}
 
 	h.writeJSON(w, http.StatusOK, response)
@@ -138,7 +133,7 @@ func (h *MessageHandler) GetChatInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	chatInfo, err := h.messageSender.GetChatInfo(r.Context(), sessionID, chatJID)
+	chatInfo, err := h.messageService.GetChatInfo(r.Context(), sessionID, chatJID)
 	if err != nil {
 		h.logger.Error().
 			Err(err).
@@ -171,7 +166,7 @@ func (h *MessageHandler) GetContacts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contacts, err := h.messageSender.GetContacts(r.Context(), sessionID)
+	contacts, err := h.messageService.GetContacts(r.Context(), sessionID)
 	if err != nil {
 		h.logger.Error().
 			Err(err).
@@ -206,7 +201,7 @@ func (h *MessageHandler) GetChats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	chats, err := h.messageSender.GetChats(r.Context(), sessionID)
+	chats, err := h.messageService.GetChats(r.Context(), sessionID)
 	if err != nil {
 		h.logger.Error().
 			Err(err).
