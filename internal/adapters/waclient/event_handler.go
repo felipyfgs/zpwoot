@@ -230,7 +230,7 @@ func (eh *DefaultEventHandler) sendWebhook(client *Client, eventType EventType, 
 		Timestamp: time.Now(),
 	}
 
-	// Use client context with timeout
+
 	ctx, cancel := context.WithTimeout(client.ctx, 30*time.Second)
 	defer cancel()
 
