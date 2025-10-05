@@ -182,10 +182,9 @@ func randomString(length int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	b := make([]byte, length)
 
-	// Use crypto/rand for secure random generation
 	randomBytes := make([]byte, length)
 	if _, err := rand.Read(randomBytes); err != nil {
-		// Fallback to time-based generation if crypto/rand fails
+
 		for i := range b {
 			b[i] = charset[time.Now().UnixNano()%int64(len(charset))]
 		}

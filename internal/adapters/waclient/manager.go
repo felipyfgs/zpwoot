@@ -604,7 +604,6 @@ func NewWAStoreContainer(db *sqlx.DB, logger *logger.Logger, dbURL string) *sqls
 	if err != nil {
 		logger.Error().
 			Err(err).
-			Str("db_url", maskDBURL(dbURL)).
 			Msg("Failed to create WhatsApp store container")
 		return nil
 	}

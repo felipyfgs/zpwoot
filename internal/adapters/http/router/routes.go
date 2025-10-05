@@ -44,7 +44,7 @@ func setupMiddleware(r *chi.Mux) {
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization", "X-API-Key", "X-Requested-With"},
 		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: false, // More secure for API
+		AllowCredentials: false,
 		MaxAge:           300,
 	}))
 

@@ -69,7 +69,6 @@ func Load() *Config {
 		Environment: getEnv("NODE_ENV", "development"),
 	}
 
-	// Validate required configuration
 	if err := cfg.Validate(); err != nil {
 		panic("Configuration validation failed: " + err.Error())
 	}
@@ -77,7 +76,6 @@ func Load() *Config {
 	return cfg
 }
 
-// Validate checks if all required configuration values are set
 func (c *Config) Validate() error {
 	if c.APIKey == "" {
 		return errors.New("ZP_API_KEY is required")
