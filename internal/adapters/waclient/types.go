@@ -190,28 +190,20 @@ type MessageResponse struct {
 	Error     string `json:"error,omitempty"`
 }
 
-// SessionResponse represents a session operation response
-type SessionResponse struct {
-	Success  bool           `json:"success"`
-	Session  *SessionInfo   `json:"session,omitempty"`
-	Sessions []*SessionInfo `json:"sessions,omitempty"`
-	QRCode   string         `json:"qrCode,omitempty"`
-	Error    string         `json:"error,omitempty"`
-}
-
-// SessionInfo represents session information for API responses
+// SessionInfo represents internal session information (for database and internal use)
+// Note: For API responses, use dto.SessionResponse or dto.SessionListInfo instead
 type SessionInfo struct {
-	ID          string        `json:"id"`
-	Name        string        `json:"name"`
-	DeviceJID   string        `json:"deviceJid,omitempty"`
-	Status      SessionStatus `json:"status"`
-	Connected   bool          `json:"connected"`
-	QRCode      string        `json:"qrCode,omitempty"`
-	QRExpiresAt time.Time     `json:"qrExpiresAt,omitempty"`
-	ConnectedAt time.Time     `json:"connectedAt,omitempty"`
-	LastSeen    time.Time     `json:"lastSeen,omitempty"`
-	CreatedAt   time.Time     `json:"createdAt"`
-	UpdatedAt   time.Time     `json:"updatedAt"`
+	ID          string
+	Name        string
+	DeviceJID   string
+	Status      SessionStatus
+	Connected   bool
+	QRCode      string
+	QRExpiresAt time.Time
+	ConnectedAt time.Time
+	LastSeen    time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 // Error types

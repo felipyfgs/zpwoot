@@ -21,7 +21,7 @@ func main() {
 	// =============================================================================
 	// BASIC LOGGING - Using global logger functions
 	// =============================================================================
-	
+
 	logger.Info().Msg("Application started")
 	logger.Debug().Msg("Debug information")
 	logger.Warn().Msg("Warning message")
@@ -30,7 +30,7 @@ func main() {
 	// =============================================================================
 	// STRUCTURED LOGGING - Adding fields to logs
 	// =============================================================================
-	
+
 	logger.Info().
 		Str("version", "1.0.0").
 		Int("port", 8080).
@@ -49,7 +49,7 @@ func main() {
 	// =============================================================================
 	// CONTEXTUAL LOGGING - Creating loggers with context
 	// =============================================================================
-	
+
 	// Logger with component context
 	apiLogger := logger.WithComponent("api")
 	apiLogger.Info().
@@ -87,7 +87,7 @@ func main() {
 	// =============================================================================
 	// INSTANCE LOGGING - Using logger instances
 	// =============================================================================
-	
+
 	log := logger.New()
 	log.Info().
 		Str("service", "zpwoot").
@@ -103,20 +103,20 @@ func main() {
 	// =============================================================================
 	// DIFFERENT LOG LEVELS
 	// =============================================================================
-	
+
 	logger.Trace().Msg("Very detailed trace information")
 	logger.Debug().Msg("Debug information for development")
 	logger.Info().Msg("General information")
 	logger.Warn().Msg("Warning - something might be wrong")
 	logger.Error().Msg("Error - something went wrong")
-	
+
 	// Using WithLevel for dynamic levels
 	logger.WithLevel(zerolog.InfoLevel).Msg("Dynamic level logging")
 
 	// =============================================================================
 	// COMPLEX STRUCTURED DATA
 	// =============================================================================
-	
+
 	// Nested objects
 	logger.Info().
 		Dict("user", zerolog.Dict().
@@ -138,12 +138,12 @@ func main() {
 	// =============================================================================
 	// PERFORMANCE LOGGING
 	// =============================================================================
-	
+
 	start := time.Now()
-	
+
 	// Simulate some work
 	time.Sleep(10 * time.Millisecond)
-	
+
 	logger.Info().
 		Str("operation", "data_processing").
 		Dur("duration", time.Since(start)).
@@ -153,7 +153,7 @@ func main() {
 	// =============================================================================
 	// ERROR HANDLING WITH CONTEXT
 	// =============================================================================
-	
+
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -163,7 +163,7 @@ func main() {
 					Msg("Panic recovered")
 			}
 		}()
-		
+
 		// Simulate error scenarios
 		if err := processData(); err != nil {
 			logger.Error().
@@ -177,7 +177,7 @@ func main() {
 	// =============================================================================
 	// CONDITIONAL LOGGING
 	// =============================================================================
-	
+
 	debugMode := cfg.LogLevel == "debug"
 	if debugMode {
 		logger.Debug().
@@ -202,7 +202,7 @@ func main() {
 	// =============================================================================
 	// FINAL MESSAGE
 	// =============================================================================
-	
+
 	logger.Info().
 		Str("example", "completed").
 		Dur("total_runtime", time.Since(time.Now().Add(-100*time.Millisecond))).
@@ -213,7 +213,7 @@ func main() {
 func processData() error {
 	// Simulate processing
 	time.Sleep(5 * time.Millisecond)
-	
+
 	// Return an error for demonstration
 	return errors.New("simulated processing error")
 }

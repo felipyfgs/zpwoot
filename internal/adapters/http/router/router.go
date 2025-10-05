@@ -152,6 +152,7 @@ func setupSessionRoutes(r chi.Router, h *Handlers) {
 		// Session actions
 		r.Post("/{sessionId}/connect", h.Session.ConnectSession)
 		r.Post("/{sessionId}/disconnect", h.Session.DisconnectSession)
+		r.Post("/{sessionId}/logout", h.Session.LogoutSession)
 		r.Get("/{sessionId}/qr", h.Session.GetQRCode)
 		r.Post("/{sessionId}/qr/refresh", h.Session.RefreshQRCode)
 

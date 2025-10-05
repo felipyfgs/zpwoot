@@ -1,7 +1,10 @@
 package dto
 
 import (
+	"encoding/base64"
 	"time"
+
+	"github.com/skip2/go-qrcode"
 	"zpwoot/internal/adapters/waclient"
 	"zpwoot/internal/domain/session"
 )
@@ -32,8 +35,9 @@ type SessionSettings struct {
 
 // CreateSessionRequest represents a session creation request
 type CreateSessionRequest struct {
-	Name     string           `json:"name" example:"my-session" validate:"required,min=1,max=100" description:"Session name for identification"`
-	Settings *SessionSettings `json:"settings,omitempty" description:"Session settings (proxy, webhook)"`
+	Name           string           `json:"name" example:"my-session" validate:"required,min=1,max=100" description:"Session name for identification"`
+	Settings       *SessionSettings `json:"settings,omitempty" description:"Session settings (proxy, webhook)"`
+	GenerateQRCode bool             `json:"qrCode,omitempty" example:"true" description:"Auto-generate QR code after creation (default: false)"`
 }
 
 // UpdateSessionRequest represents a session update request
@@ -44,14 +48,29 @@ type UpdateSessionRequest struct {
 
 // SessionResponse represents a unified session information response
 type SessionResponse struct {
+	SessionID       string           `json:"sessionId" example:"550e8400-e29b-41d4-a716-446655440000" description:"Unique session identifier"`
+	Name            string           `json:"name" example:"my-session" description:"Session name"`
+	Status          string           `json:"status" example:"connected" description:"Current session status (disconnected, connecting, connected, qr_code, error)"`
+	Connected       bool             `json:"connected" example:"true" description:"Whether session is connected"`
+	DeviceJID       string           `json:"deviceJid,omitempty" example:"5511999999999@s.whatsapp.net" description:"WhatsApp device JID when connected"`
+	Settings        *SessionSettings `json:"settings,omitempty" description:"Session settings (proxy, webhook)"`
+	QRCode          string           `json:"qrCode,omitempty" example:"2@abc123..." description:"QR code string (original from WhatsApp)"`
+	QRCodeBase64    string           `json:"qrCodeBase64,omitempty" example:"data:image/png;base64,iVBORw0KGgo..." description:"QR code as base64 image"`
+	QRCodeExpiresAt *time.Time       `json:"qrCodeExpiresAt,omitempty" example:"2025-01-15T10:35:00Z" description:"QR code expiration time"`
+	CreatedAt       time.Time        `json:"createdAt" example:"2025-01-15T10:30:00Z" description:"Session creation timestamp"`
+	UpdatedAt       time.Time        `json:"updatedAt" example:"2025-01-15T10:35:00Z" description:"Last update timestamp"`
+	ConnectedAt     *time.Time       `json:"connectedAt,omitempty" example:"2025-01-15T10:32:00Z" description:"Connection timestamp"`
+	LastSeen        *time.Time       `json:"lastSeen,omitempty" example:"2025-01-15T10:35:00Z" description:"Last activity timestamp"`
+}
+
+// SessionListInfo represents session information for list/info endpoints (excludes QR code)
+type SessionListInfo struct {
 	SessionID   string           `json:"sessionId" example:"550e8400-e29b-41d4-a716-446655440000" description:"Unique session identifier"`
 	Name        string           `json:"name" example:"my-session" description:"Session name"`
 	Status      string           `json:"status" example:"connected" description:"Current session status (disconnected, connecting, connected, qr_code, error)"`
 	Connected   bool             `json:"connected" example:"true" description:"Whether session is connected"`
 	DeviceJID   string           `json:"deviceJid,omitempty" example:"5511999999999@s.whatsapp.net" description:"WhatsApp device JID when connected"`
 	Settings    *SessionSettings `json:"settings,omitempty" description:"Session settings (proxy, webhook)"`
-	QRCode      string           `json:"qrCode,omitempty" description:"QR code for authentication (when status is qr_code)"`
-	QRExpiresAt *time.Time       `json:"qrCodeExpiresAt,omitempty" example:"2025-01-15T10:35:00Z" description:"QR code expiration time"`
 	CreatedAt   time.Time        `json:"createdAt" example:"2025-01-15T10:30:00Z" description:"Session creation timestamp"`
 	UpdatedAt   time.Time        `json:"updatedAt" example:"2025-01-15T10:35:00Z" description:"Last update timestamp"`
 	ConnectedAt *time.Time       `json:"connectedAt,omitempty" example:"2025-01-15T10:32:00Z" description:"Connection timestamp"`
@@ -60,23 +79,24 @@ type SessionResponse struct {
 
 // SessionListResponse represents a list of sessions response
 type SessionListResponse struct {
-	Sessions []SessionResponse `json:"sessions" description:"List of sessions"`
+	Sessions []SessionListInfo `json:"sessions" description:"List of sessions (without QR codes)"`
 	Total    int               `json:"total" example:"5" description:"Total number of sessions"`
+}
+
+// SessionActionResponse represents a session action response (connect, disconnect, logout, delete)
+type SessionActionResponse struct {
+	SessionID string `json:"sessionId" example:"550e8400-e29b-41d4-a716-446655440000" description:"Session ID"`
+	Action    string `json:"action" example:"connect" description:"Action performed (connect, disconnect, logout, delete)"`
+	Status    string `json:"status" example:"success" description:"Action status"`
+	Message   string `json:"message,omitempty" example:"Session connected successfully" description:"Action message"`
 }
 
 // QRCodeResponse represents a QR code response
 type QRCodeResponse struct {
-	QRCode    string `json:"qrCode" example:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..." description:"Base64 encoded QR code image"`
-	ExpiresAt string `json:"expiresAt" example:"2025-01-15T10:35:00Z" description:"QR code expiration time"`
-	Status    string `json:"status" example:"generated" description:"QR code status"`
-}
-
-// SessionActionResponse represents a response for session actions (connect, disconnect, delete)
-type SessionActionResponse struct {
-	SessionID string `json:"sessionId" example:"550e8400-e29b-41d4-a716-446655440000" description:"Session identifier"`
-	Action    string `json:"action" example:"connected" description:"Action performed"`
-	Status    string `json:"status" example:"success" description:"Action status"`
-	Message   string `json:"message" example:"Session connected successfully" description:"Action result message"`
+	QRCode       string `json:"qrCode" example:"2@abc123..." description:"QR code string (original from WhatsApp)"`
+	QRCodeBase64 string `json:"qrCodeBase64" example:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..." description:"Base64 encoded QR code image"`
+	ExpiresAt    string `json:"expiresAt" example:"2025-01-15T10:35:00Z" description:"QR code expiration time"`
+	Status       string `json:"status" example:"generated" description:"QR code status"`
 }
 
 // Legacy DTOs for backward compatibility with use cases
@@ -199,11 +219,18 @@ func FromDomainSession(s *session.Session) *SessionResponse {
 		Connected:   s.IsConnected,
 		DeviceJID:   s.DeviceJID,
 		QRCode:      s.QRCode,
-		QRExpiresAt: s.QRCodeExpiresAt,
 		CreatedAt:   s.CreatedAt,
 		UpdatedAt:   s.UpdatedAt,
 		ConnectedAt: s.ConnectedAt,
 		LastSeen:    s.LastSeen,
+	}
+
+	// Generate base64 and set expiration if QR code exists
+	if s.QRCode != "" {
+		response.QRCodeBase64 = GenerateQRCodeBase64(s.QRCode)
+		if s.QRCodeExpiresAt != nil {
+			response.QRCodeExpiresAt = s.QRCodeExpiresAt
+		}
 	}
 
 	// Note: Settings should be populated from session config if available
@@ -225,9 +252,17 @@ func FromWAClient(client *waclient.Client) *SessionResponse {
 		Status:    string(client.Status),
 		Connected: client.Status == waclient.StatusConnected,
 		DeviceJID: deviceJID,
-		QRCode:    client.QRCode,
-		CreatedAt: time.Now(), // Should be stored in client
+		QRCode:    client.QRCode, // Original QR string
+		CreatedAt: time.Now(),    // Should be stored in client
 		UpdatedAt: time.Now(),
+	}
+
+	// Generate base64 QR code if QR string exists
+	if client.QRCode != "" {
+		response.QRCodeBase64 = GenerateQRCodeBase64(client.QRCode)
+		if !client.QRExpiresAt.IsZero() {
+			response.QRCodeExpiresAt = &client.QRExpiresAt
+		}
 	}
 
 	// Build settings from client config
@@ -267,7 +302,7 @@ func FromWAClient(client *waclient.Client) *SessionResponse {
 	}
 
 	if !client.QRExpiresAt.IsZero() {
-		response.QRExpiresAt = &client.QRExpiresAt
+		response.QRCodeExpiresAt = &client.QRExpiresAt
 	}
 	if !client.ConnectedAt.IsZero() {
 		response.ConnectedAt = &client.ConnectedAt
@@ -279,11 +314,28 @@ func FromWAClient(client *waclient.Client) *SessionResponse {
 	return response
 }
 
-// FromWAClientList converts slice of waclient.Client to SessionListResponse
+// ToListInfo converts SessionResponse to SessionListInfo (removes QR code)
+func (s *SessionResponse) ToListInfo() *SessionListInfo {
+	return &SessionListInfo{
+		SessionID:   s.SessionID,
+		Name:        s.Name,
+		Status:      s.Status,
+		Connected:   s.Connected,
+		DeviceJID:   s.DeviceJID,
+		Settings:    s.Settings,
+		CreatedAt:   s.CreatedAt,
+		UpdatedAt:   s.UpdatedAt,
+		ConnectedAt: s.ConnectedAt,
+		LastSeen:    s.LastSeen,
+	}
+}
+
+// FromWAClientList converts slice of waclient.Client to SessionListResponse (without QR codes)
 func FromWAClientList(clients []*waclient.Client) *SessionListResponse {
-	sessions := make([]SessionResponse, len(clients))
+	sessions := make([]SessionListInfo, len(clients))
 	for i, client := range clients {
-		sessions[i] = *FromWAClient(client)
+		sessionResp := FromWAClient(client)
+		sessions[i] = *sessionResp.ToListInfo() // Remove QR code
 	}
 
 	return &SessionListResponse{
@@ -295,9 +347,10 @@ func FromWAClientList(clients []*waclient.Client) *SessionListResponse {
 // FromQREvent converts waclient.QREvent to QRCodeResponse
 func FromQREvent(qrEvent *waclient.QREvent) *QRCodeResponse {
 	return &QRCodeResponse{
-		QRCode:    qrEvent.Base64,
-		ExpiresAt: qrEvent.ExpiresAt.Format(time.RFC3339),
-		Status:    "generated",
+		QRCode:       qrEvent.Code,                       // Original QR string
+		QRCodeBase64: GenerateQRCodeBase64(qrEvent.Code), // Base64 image
+		ExpiresAt:    qrEvent.ExpiresAt.Format(time.RFC3339),
+		Status:       "generated",
 	}
 }
 
@@ -309,9 +362,10 @@ func NewQRCodeResponse(qrCode string, expiresAt time.Time, status string) *QRCod
 	}
 
 	return &QRCodeResponse{
-		QRCode:    qrCode,
-		ExpiresAt: expiresAtStr,
-		Status:    status,
+		QRCode:       qrCode,                       // Original QR string
+		QRCodeBase64: GenerateQRCodeBase64(qrCode), // Base64 image
+		ExpiresAt:    expiresAtStr,
+		Status:       status,
 	}
 }
 
@@ -359,6 +413,22 @@ func SessionToStatusResponse(s *session.Session) *SessionStatusResponse {
 // SessionToListResponse converts domain.Session to SessionResponse for list view (legacy)
 func SessionToListResponse(s *session.Session) *SessionResponse {
 	return FromDomainSession(s)
+}
+
+// GenerateQRCodeBase64 converts QR code string to base64 image
+func GenerateQRCodeBase64(qrString string) string {
+	if qrString == "" {
+		return ""
+	}
+
+	// Generate QR code image
+	qrImage, err := qrcode.Encode(qrString, qrcode.Medium, 256)
+	if err != nil {
+		return "" // Return empty if encoding fails
+	}
+
+	// Convert to base64
+	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(qrImage)
 }
 
 // Error definitions for sessions

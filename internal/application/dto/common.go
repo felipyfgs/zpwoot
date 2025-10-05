@@ -123,16 +123,16 @@ func NewValidationErrorResponse(field, message string) *APIResponse {
 
 // Common error codes
 const (
-	ErrorCodeValidation     = "validation_error"
-	ErrorCodeNotFound       = "not_found"
-	ErrorCodeUnauthorized   = "unauthorized"
-	ErrorCodeForbidden      = "forbidden"
-	ErrorCodeConflict       = "conflict"
-	ErrorCodeInternalError  = "internal_error"
-	ErrorCodeBadRequest     = "bad_request"
-	ErrorCodeServiceError   = "service_error"
-	ErrorCodeTimeout        = "timeout"
-	ErrorCodeRateLimit      = "rate_limit"
+	ErrorCodeValidation    = "validation_error"
+	ErrorCodeNotFound      = "not_found"
+	ErrorCodeUnauthorized  = "unauthorized"
+	ErrorCodeForbidden     = "forbidden"
+	ErrorCodeConflict      = "conflict"
+	ErrorCodeInternalError = "internal_error"
+	ErrorCodeBadRequest    = "bad_request"
+	ErrorCodeServiceError  = "service_error"
+	ErrorCodeTimeout       = "timeout"
+	ErrorCodeRateLimit     = "rate_limit"
 )
 
 // Default pagination values

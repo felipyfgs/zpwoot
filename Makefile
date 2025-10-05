@@ -351,7 +351,7 @@ install-swag: ## Install swag tool for Swagger generation
 	@echo "Checking if swag is installed..."
 	@which swag > /dev/null 2>&1 || { \
 		echo "Installing swag..."; \
-		go install github.com/swaggo/swag/cmd/swag@latest; \
+		go install github.com/swaggo/swag/cmd/swag@v1.8.12; \
 		echo "✅ swag installed successfully"; \
 	}
 

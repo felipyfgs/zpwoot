@@ -89,8 +89,8 @@ func (h packageHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
 		if ok {
 			// Skip internal logger files
 			if strings.Contains(file, "/logger/") ||
-			   strings.Contains(file, "/zerolog/") ||
-			   strings.Contains(file, "/runtime/") {
+				strings.Contains(file, "/zerolog/") ||
+				strings.Contains(file, "/runtime/") {
 				continue
 			}
 

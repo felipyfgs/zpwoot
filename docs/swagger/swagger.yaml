@@ -1,17 +1,21 @@
+basePath: /
 definitions:
-  dto.CreateSessionRequest:
+  zpwoot_internal_application_dto.CreateSessionRequest:
     properties:
       name:
         example: my-session
         maxLength: 100
         minLength: 1
         type: string
+      qrCode:
+        example: true
+        type: boolean
       settings:
-        $ref: '#/definitions/dto.SessionSettings'
+        $ref: '#/definitions/zpwoot_internal_application_dto.SessionSettings'
     required:
     - name
     type: object
-  dto.ErrorResponse:
+  zpwoot_internal_application_dto.ErrorResponse:
     properties:
       error:
         example: validation_error
@@ -20,7 +24,7 @@ definitions:
         example: name is required
         type: string
     type: object
-  dto.ProxySettings:
+  zpwoot_internal_application_dto.ProxySettings:
     properties:
       enabled:
         example: true
@@ -45,7 +49,7 @@ definitions:
         example: proxyUser123
         type: string
     type: object
-  dto.QRCodeResponse:
+  zpwoot_internal_application_dto.QRCodeResponse:
     properties:
       expiresAt:
         example: "2025-01-15T10:35:00Z"
@@ -57,7 +61,49 @@ definitions:
         example: generated
         type: string
     type: object
-  dto.SessionResponse:
+  zpwoot_internal_application_dto.SessionListInfo:
+    properties:
+      connected:
+        example: true
+        type: boolean
+      connectedAt:
+        example: "2025-01-15T10:32:00Z"
+        type: string
+      createdAt:
+        example: "2025-01-15T10:30:00Z"
+        type: string
+      deviceJid:
+        example: 5511999999999@s.whatsapp.net
+        type: string
+      lastSeen:
+        example: "2025-01-15T10:35:00Z"
+        type: string
+      name:
+        example: my-session
+        type: string
+      sessionId:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      settings:
+        $ref: '#/definitions/zpwoot_internal_application_dto.SessionSettings'
+      status:
+        example: connected
+        type: string
+      updatedAt:
+        example: "2025-01-15T10:35:00Z"
+        type: string
+    type: object
+  zpwoot_internal_application_dto.SessionListResponse:
+    properties:
+      sessions:
+        items:
+          $ref: '#/definitions/zpwoot_internal_application_dto.SessionListInfo'
+        type: array
+      total:
+        example: 5
+        type: integer
+    type: object
+  zpwoot_internal_application_dto.SessionResponse:
     properties:
       connected:
         example: true
@@ -86,7 +132,7 @@ definitions:
         example: 550e8400-e29b-41d4-a716-446655440000
         type: string
       settings:
-        $ref: '#/definitions/dto.SessionSettings'
+        $ref: '#/definitions/zpwoot_internal_application_dto.SessionSettings'
       status:
         example: connected
         type: string
@@ -94,14 +140,14 @@ definitions:
         example: "2025-01-15T10:35:00Z"
         type: string
     type: object
-  dto.SessionSettings:
+  zpwoot_internal_application_dto.SessionSettings:
     properties:
       proxy:
-        $ref: '#/definitions/dto.ProxySettings'
+        $ref: '#/definitions/zpwoot_internal_application_dto.ProxySettings'
       webhook:
-        $ref: '#/definitions/dto.WebhookSettings'
+        $ref: '#/definitions/zpwoot_internal_application_dto.WebhookSettings'
     type: object
-  dto.WebhookSettings:
+  zpwoot_internal_application_dto.WebhookSettings:
     properties:
       enabled:
         example: true
@@ -122,9 +168,18 @@ definitions:
         type: string
     type: object
 info:
-  contact: {}
-  description: 'API key for authentication. Use the value from .env file (API_KEY
-    variable). Send as ''Authorization: your-api-key'' (without Bearer prefix)'
+  contact:
+    email: support@zpwoot.com
+    name: zpwoot Support
+    url: https://github.com/your-org/zpwoot
+  description: |-
+    A comprehensive WhatsApp Business API built with Go, following Clean Architecture principles.
+    Provides endpoints for session management, messaging, contacts, groups, media handling, and integrations.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: zpwoot WhatsApp API
+  version: 1.0.0
 paths:
   /sessions/{sessionId}/connect:
     post:
@@ -145,19 +200,19 @@ paths:
         "200":
           description: Session connection initiated
           schema:
-            $ref: '#/definitions/dto.SessionResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.SessionResponse'
         "400":
           description: Invalid session ID
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
         "404":
           description: Session not found
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
         "500":
           description: Connection error
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
       security:
       - ApiKeyAuth: []
       summary: Connect WhatsApp Session
@@ -181,19 +236,19 @@ paths:
         "200":
           description: Session deleted successfully
           schema:
-            $ref: '#/definitions/dto.SessionResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.SessionResponse'
         "400":
           description: Invalid session ID
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
         "404":
           description: Session not found
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
         "500":
           description: Deletion error
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
       security:
       - ApiKeyAuth: []
       summary: Delete WhatsApp Session
@@ -203,7 +258,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Disconnects an active WhatsApp session
+      description: Disconnects an active WhatsApp session temporarily. Credentials
+        are kept for reconnection without QR code.
       parameters:
       - description: Session ID
         format: uuid
@@ -217,19 +273,19 @@ paths:
         "200":
           description: Session disconnected successfully
           schema:
-            $ref: '#/definitions/dto.SessionResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.SessionResponse'
         "400":
           description: Invalid session ID
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
         "404":
           description: Session not found
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
         "500":
           description: Disconnection error
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
       security:
       - ApiKeyAuth: []
       summary: Disconnect WhatsApp Session
@@ -240,6 +296,7 @@ paths:
       consumes:
       - application/json
       description: Retrieves detailed information about a specific WhatsApp session
+        (without QR code)
       parameters:
       - description: Session ID
         format: uuid
@@ -251,24 +308,61 @@ paths:
       - application/json
       responses:
         "200":
-          description: Session information
+          description: Session information (without QR code)
           schema:
-            $ref: '#/definitions/dto.SessionResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.SessionListInfo'
         "400":
           description: Invalid session ID
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
         "404":
           description: Session not found
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
       security:
       - ApiKeyAuth: []
       summary: Get WhatsApp Session
+      tags:
+      - Sessions
+  /sessions/{sessionId}/logout:
+    post:
+      consumes:
+      - application/json
+      description: Logs out a WhatsApp session permanently. Unlinks device from WhatsApp.
+        Requires QR scan to reconnect.
+      parameters:
+      - description: Session ID
+        format: uuid
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Session logged out successfully
+          schema:
+            $ref: '#/definitions/zpwoot_internal_application_dto.SessionResponse'
+        "400":
+          description: Invalid session ID
+          schema:
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
+        "500":
+          description: Logout error
+          schema:
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Logout WhatsApp Session
       tags:
       - Sessions
   /sessions/{sessionId}/qr:
@@ -290,23 +384,23 @@ paths:
         "200":
           description: QR code data
           schema:
-            $ref: '#/definitions/dto.QRCodeResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.QRCodeResponse'
         "400":
           description: Invalid session ID
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
         "404":
           description: Session not found
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
         "409":
           description: Session already connected
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
         "500":
           description: QR code generation error
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
       security:
       - ApiKeyAuth: []
       summary: Get QR Code
@@ -323,26 +417,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.CreateSessionRequest'
+          $ref: '#/definitions/zpwoot_internal_application_dto.CreateSessionRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Session created successfully
           schema:
-            $ref: '#/definitions/dto.SessionResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.SessionResponse'
         "400":
           description: Invalid request body or validation error
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
         "409":
           description: Session already exists
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
       security:
       - ApiKeyAuth: []
       summary: Create WhatsApp Session
@@ -353,19 +447,18 @@ paths:
       consumes:
       - application/json
       description: Retrieves a list of all WhatsApp sessions with their current status
+        (without QR codes)
       produces:
       - application/json
       responses:
         "200":
-          description: List of sessions
+          description: List of sessions (without QR codes)
           schema:
-            items:
-              $ref: '#/definitions/dto.SessionResponse'
-            type: array
+            $ref: '#/definitions/zpwoot_internal_application_dto.SessionListResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/zpwoot_internal_application_dto.ErrorResponse'
       security:
       - ApiKeyAuth: []
       summary: List WhatsApp Sessions
@@ -373,6 +466,8 @@ paths:
       - Sessions
 securityDefinitions:
   ApiKeyAuth:
+    description: 'API key for authentication. Use the value from .env file (API_KEY
+      variable). Send as ''Authorization: your-api-key'' (without Bearer prefix)'
     in: header
     name: Authorization
     type: apiKey
