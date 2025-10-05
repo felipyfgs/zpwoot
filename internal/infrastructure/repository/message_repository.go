@@ -44,14 +44,14 @@ type messageModel struct {
 	UpdatedAt        time.Time      `db:"updatedAt"`
 }
 
-func (r *MessageRepository) Create(ctx context.Context, message *message.Message) error {
+func (r *MessageRepository) Create(ctx context.Context, msg *message.Message) error {
 	r.logger.DebugWithFields("Creating message", map[string]interface{}{
-		"message_id":    message.ID.String(),
-		"session_id":    message.SessionID.String(),
-		"zp_message_id": message.ZpMessageID,
+		"message_id":    msg.ID.String(),
+		"session_id":    msg.SessionID.String(),
+		"zp_message_id": msg.ZpMessageID,
 	})
 
-	model := r.messageToModel(message)
+	model := r.messageToModel(msg)
 
 	query := `
 		INSERT INTO "zpMessage" (
@@ -81,8 +81,8 @@ func (r *MessageRepository) Create(ctx context.Context, message *message.Message
 	}
 
 	r.logger.InfoWithFields("Message created successfully", map[string]interface{}{
-		"message_id":    message.ID.String(),
-		"zp_message_id": message.ZpMessageID,
+		"message_id":    msg.ID.String(),
+		"zp_message_id": msg.ZpMessageID,
 	})
 
 	return nil
@@ -130,9 +130,9 @@ func (r *MessageRepository) ExistsByZpMessageID(ctx context.Context, sessionID u
 	return count > 0, nil
 }
 
-func (r *MessageRepository) Update(ctx context.Context, message *message.Message) error {
-	message.UpdatedAt = time.Now()
-	model := r.messageToModel(message)
+func (r *MessageRepository) Update(ctx context.Context, msg *message.Message) error {
+	msg.UpdatedAt = time.Now()
+	model := r.messageToModel(msg)
 
 	query := `
 		UPDATE "zpMessage" SET
@@ -819,35 +819,35 @@ func (r *MessageRepository) CleanupFailedMessages(ctx context.Context, olderThan
 	return rowsAffected, nil
 }
 
-func (r *MessageRepository) messageToModel(message *message.Message) *messageModel {
+func (r *MessageRepository) messageToModel(msg *message.Message) *messageModel {
 	model := &messageModel{
-		ID:          message.ID.String(),
-		SessionID:   message.SessionID.String(),
-		ZpMessageID: message.ZpMessageID,
-		ZpSender:    message.ZpSender,
-		ZpChat:      message.ZpChat,
-		ZpTimestamp: message.ZpTimestamp,
-		ZpFromMe:    message.ZpFromMe,
-		ZpType:      message.ZpType,
-		SyncStatus:  message.SyncStatus,
-		CreatedAt:   message.CreatedAt,
-		UpdatedAt:   message.UpdatedAt,
+		ID:          msg.ID.String(),
+		SessionID:   msg.SessionID.String(),
+		ZpMessageID: msg.ZpMessageID,
+		ZpSender:    msg.ZpSender,
+		ZpChat:      msg.ZpChat,
+		ZpTimestamp: msg.ZpTimestamp,
+		ZpFromMe:    msg.ZpFromMe,
+		ZpType:      msg.ZpType,
+		SyncStatus:  msg.SyncStatus,
+		CreatedAt:   msg.CreatedAt,
+		UpdatedAt:   msg.UpdatedAt,
 	}
 
-	if message.Content != "" {
-		model.Content = sql.NullString{String: message.Content, Valid: true}
+	if msg.Content != "" {
+		model.Content = sql.NullString{String: msg.Content, Valid: true}
 	}
 
-	if message.CwMessageID != nil {
-		model.CwMessageID = sql.NullInt64{Int64: int64(*message.CwMessageID), Valid: true}
+	if msg.CwMessageID != nil {
+		model.CwMessageID = sql.NullInt64{Int64: int64(*msg.CwMessageID), Valid: true}
 	}
 
-	if message.CwConversationID != nil {
-		model.CwConversationID = sql.NullInt64{Int64: int64(*message.CwConversationID), Valid: true}
+	if msg.CwConversationID != nil {
+		model.CwConversationID = sql.NullInt64{Int64: int64(*msg.CwConversationID), Valid: true}
 	}
 
-	if message.SyncedAt != nil {
-		model.SyncedAt = pq.NullTime{Time: *message.SyncedAt, Valid: true}
+	if msg.SyncedAt != nil {
+		model.SyncedAt = pq.NullTime{Time: *msg.SyncedAt, Valid: true}
 	}
 
 	return model

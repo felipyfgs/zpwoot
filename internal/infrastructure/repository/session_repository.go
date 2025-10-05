@@ -39,7 +39,7 @@ type sessionModel struct {
 	LastSeen        sql.NullTime   `db:"lastSeen"`
 }
 
-func (r *SessionRepository) Create(ctx context.Context, sess *session.Session) error {
+func (r *SessionRepository) Save(ctx context.Context, sess *session.Session) error {
 	model, err := r.toModel(sess)
 	if err != nil {
 		return fmt.Errorf("failed to convert session to model: %w", err)
@@ -502,6 +502,22 @@ func (r *SessionRepository) FindByID(ctx context.Context, id uuid.UUID) (*sessio
 	return r.fromModel(&model)
 }
 
+// FindByName finds a session by name
+func (r *SessionRepository) FindByName(ctx context.Context, name string) (*session.Session, error) {
+	var model sessionModel
+	query := `SELECT * FROM "zpSessions" WHERE "name" = $1`
+
+	err := r.db.GetContext(ctx, &model, query, name)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, session.ErrSessionNotFound
+		}
+		return nil, fmt.Errorf("failed to find session by name: %w", err)
+	}
+
+	return r.fromModel(&model)
+}
+
 // FindAll returns all sessions
 func (r *SessionRepository) FindAll(ctx context.Context) ([]*session.Session, error) {
 	var sessions []*sessionModel
@@ -514,7 +530,51 @@ func (r *SessionRepository) FindAll(ctx context.Context) ([]*session.Session, er
 
 	result := make([]*session.Session, len(sessions))
 	for i, s := range sessions {
-		sess, err := r.toDomainSession(s)
+		sess, err := r.fromModel(s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert session %s: %w", s.ID, err)
+		}
+		result[i] = sess
+	}
+
+	return result, nil
+}
+
+// FindConnected returns all connected sessions
+func (r *SessionRepository) FindConnected(ctx context.Context) ([]*session.Session, error) {
+	var sessions []*sessionModel
+	query := `SELECT * FROM "zpSessions" WHERE "isConnected" = true ORDER BY "createdAt" DESC`
+
+	err := r.db.SelectContext(ctx, &sessions, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find connected sessions: %w", err)
+	}
+
+	result := make([]*session.Session, len(sessions))
+	for i, s := range sessions {
+		sess, err := r.fromModel(s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert session %s: %w", s.ID, err)
+		}
+		result[i] = sess
+	}
+
+	return result, nil
+}
+
+// FindDisconnected returns all disconnected sessions
+func (r *SessionRepository) FindDisconnected(ctx context.Context) ([]*session.Session, error) {
+	var sessions []*sessionModel
+	query := `SELECT * FROM "zpSessions" WHERE "isConnected" = false ORDER BY "createdAt" DESC`
+
+	err := r.db.SelectContext(ctx, &sessions, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find disconnected sessions: %w", err)
+	}
+
+	result := make([]*session.Session, len(sessions))
+	for i, s := range sessions {
+		sess, err := r.fromModel(s)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert session %s: %w", s.ID, err)
 		}

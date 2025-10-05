@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 
 	"zpwoot/internal/api/shared"
 	"zpwoot/internal/domain/message"
@@ -71,9 +72,15 @@ type ChatwootInbox struct {
 func (h *ChatwootHandler) ReceiveWebhook(w http.ResponseWriter, r *http.Request) {
 	h.LogRequest(r, "receive chatwoot webhook")
 
-	sessionID := chi.URLParam(r, "sessionID")
-	if sessionID == "" {
+	sessionIDStr := chi.URLParam(r, "sessionID")
+	if sessionIDStr == "" {
 		h.GetWriter().WriteBadRequest(w, "Session ID is required")
+		return
+	}
+
+	sessionID, err := uuid.Parse(sessionIDStr)
+	if err != nil {
+		h.GetWriter().WriteBadRequest(w, "Invalid session ID format")
 		return
 	}
 
@@ -83,7 +90,7 @@ func (h *ChatwootHandler) ReceiveWebhook(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err := h.sessionService.GetSession(r.Context(), sessionID)
+	_, err = h.sessionService.GetSession(r.Context(), sessionID)
 	if err != nil {
 		h.GetWriter().WriteNotFound(w, "Session not found")
 		return
