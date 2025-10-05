@@ -593,8 +593,7 @@ func (wac *WAClient) updateSessionStatus(ctx context.Context, client *Client) {
 		sess.LastSeen = &client.LastSeen
 	}
 
-	dbCtx := context.Background()
-	if err := wac.sessionRepo.Update(dbCtx, sess); err != nil {
+	if err := wac.sessionRepo.Update(ctx, sess); err != nil {
 		wac.logger.Error().Err(err).Str("session_id", client.SessionID).Str("device_jid", deviceJID).Msg("Failed to update session status")
 	}
 }

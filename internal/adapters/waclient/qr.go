@@ -37,7 +37,7 @@ func (wac *WAClient) GetQRCodeForSession(ctx context.Context, sessionID string) 
 			return nil, err
 		}
 
-		if err := wac.waitForQRCode(ctx, sessionID); err != nil {
+		if err := wac.waitForQRCode(ctx); err != nil {
 			return nil, err
 		}
 	}
@@ -131,7 +131,7 @@ func (wac *WAClient) isQRCodeExpired(client *Client) bool {
 	return client.QRCode != "" && !client.QRExpiresAt.IsZero() && time.Now().After(client.QRExpiresAt)
 }
 
-func (wac *WAClient) waitForQRCode(ctx context.Context, sessionID string) error {
+func (wac *WAClient) waitForQRCode(ctx context.Context) error {
 	timer := time.NewTimer(QRWaitTimeout)
 	defer timer.Stop()
 
