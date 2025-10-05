@@ -5,15 +5,16 @@ import (
 
 	"zpwoot/internal/api/contracts"
 	"zpwoot/internal/api/shared"
+	"zpwoot/internal/domain/session"
 	"zpwoot/platform/logger"
 )
 
 type SessionHandler struct {
 	*shared.BaseHandler
-	sessionService *usecases.SessionService
+	sessionService *session.Service
 }
 
-func NewSessionHandler(sessionService *usecases.SessionService, logger *logger.Logger) *SessionHandler {
+func NewSessionHandler(sessionService *session.Service, logger *logger.Logger) *SessionHandler {
 	return &SessionHandler{
 		BaseHandler:    shared.NewBaseHandler(logger),
 		sessionService: sessionService,

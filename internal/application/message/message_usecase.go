@@ -14,14 +14,14 @@ import (
 )
 
 type MessageService struct {
-	messagingCore *messaging.Service
+	messagingCore *message.Service
 	sessionCore   *session.Service
 
 	logger *logger.Logger
 }
 
 func NewMessageService(
-	messagingCore *messaging.Service,
+	messagingCore *message.Service,
 	sessionCore *session.Service,
 	logger *logger.Logger,
 ) *MessageService {
@@ -94,14 +94,14 @@ func (s *MessageService) CreateMessage(ctx context.Context, req *CreateMessageRe
 		return nil, fmt.Errorf("invalid timestamp format: %w", err)
 	}
 
-	coreReq := &messaging.CreateMessageRequest{
+	coreReq := &message.CreateMessageRequest{
 		SessionID:   sessionID,
 		ZpMessageID: req.ZpMessageID,
 		ZpSender:    req.ZpSender,
 		ZpChat:      req.ZpChat,
 		ZpTimestamp: zpTimestamp,
 		ZpFromMe:    req.ZpFromMe,
-		ZpType:      messaging.MessageType(req.ZpType),
+		ZpType:      message.MessageType(req.ZpType),
 		Content:     req.Content,
 	}
 
@@ -149,7 +149,7 @@ func (s *MessageService) ListMessages(ctx context.Context, req *ListMessagesRequ
 		req.Limit = 50
 	}
 
-	coreReq := &messaging.ListMessagesRequest{
+	coreReq := &message.ListMessagesRequest{
 		SessionID: req.SessionID,
 		ChatJID:   req.ChatJID,
 		Limit:     req.Limit,
@@ -186,7 +186,7 @@ func (s *MessageService) UpdateSyncStatus(ctx context.Context, req *UpdateSyncSt
 		return fmt.Errorf("invalid message ID: %w", err)
 	}
 
-	status := messaging.SyncStatus(req.SyncStatus)
+	status := message.SyncStatus(req.SyncStatus)
 	err = s.messagingCore.UpdateSyncStatus(ctx, messageID, status, req.CwMessageID, req.CwConversationID)
 	if err != nil {
 		return fmt.Errorf("failed to update sync status: %w", err)
@@ -222,7 +222,7 @@ func (s *MessageService) GetPendingSyncMessages(ctx context.Context, sessionID s
 	return messageDTOs, nil
 }
 
-func (s *MessageService) GetMessageStats(ctx context.Context, sessionID *string) (*messaging.MessageStats, error) {
+func (s *MessageService) GetMessageStats(ctx context.Context, sessionID *string) (*message.MessageStats, error) {
 	if sessionID != nil {
 
 		id, err := uuid.Parse(*sessionID)
@@ -414,7 +414,7 @@ func (s *MessageService) SendContactMessage(ctx context.Context, sessionID, to, 
 	return response, nil
 }
 
-func (s *MessageService) messageToDTO(message *messaging.Message) *contracts.MessageDTO {
+func (s *MessageService) messageToDTO(message *message.Message) *contracts.MessageDTO {
 	return &contracts.MessageDTO{
 		ID:               message.ID.String(),
 		SessionID:        message.SessionID.String(),

@@ -30,14 +30,15 @@ type Container struct {
 	database *database.Database
 
 	sessionCore   *session.Service
-	messagingCore *messaging.Service
+	messagingCore *message.Service
 
-	sessionService   *usecases.SessionService
-	messagingService *usecases.MessageService
-	groupService     *usecases.GroupService
+	// Services are now directly the domain services
+	// sessionService   *session.Service (same as sessionCore)
+	// messagingService *message.Service (same as messagingCore)
+	// groupService     *group.Service
 
 	sessionRepo     session.Repository
-	messageRepo     messaging.Repository
+	messageRepo     message.Repository
 	whatsappGateway session.WhatsAppGateway
 }
 
@@ -104,29 +105,12 @@ func (c *Container) initialize() error {
 		qrGenerator,
 	)
 
-	c.messagingCore = messaging.NewService(
+	c.messagingCore = message.NewService(
 		c.messageRepo,
 	)
 
-	c.sessionService = usecases.NewSessionService(
-		c.sessionCore,
-		c.logger,
-	)
-
-	c.messagingService = usecases.NewMessageService(
-		c.messagingCore,
-		c.sessionCore,
-		c.logger,
-	)
-
-	groupCore := group.NewService(nil)
-
-	c.groupService = usecases.NewGroupService(
-		groupCore,
-		nil,
-		nil,
-		c.logger,
-	)
+	// Services are now directly the domain services
+	// No need for separate use case layer in this simplified architecture
 
 	sessionEventHandler := session.NewSessionEventHandler(c.sessionCore)
 	c.whatsappGateway.SetEventHandler(sessionEventHandler)
@@ -151,12 +135,12 @@ func (c *Container) GetDatabase() *database.Database {
 	return c.database
 }
 
-func (c *Container) GetSessionService() *usecases.SessionService {
-	return c.sessionService
+func (c *Container) GetSessionService() *session.Service {
+	return c.sessionCore
 }
 
-func (c *Container) GetMessageService() *usecases.MessageService {
-	return c.messagingService
+func (c *Container) GetMessageService() *message.Service {
+	return c.messagingCore
 }
 
 func (c *Container) GetSessionCore() *session.Service {
@@ -192,25 +176,8 @@ func (c *Container) Handler() http.Handler {
 	return c.Server().Handler()
 }
 
-type sessionServiceAdapter struct {
-	service *usecases.SessionService
-}
-
-func (a *sessionServiceAdapter) UpdateDeviceJID(ctx context.Context, id uuid.UUID, deviceJID string) error {
-
-	return nil
-}
-
-func (a *sessionServiceAdapter) UpdateQRCode(ctx context.Context, id uuid.UUID, qrCode string, expiresAt time.Time) error {
-
-	return nil
-}
-
-func (a *sessionServiceAdapter) ClearQRCode(ctx context.Context, id uuid.UUID) error {
-
-	return nil
-}
-
-func (c *Container) GetGroupService() *usecases.GroupService {
-	return c.groupService
+// Group service is not implemented yet in this simplified version
+func (c *Container) GetGroupService() *group.Service {
+	// Return a basic group service for now
+	return group.NewService(nil, nil, nil)
 }

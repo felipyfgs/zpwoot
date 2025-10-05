@@ -48,6 +48,28 @@ func NewSession(name string, proxyConfig *ProxyConfig) (*Session, error) {
 	}, nil
 }
 
+// RestoreSession creates a session from persisted data (for repository use)
+func RestoreSession(id uuid.UUID, name string, isConnected bool, deviceJID *string,
+	connectionError *string, qrCode *string, qrCodeExpiresAt *time.Time,
+	proxyConfig *ProxyConfig, createdAt, updatedAt time.Time,
+	connectedAt, lastSeen *time.Time) *Session {
+
+	return &Session{
+		id:               id,
+		name:             name,
+		isConnected:      isConnected,
+		deviceJID:        deviceJID,
+		connectionError:  connectionError,
+		qrCode:           qrCode,
+		qrCodeExpiresAt:  qrCodeExpiresAt,
+		proxyConfig:      proxyConfig,
+		createdAt:        createdAt,
+		updatedAt:        updatedAt,
+		connectedAt:      connectedAt,
+		lastSeen:         lastSeen,
+	}
+}
+
 // Business methods
 
 // Connect marks session as connected

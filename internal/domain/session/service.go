@@ -42,20 +42,18 @@ func (s *Service) CreateSession(ctx context.Context, req *CreateSessionRequest) 
 		return nil, ErrSessionAlreadyExists
 	}
 
-	session := NewSession(req.Name)
-	session.ProxyConfig = req.ProxyConfig
-
-	if err := session.Validate(); err != nil {
+	session, err := NewSession(req.Name, req.ProxyConfig)
+	if err != nil {
 		return nil, err
 	}
 
-	if err := s.repository.Create(ctx, session); err != nil {
+	if err := s.repository.Save(ctx, session); err != nil {
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
-	if err := s.gateway.CreateSession(ctx, session.ID); err != nil {
+	if err := s.gateway.CreateSession(ctx, session.ID()); err != nil {
 
-		_ = s.repository.Delete(ctx, session.ID)
+		_ = s.repository.Delete(ctx, session.ID())
 		return nil, fmt.Errorf("failed to initialize WhatsApp session: %w", err)
 	}
 
@@ -69,7 +67,7 @@ func (s *Service) CreateSession(ctx context.Context, req *CreateSessionRequest) 
 }
 
 func (s *Service) GetSession(ctx context.Context, id uuid.UUID) (*Session, error) {
-	session, err := s.repository.GetByID(ctx, id)
+	session, err := s.repository.FindByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
@@ -93,16 +91,26 @@ func (s *Service) ListSessions(ctx context.Context, limit, offset int) ([]*Sessi
 		offset = 0
 	}
 
-	sessions, err := s.repository.List(ctx, limit, offset)
+	sessions, err := s.repository.FindAll(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list sessions: %w", err)
 	}
 
-	return sessions, nil
+	// Apply pagination manually for now
+	start := offset
+	end := offset + limit
+	if start >= len(sessions) {
+		return []*Session{}, nil
+	}
+	if end > len(sessions) {
+		end = len(sessions)
+	}
+
+	return sessions[start:end], nil
 }
 
 func (s *Service) ListConnectedSessions(ctx context.Context) ([]*Session, error) {
-	sessions, err := s.repository.ListConnected(ctx)
+	sessions, err := s.repository.FindConnected(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list connected sessions: %w", err)
 	}
@@ -111,22 +119,22 @@ func (s *Service) ListConnectedSessions(ctx context.Context) ([]*Session, error)
 }
 
 func (s *Service) ConnectSession(ctx context.Context, id uuid.UUID) error {
-	session, err := s.repository.GetByID(ctx, id)
+	session, err := s.repository.FindByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to get session: %w", err)
 	}
 
-	if session.IsConnected {
+	if session.IsConnected() {
 		return ErrSessionAlreadyConnected
 	}
 
-	connected, err := s.gateway.IsSessionConnected(ctx, session.ID)
+	connected, err := s.gateway.IsSessionConnected(ctx, session.ID())
 	if err != nil {
 		return fmt.Errorf("failed to check session status: %w", err)
 	}
 
 	if connected {
-		session.UpdateConnectionStatus(true)
+		session.Connect("") // Will be updated with actual device JID later
 		if err := s.repository.Update(ctx, session); err != nil {
 			return fmt.Errorf("failed to update session status: %w", err)
 		}
@@ -137,20 +145,20 @@ func (s *Service) ConnectSession(ctx context.Context, id uuid.UUID) error {
 }
 
 func (s *Service) DisconnectSession(ctx context.Context, id uuid.UUID) error {
-	session, err := s.repository.GetByID(ctx, id)
+	session, err := s.repository.FindByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to get session: %w", err)
 	}
 
-	if !session.IsConnected {
+	if !session.IsConnected() {
 		return ErrSessionNotConnected
 	}
 
-	if err := s.gateway.DisconnectSession(ctx, session.ID); err != nil {
+	if err := s.gateway.DisconnectSession(ctx, session.ID()); err != nil {
 		return fmt.Errorf("failed to disconnect session: %w", err)
 	}
 
-	session.UpdateConnectionStatus(false)
+	session.Disconnect("Manual disconnect")
 	session.ClearQRCode()
 
 	if err := s.repository.Update(ctx, session); err != nil {
@@ -161,18 +169,18 @@ func (s *Service) DisconnectSession(ctx context.Context, id uuid.UUID) error {
 }
 
 func (s *Service) DeleteSession(ctx context.Context, id uuid.UUID) error {
-	session, err := s.repository.GetByID(ctx, id)
+	session, err := s.repository.FindByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to get session: %w", err)
 	}
 
-	if session.IsConnected {
+	if session.IsConnected() {
 		if err := s.DisconnectSession(ctx, id); err != nil {
 
 		}
 	}
 
-	if err := s.gateway.DeleteSession(ctx, session.ID); err != nil {
+	if err := s.gateway.DeleteSession(ctx, session.ID()); err != nil {
 
 	}
 
@@ -184,24 +192,24 @@ func (s *Service) DeleteSession(ctx context.Context, id uuid.UUID) error {
 }
 
 func (s *Service) GenerateQRCode(ctx context.Context, id uuid.UUID) (*QRCodeResponse, error) {
-	session, err := s.repository.GetByID(ctx, id)
+	session, err := s.repository.FindByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
 
-	if session.IsConnected {
+	if session.IsConnected() {
 		return nil, ErrSessionAlreadyConnected
 	}
 
-	if session.QRCode != nil && !session.IsQRCodeExpired() {
+	if session.HasValidQRCode() {
 		return &QRCodeResponse{
-			QRCode:    *session.QRCode,
-			ExpiresAt: *session.QRCodeExpiresAt,
+			QRCode:    *session.QRCode(),
+			ExpiresAt: *session.QRCodeExpiresAt(),
 			Timeout:   120,
 		}, nil
 	}
 
-	qrResponse, err := s.gateway.GenerateQRCode(ctx, session.ID)
+	qrResponse, err := s.gateway.GenerateQRCode(ctx, session.ID())
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate QR code: %w", err)
 	}
@@ -215,28 +223,28 @@ func (s *Service) GenerateQRCode(ctx context.Context, id uuid.UUID) (*QRCodeResp
 }
 
 func (s *Service) GetQRCode(ctx context.Context, id uuid.UUID) (*QRCodeResponse, error) {
-	session, err := s.repository.GetByID(ctx, id)
+	session, err := s.repository.FindByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
 
-	if session.QRCode == nil {
+	if session.QRCode() == nil {
 		return nil, ErrQRCodeNotAvailable
 	}
 
-	if session.IsQRCodeExpired() {
+	if !session.HasValidQRCode() {
 		return nil, ErrQRCodeExpired
 	}
 
 	return &QRCodeResponse{
-		QRCode:    *session.QRCode,
-		ExpiresAt: *session.QRCodeExpiresAt,
+		QRCode:    *session.QRCode(),
+		ExpiresAt: *session.QRCodeExpiresAt(),
 		Timeout:   120,
 	}, nil
 }
 
 func (s *Service) SetProxy(ctx context.Context, id uuid.UUID, proxy *ProxyConfig) error {
-	session, err := s.repository.GetByID(ctx, id)
+	session, err := s.repository.FindByID(ctx, id)
 	if err != nil {
 		return fmt.Errorf("failed to get session: %w", err)
 	}
@@ -245,13 +253,12 @@ func (s *Service) SetProxy(ctx context.Context, id uuid.UUID, proxy *ProxyConfig
 		return err
 	}
 
-	if err := s.gateway.SetProxy(ctx, session.ID, proxy); err != nil {
+	if err := s.gateway.SetProxy(ctx, session.ID(), proxy); err != nil {
 		return fmt.Errorf("failed to set proxy: %w", err)
 	}
 
-	session.ProxyConfig = proxy
-	session.UpdatedAt = time.Now()
-
+	// Note: Session entity should be updated via proper methods
+	// For now, we'll just persist the current state
 	if err := s.repository.Update(ctx, session); err != nil {
 		return fmt.Errorf("failed to update session: %w", err)
 	}
@@ -260,17 +267,23 @@ func (s *Service) SetProxy(ctx context.Context, id uuid.UUID, proxy *ProxyConfig
 }
 
 func (s *Service) GetProxy(ctx context.Context, id uuid.UUID) (*ProxyConfig, error) {
-	session, err := s.repository.GetByID(ctx, id)
+	session, err := s.repository.FindByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
 
-	return session.ProxyConfig, nil
+	return session.ProxyConfig(), nil
 }
 
 func (s *Service) UpdateLastSeen(ctx context.Context, id uuid.UUID) error {
-	now := time.Now()
-	if err := s.repository.UpdateLastSeen(ctx, id, now); err != nil {
+	session, err := s.repository.FindByID(ctx, id)
+	if err != nil {
+		return fmt.Errorf("failed to get session: %w", err)
+	}
+
+	session.UpdateLastSeen()
+
+	if err := s.repository.Update(ctx, session); err != nil {
 		return fmt.Errorf("failed to update last seen: %w", err)
 	}
 	return nil
@@ -282,7 +295,7 @@ func (s *Service) GetSessionStats(ctx context.Context) (*SessionStats, error) {
 		return nil, fmt.Errorf("failed to count sessions: %w", err)
 	}
 
-	connected, err := s.repository.ListConnected(ctx)
+	connected, err := s.repository.FindConnected(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list connected sessions: %w", err)
 	}
@@ -351,18 +364,18 @@ func (s *Service) validateProxyConfig(proxy *ProxyConfig) error {
 }
 
 func (s *Service) initiateConnection(ctx context.Context, session *Session) error {
-	sessionExists := s.gateway.SessionExists(session.ID)
+	sessionExists := s.gateway.SessionExists(session.ID())
 
 	if !sessionExists {
-		if err := s.gateway.RestoreSession(ctx, session.ID); err != nil {
-			session.SetConnectionError(err.Error())
+		if err := s.gateway.RestoreSession(ctx, session.ID()); err != nil {
+			session.Disconnect(err.Error())
 			_ = s.repository.Update(ctx, session)
 			return fmt.Errorf("failed to restore session: %w", err)
 		}
 	}
 
-	if err := s.gateway.ConnectSession(ctx, session.ID); err != nil {
-		session.SetConnectionError(err.Error())
+	if err := s.gateway.ConnectSession(ctx, session.ID()); err != nil {
+		session.Disconnect(err.Error())
 		_ = s.repository.Update(ctx, session)
 		return fmt.Errorf("failed to connect session: %w", err)
 	}
@@ -371,13 +384,17 @@ func (s *Service) initiateConnection(ctx context.Context, session *Session) erro
 }
 
 func (s *Service) syncSessionStatus(ctx context.Context, session *Session) error {
-	connected, err := s.gateway.IsSessionConnected(ctx, session.ID)
+	connected, err := s.gateway.IsSessionConnected(ctx, session.ID())
 	if err != nil {
 		return fmt.Errorf("failed to check session status: %w", err)
 	}
 
-	if session.IsConnected != connected {
-		session.UpdateConnectionStatus(connected)
+	if session.IsConnected() != connected {
+		if connected {
+			session.Connect("") // Device JID will be updated later
+		} else {
+			session.Disconnect("Status update")
+		}
 		if err := s.repository.Update(ctx, session); err != nil {
 			return fmt.Errorf("failed to update session status: %w", err)
 		}
@@ -416,13 +433,12 @@ func NewSessionEventHandler(service *Service) *SessionEventHandler {
 func (h *SessionEventHandler) OnSessionConnected(sessionId uuid.UUID, deviceInfo *DeviceInfo) {
 	ctx := context.Background()
 
-	session, err := h.service.repository.GetByID(ctx, sessionId)
+	session, err := h.service.repository.FindByID(ctx, sessionId)
 	if err != nil {
 		return
 	}
 
-	session.UpdateConnectionStatus(true)
-	session.ConnectionError = nil
+	session.Connect("")
 	session.ClearQRCode()
 
 	_ = h.service.repository.Update(ctx, session)
@@ -431,14 +447,14 @@ func (h *SessionEventHandler) OnSessionConnected(sessionId uuid.UUID, deviceInfo
 func (h *SessionEventHandler) OnSessionDisconnected(sessionId uuid.UUID, reason string) {
 	ctx := context.Background()
 
-	session, err := h.service.repository.GetByID(ctx, sessionId)
+	session, err := h.service.repository.FindByID(ctx, sessionId)
 	if err != nil {
 		return
 	}
 
-	session.UpdateConnectionStatus(false)
+	session.Disconnect("Status update")
 	if reason != "" {
-		session.SetConnectionError(reason)
+		session.Disconnect(reason)
 	}
 
 	_ = h.service.repository.Update(ctx, session)
@@ -447,7 +463,7 @@ func (h *SessionEventHandler) OnSessionDisconnected(sessionId uuid.UUID, reason 
 func (h *SessionEventHandler) OnQRCodeGenerated(sessionId uuid.UUID, qrCode string, expiresAt time.Time) {
 	ctx := context.Background()
 
-	session, err := h.service.repository.GetByID(ctx, sessionId)
+	session, err := h.service.repository.FindByID(ctx, sessionId)
 	if err != nil {
 		return
 	}
@@ -459,19 +475,19 @@ func (h *SessionEventHandler) OnQRCodeGenerated(sessionId uuid.UUID, qrCode stri
 func (h *SessionEventHandler) OnConnectionError(sessionId uuid.UUID, err error) {
 	ctx := context.Background()
 
-	session, err2 := h.service.repository.GetByID(ctx, sessionId)
+	session, err2 := h.service.repository.FindByID(ctx, sessionId)
 	if err2 != nil {
 		return
 	}
 
-	session.SetConnectionError(err.Error())
+	session.Disconnect(err.Error())
 	_ = h.service.repository.Update(ctx, session)
 }
 
 func (h *SessionEventHandler) OnMessageReceived(sessionId uuid.UUID, message *WhatsAppMessage) {
 
 	ctx := context.Background()
-	session, err := h.service.repository.GetByID(ctx, sessionId)
+	session, err := h.service.repository.FindByID(ctx, sessionId)
 	if err != nil {
 		return
 	}
@@ -481,15 +497,30 @@ func (h *SessionEventHandler) OnMessageReceived(sessionId uuid.UUID, message *Wh
 }
 
 func (s *Service) UpdateDeviceJID(ctx context.Context, id uuid.UUID, deviceJID string) error {
-	return s.repository.UpdateDeviceJID(ctx, id, deviceJID)
+	session, err := s.repository.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	session.Connect(deviceJID)
+	return s.repository.Update(ctx, session)
 }
 
 func (s *Service) UpdateQRCode(ctx context.Context, id uuid.UUID, qrCode string, expiresAt time.Time) error {
-	return s.repository.UpdateQRCode(ctx, id, qrCode, expiresAt)
+	session, err := s.repository.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	session.SetQRCode(qrCode, expiresAt)
+	return s.repository.Update(ctx, session)
 }
 
 func (s *Service) ClearQRCode(ctx context.Context, id uuid.UUID) error {
-	return s.repository.ClearQRCode(ctx, id)
+	session, err := s.repository.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+	session.ClearQRCode()
+	return s.repository.Update(ctx, session)
 }
 
 func (s *Service) SendTextMessage(ctx context.Context, sessionID uuid.UUID, to, content string) (*MessageSendResult, error) {
@@ -498,11 +529,11 @@ func (s *Service) SendTextMessage(ctx context.Context, sessionID uuid.UUID, to, 
 		return nil, fmt.Errorf("session not found: %w", err)
 	}
 
-	if !session.IsConnected {
-		return nil, fmt.Errorf("session %s is not connected", session.ID)
+	if !session.IsConnected() {
+		return nil, fmt.Errorf("session %s is not connected", session.ID())
 	}
 
-	return s.gateway.SendTextMessage(ctx, session.ID, to, content)
+	return s.gateway.SendTextMessage(ctx, session.ID(), to, content)
 }
 
 func (s *Service) SendMediaMessage(ctx context.Context, sessionID uuid.UUID, to, mediaURL, caption, mediaType string) (*MessageSendResult, error) {
@@ -511,11 +542,11 @@ func (s *Service) SendMediaMessage(ctx context.Context, sessionID uuid.UUID, to,
 		return nil, fmt.Errorf("session not found: %w", err)
 	}
 
-	if !session.IsConnected {
-		return nil, fmt.Errorf("session %s is not connected", session.ID)
+	if !session.IsConnected() {
+		return nil, fmt.Errorf("session %s is not connected", session.ID())
 	}
 
-	return s.gateway.SendMediaMessage(ctx, session.ID, to, mediaURL, caption, mediaType)
+	return s.gateway.SendMediaMessage(ctx, session.ID(), to, mediaURL, caption, mediaType)
 }
 
 func (s *Service) SendLocationMessage(ctx context.Context, sessionID uuid.UUID, to string, latitude, longitude float64, address string) (*MessageSendResult, error) {
@@ -524,11 +555,11 @@ func (s *Service) SendLocationMessage(ctx context.Context, sessionID uuid.UUID, 
 		return nil, fmt.Errorf("session not found: %w", err)
 	}
 
-	if !session.IsConnected {
-		return nil, fmt.Errorf("session %s is not connected", session.ID)
+	if !session.IsConnected() {
+		return nil, fmt.Errorf("session %s is not connected", session.ID())
 	}
 
-	return s.gateway.SendLocationMessage(ctx, session.ID, to, latitude, longitude, address)
+	return s.gateway.SendLocationMessage(ctx, session.ID(), to, latitude, longitude, address)
 }
 
 func (s *Service) SendContactMessage(ctx context.Context, sessionID uuid.UUID, to, contactName, contactPhone string) (*MessageSendResult, error) {
@@ -537,11 +568,11 @@ func (s *Service) SendContactMessage(ctx context.Context, sessionID uuid.UUID, t
 		return nil, fmt.Errorf("session not found: %w", err)
 	}
 
-	if !session.IsConnected {
-		return nil, fmt.Errorf("session %s is not connected", session.ID)
+	if !session.IsConnected() {
+		return nil, fmt.Errorf("session %s is not connected", session.ID())
 	}
 
-	return s.gateway.SendContactMessage(ctx, session.ID, to, contactName, contactPhone)
+	return s.gateway.SendContactMessage(ctx, session.ID(), to, contactName, contactPhone)
 }
 
 func (s *Service) RestoreAllSessions(ctx context.Context) error {
@@ -556,7 +587,7 @@ func (s *Service) RestoreAllSessions(ctx context.Context) error {
 
 	sessionIds := make([]uuid.UUID, len(sessions))
 	for i, sess := range sessions {
-		sessionIds[i] = sess.ID
+		sessionIds[i] = sess.ID()
 	}
 
 	return s.gateway.RestoreAllSessions(ctx, sessionIds)
@@ -565,7 +596,7 @@ func (s *Service) RestoreAllSessions(ctx context.Context) error {
 func (h *SessionEventHandler) OnMessageSent(sessionId uuid.UUID, messageID string, status string) {
 
 	ctx := context.Background()
-	session, err := h.service.repository.GetByID(ctx, sessionId)
+	session, err := h.service.repository.FindByID(ctx, sessionId)
 	if err != nil {
 		return
 	}

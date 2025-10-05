@@ -7,18 +7,20 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"zpwoot/internal/api/shared"
+	"zpwoot/internal/domain/message"
+	"zpwoot/internal/domain/session"
 	"zpwoot/platform/logger"
 )
 
 type ChatwootHandler struct {
 	*shared.BaseHandler
-	messageService *usecases.MessageService
-	sessionService *usecases.SessionService
+	messageService *message.Service
+	sessionService *session.Service
 }
 
 func NewChatwootHandler(
-	messageService *usecases.MessageService,
-	sessionService *usecases.SessionService,
+	messageService *message.Service,
+	sessionService *session.Service,
 	logger *logger.Logger,
 ) *ChatwootHandler {
 	return &ChatwootHandler{

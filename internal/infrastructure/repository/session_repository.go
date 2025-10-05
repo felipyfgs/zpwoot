@@ -376,43 +376,43 @@ func (r *SessionRepository) Count(ctx context.Context) (int64, error) {
 
 func (r *SessionRepository) toModel(sess *session.Session) (*sessionModel, error) {
 	model := &sessionModel{
-		ID:          sess.ID.String(),
-		Name:        sess.Name,
-		IsConnected: sess.IsConnected,
-		CreatedAt:   sess.CreatedAt,
-		UpdatedAt:   sess.UpdatedAt,
+		ID:          sess.ID().String(),
+		Name:        sess.Name(),
+		IsConnected: sess.IsConnected(),
+		CreatedAt:   sess.CreatedAt(),
+		UpdatedAt:   sess.UpdatedAt(),
 	}
 
-	if sess.DeviceJID != nil {
-		model.DeviceJID = sql.NullString{String: *sess.DeviceJID, Valid: true}
+	if sess.DeviceJID() != nil {
+		model.DeviceJID = sql.NullString{String: *sess.DeviceJID(), Valid: true}
 	}
 
-	if sess.ConnectionError != nil {
-		model.ConnectionError = sql.NullString{String: *sess.ConnectionError, Valid: true}
+	if sess.ConnectionError() != nil {
+		model.ConnectionError = sql.NullString{String: *sess.ConnectionError(), Valid: true}
 	}
 
-	if sess.QRCode != nil {
-		model.QRCode = sql.NullString{String: *sess.QRCode, Valid: true}
+	if sess.QRCode() != nil {
+		model.QRCode = sql.NullString{String: *sess.QRCode(), Valid: true}
 	}
 
-	if sess.QRCodeExpiresAt != nil {
-		model.QRCodeExpiresAt = sql.NullTime{Time: *sess.QRCodeExpiresAt, Valid: true}
+	if sess.QRCodeExpiresAt() != nil {
+		model.QRCodeExpiresAt = sql.NullTime{Time: *sess.QRCodeExpiresAt(), Valid: true}
 	}
 
-	if sess.ProxyConfig != nil {
-		proxyJSON, err := json.Marshal(sess.ProxyConfig)
+	if sess.ProxyConfig() != nil {
+		proxyJSON, err := json.Marshal(sess.ProxyConfig())
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal proxy config: %w", err)
 		}
 		model.ProxyConfig = sql.NullString{String: string(proxyJSON), Valid: true}
 	}
 
-	if sess.ConnectedAt != nil {
-		model.ConnectedAt = sql.NullTime{Time: *sess.ConnectedAt, Valid: true}
+	if sess.ConnectedAt() != nil {
+		model.ConnectedAt = sql.NullTime{Time: *sess.ConnectedAt(), Valid: true}
 	}
 
-	if sess.LastSeen != nil {
-		model.LastSeen = sql.NullTime{Time: *sess.LastSeen, Valid: true}
+	if sess.LastSeen() != nil {
+		model.LastSeen = sql.NullTime{Time: *sess.LastSeen(), Valid: true}
 	}
 
 	return model, nil
@@ -424,45 +424,102 @@ func (r *SessionRepository) fromModel(model *sessionModel) (*session.Session, er
 		return nil, fmt.Errorf("failed to parse session ID: %w", err)
 	}
 
-	sess := &session.Session{
-		ID:          id,
-		Name:        model.Name,
-		IsConnected: model.IsConnected,
-		CreatedAt:   model.CreatedAt,
-		UpdatedAt:   model.UpdatedAt,
-	}
-
+	var deviceJID *string
 	if model.DeviceJID.Valid {
-		sess.DeviceJID = &model.DeviceJID.String
+		deviceJID = &model.DeviceJID.String
 	}
 
+	var connectionError *string
 	if model.ConnectionError.Valid {
-		sess.ConnectionError = &model.ConnectionError.String
+		connectionError = &model.ConnectionError.String
 	}
 
+	var qrCode *string
 	if model.QRCode.Valid {
-		sess.QRCode = &model.QRCode.String
+		qrCode = &model.QRCode.String
 	}
 
+	var qrCodeExpiresAt *time.Time
 	if model.QRCodeExpiresAt.Valid {
-		sess.QRCodeExpiresAt = &model.QRCodeExpiresAt.Time
+		qrCodeExpiresAt = &model.QRCodeExpiresAt.Time
 	}
 
+	var proxyConfig *session.ProxyConfig
 	if model.ProxyConfig.Valid {
-		var proxyConfig session.ProxyConfig
-		if err := json.Unmarshal([]byte(model.ProxyConfig.String), &proxyConfig); err != nil {
+		var pc session.ProxyConfig
+		if err := json.Unmarshal([]byte(model.ProxyConfig.String), &pc); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal proxy config: %w", err)
 		}
-		sess.ProxyConfig = &proxyConfig
+		proxyConfig = &pc
 	}
 
+	var connectedAt *time.Time
 	if model.ConnectedAt.Valid {
-		sess.ConnectedAt = &model.ConnectedAt.Time
+		connectedAt = &model.ConnectedAt.Time
 	}
 
+	var lastSeen *time.Time
 	if model.LastSeen.Valid {
-		sess.LastSeen = &model.LastSeen.Time
+		lastSeen = &model.LastSeen.Time
 	}
+
+	sess := session.RestoreSession(
+		id, model.Name, model.IsConnected, deviceJID,
+		connectionError, qrCode, qrCodeExpiresAt,
+		proxyConfig, model.CreatedAt, model.UpdatedAt,
+		connectedAt, lastSeen,
+	)
 
 	return sess, nil
+}
+
+// CountConnected returns the number of connected sessions
+func (r *SessionRepository) CountConnected(ctx context.Context) (int64, error) {
+	var count int64
+	query := `SELECT COUNT(*) FROM "zpSessions" WHERE "isConnected" = true`
+
+	err := r.db.GetContext(ctx, &count, query)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count connected sessions: %w", err)
+	}
+
+	return count, nil
+}
+
+// FindByID finds a session by ID
+func (r *SessionRepository) FindByID(ctx context.Context, id uuid.UUID) (*session.Session, error) {
+	var model sessionModel
+	query := `SELECT * FROM "zpSessions" WHERE "id" = $1`
+
+	err := r.db.GetContext(ctx, &model, query, id.String())
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, session.ErrSessionNotFound
+		}
+		return nil, fmt.Errorf("failed to find session by ID: %w", err)
+	}
+
+	return r.fromModel(&model)
+}
+
+// FindAll returns all sessions
+func (r *SessionRepository) FindAll(ctx context.Context) ([]*session.Session, error) {
+	var sessions []*sessionModel
+	query := `SELECT * FROM "zpSessions" ORDER BY "createdAt" DESC`
+
+	err := r.db.SelectContext(ctx, &sessions, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find all sessions: %w", err)
+	}
+
+	result := make([]*session.Session, len(sessions))
+	for i, s := range sessions {
+		sess, err := r.toDomainSession(s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert session %s: %w", s.ID, err)
+		}
+		result[i] = sess
+	}
+
+	return result, nil
 }

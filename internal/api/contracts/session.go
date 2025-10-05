@@ -121,32 +121,32 @@ func (r *CreateSessionRequest) ToCreateSessionRequest() *session.CreateSessionRe
 
 func FromSession(s *session.Session) *SessionResponse {
 	response := &SessionResponse{
-		ID:          s.ID.String(),
-		Name:        s.Name,
-		IsConnected: s.IsConnected,
-		CreatedAt:   s.CreatedAt,
-		UpdatedAt:   s.UpdatedAt,
+		ID:          s.ID().String(),
+		Name:        s.Name(),
+		IsConnected: s.IsConnected(),
+		CreatedAt:   s.CreatedAt(),
+		UpdatedAt:   s.UpdatedAt(),
 	}
 
-	if s.DeviceJID != nil {
-		response.DeviceJID = *s.DeviceJID
+	if s.DeviceJID() != nil {
+		response.DeviceJID = *s.DeviceJID()
 	}
 
-	if s.ConnectionError != nil {
-		response.ConnectionError = s.ConnectionError
+	if s.ConnectionError() != nil {
+		response.ConnectionError = s.ConnectionError()
 	}
 
-	if s.ConnectedAt != nil {
-		response.ConnectedAt = s.ConnectedAt
+	if s.ConnectedAt() != nil {
+		response.ConnectedAt = s.ConnectedAt()
 	}
 
-	if s.ProxyConfig != nil {
+	if s.ProxyConfig() != nil {
 		response.ProxyConfig = &ProxyConfig{
-			Type:     s.ProxyConfig.Type,
-			Host:     s.ProxyConfig.Host,
-			Port:     s.ProxyConfig.Port,
-			Username: s.ProxyConfig.Username,
-			Password: s.ProxyConfig.Password,
+			Type:     s.ProxyConfig().Type,
+			Host:     s.ProxyConfig().Host,
+			Port:     s.ProxyConfig().Port,
+			Username: s.ProxyConfig().Username,
+			Password: s.ProxyConfig().Password,
 		}
 	}
 
