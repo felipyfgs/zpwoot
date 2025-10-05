@@ -44,6 +44,7 @@ func (uc *DisconnectUseCase) Execute(ctx context.Context, sessionID string) (*dt
 			ID:        sessionID,
 			Status:    string(domainSession.GetStatus()),
 			Connected: false,
+			Message:   "Session is already disconnected",
 		}, nil
 	}
 

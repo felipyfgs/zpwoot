@@ -44,6 +44,7 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 			ID:        sessionID,
 			Status:    string(domainSession.GetStatus()),
 			Connected: true,
+			Message:   "Session is already connected",
 		}, nil
 	}
 
@@ -58,13 +59,14 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 			case "SESSION_NOT_FOUND":
 				return nil, dto.ErrSessionNotFound
 			case "ALREADY_CONNECTED":
-
+				// Session is already connected at WhatsApp level
 				domainSession.SetConnected(domainSession.DeviceJID)
 				_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusConnected)
 				return &dto.SessionStatusResponse{
 					ID:        sessionID,
 					Status:    string(session.StatusConnected),
 					Connected: true,
+					Message:   "Session was already connected at WhatsApp level",
 				}, nil
 			default:
 				return nil, fmt.Errorf("whatsapp connection error: %w", err)

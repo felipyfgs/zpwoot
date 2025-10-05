@@ -128,7 +128,8 @@ type SessionStatusResponse struct {
 	ID        string `json:"id" example:"550e8400-e29b-41d4-a716-446655440000" description:"Session identifier"`
 	Status    string `json:"status" example:"connected" description:"Current session status"`
 	Connected bool   `json:"connected" example:"true" description:"Whether session is connected"`
-}
+	Message   string `json:"message,omitempty" example:"Session is already connected" description:"Additional status message"`
+} //@name SessionStatusResponse
 
 func (r *CreateSessionRequest) Validate() error {
 

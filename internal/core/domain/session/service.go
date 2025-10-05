@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"zpwoot/internal/core/domain/shared"
 )
@@ -23,9 +24,23 @@ func (s *Service) CreateSession(ctx context.Context, name string) (*Session, err
 		return nil, errors.New("session name cannot be empty")
 	}
 
+	// Check if session with this name already exists
+	existingSession, err := s.repo.GetByName(ctx, name)
+	if err != nil && err != shared.ErrSessionNotFound {
+		return nil, fmt.Errorf("failed to check existing session: %w", err)
+	}
+
+	if existingSession != nil {
+		return nil, shared.ErrSessionAlreadyExists
+	}
+
 	session := NewSession(name)
 
 	if err := s.repo.Create(ctx, session); err != nil {
+		// Check if it's a database constraint violation (backup check)
+		if isUniqueConstraintError(err) {
+			return nil, shared.ErrSessionAlreadyExists
+		}
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
@@ -73,4 +88,15 @@ func (s *Service) DeleteSession(ctx context.Context, id string) error {
 		return fmt.Errorf("failed to delete session: %w", err)
 	}
 	return nil
+}
+
+// isUniqueConstraintError checks if the error is a unique constraint violation
+func isUniqueConstraintError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errStr := strings.ToLower(err.Error())
+	return strings.Contains(errStr, "duplicate key") ||
+		   strings.Contains(errStr, "unique constraint") ||
+		   strings.Contains(errStr, "violates unique")
 }

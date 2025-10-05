@@ -168,6 +168,21 @@ definitions:
       webhook:
         $ref: '#/definitions/WebhookSettings'
     type: object
+  SessionStatusResponse:
+    properties:
+      connected:
+        example: true
+        type: boolean
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      message:
+        example: Session is already connected
+        type: string
+      status:
+        example: connected
+        type: string
+    type: object
   WebhookSettings:
     properties:
       enabled:
@@ -188,6 +203,24 @@ definitions:
         example: https://api.example.com/webhook
         type: string
     type: object
+  internal_adapters_http_handlers.HealthResponse:
+    properties:
+      service:
+        type: string
+      status:
+        type: string
+      version:
+        type: string
+    type: object
+  internal_adapters_http_handlers.InfoResponse:
+    properties:
+      message:
+        type: string
+      service:
+        type: string
+      version:
+        type: string
+    type: object
 info:
   contact:
     email: support@zpwoot.com
@@ -202,12 +235,42 @@ info:
   title: zpwoot WhatsApp API
   version: 1.0.0
 paths:
+  /:
+    get:
+      description: Get basic information about the service
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service information
+          schema:
+            $ref: '#/definitions/internal_adapters_http_handlers.InfoResponse'
+      summary: Service Information
+      tags:
+      - Health
+  /health:
+    get:
+      description: Check if the service and database are healthy
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Service is healthy
+          schema:
+            $ref: '#/definitions/internal_adapters_http_handlers.HealthResponse'
+        "503":
+          description: Service is unhealthy
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Health Check
+      tags:
+      - Health
   /sessions/{sessionId}/connect:
     post:
       consumes:
       - application/json
-      description: Initiates connection for a WhatsApp session. Returns session info
-        with QR code if generated.
+      description: Connects a WhatsApp session. If already connected, returns current
+        status with appropriate message.
       parameters:
       - description: Session ID
         format: uuid
@@ -219,9 +282,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: Session info with QR code (if generated)
+          description: Session connected successfully or already connected
           schema:
-            $ref: '#/definitions/SessionResponse'
+            $ref: '#/definitions/SessionStatusResponse'
         "400":
           description: Invalid session ID
           schema:
@@ -279,8 +342,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Disconnects an active WhatsApp session temporarily. Credentials
-        are kept for reconnection without QR code.
+      description: Disconnects an active WhatsApp session temporarily. If already
+        disconnected, returns current status with appropriate message.
       parameters:
       - description: Session ID
         format: uuid
@@ -292,9 +355,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: Session disconnected successfully
+          description: Session disconnected successfully or already disconnected
           schema:
-            $ref: '#/definitions/SessionResponse'
+            $ref: '#/definitions/SessionStatusResponse'
         "400":
           description: Invalid session ID
           schema:

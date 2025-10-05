@@ -24,6 +24,52 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/": {
+            "get": {
+                "description": "Get basic information about the service",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Service Information",
+                "responses": {
+                    "200": {
+                        "description": "Service information",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http_handlers.InfoResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "Check if the service and database are healthy",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Health Check",
+                "responses": {
+                    "200": {
+                        "description": "Service is healthy",
+                        "schema": {
+                            "$ref": "#/definitions/internal_adapters_http_handlers.HealthResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Service is unhealthy",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/sessions/create": {
             "post": {
                 "security": [
@@ -122,7 +168,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Initiates connection for a WhatsApp session. Returns session info with QR code if generated.",
+                "description": "Connects a WhatsApp session. If already connected, returns current status with appropriate message.",
                 "consumes": [
                     "application/json"
                 ],
@@ -145,9 +191,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Session info with QR code (if generated)",
+                        "description": "Session connected successfully or already connected",
                         "schema": {
-                            "$ref": "#/definitions/SessionResponse"
+                            "$ref": "#/definitions/SessionStatusResponse"
                         }
                     },
                     "400": {
@@ -234,7 +280,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Disconnects an active WhatsApp session temporarily. Credentials are kept for reconnection without QR code.",
+                "description": "Disconnects an active WhatsApp session temporarily. If already disconnected, returns current status with appropriate message.",
                 "consumes": [
                     "application/json"
                 ],
@@ -257,9 +303,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Session disconnected successfully",
+                        "description": "Session disconnected successfully or already disconnected",
                         "schema": {
-                            "$ref": "#/definitions/SessionResponse"
+                            "$ref": "#/definitions/SessionStatusResponse"
                         }
                     },
                     "400": {
@@ -693,6 +739,27 @@ const docTemplate = `{
                 }
             }
         },
+        "SessionStatusResponse": {
+            "type": "object",
+            "properties": {
+                "connected": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Session is already connected"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "connected"
+                }
+            }
+        },
         "WebhookSettings": {
             "type": "object",
             "properties": {
@@ -718,6 +785,34 @@ const docTemplate = `{
                 "url": {
                     "type": "string",
                     "example": "https://api.example.com/webhook"
+                }
+            }
+        },
+        "internal_adapters_http_handlers.HealthResponse": {
+            "type": "object",
+            "properties": {
+                "service": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_adapters_http_handlers.InfoResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "service": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
                 }
             }
         }

@@ -40,7 +40,24 @@ func NewSessionHandler(useCases input.SessionUseCases, sessionManager input.Sess
 func (h *SessionHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateSessionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.writeErrorResponse(w, http.StatusBadRequest, dto.ErrorCodeBadRequest, "invalid JSON body")
+		h.writeErrorResponse(w, http.StatusBadRequest, dto.ErrorCodeBadRequest, "Invalid JSON body")
+		return
+	}
+
+	// Validate required fields
+	if req.Name == "" {
+		h.writeErrorResponse(w, http.StatusBadRequest, dto.ErrorCodeValidation, "Session name is required")
+		return
+	}
+
+	// Validate name length and format
+	if len(req.Name) < 3 {
+		h.writeErrorResponse(w, http.StatusBadRequest, dto.ErrorCodeValidation, "Session name must be at least 3 characters")
+		return
+	}
+
+	if len(req.Name) > 50 {
+		h.writeErrorResponse(w, http.StatusBadRequest, dto.ErrorCodeValidation, "Session name must be less than 50 characters")
 		return
 	}
 
@@ -52,11 +69,11 @@ func (h *SessionHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
 			Msg("Failed to create session")
 
 		if err == dto.ErrSessionAlreadyExists {
-			h.writeErrorResponse(w, http.StatusConflict, dto.ErrorCodeConflict, "session already exists")
+			h.writeErrorResponse(w, http.StatusConflict, dto.ErrorCodeConflict, "A session with this name already exists")
 			return
 		}
 
-		h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "failed to create session")
+		h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to create session")
 		return
 	}
 
@@ -124,15 +141,15 @@ func (h *SessionHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
 }
 
 // @Summary		Connect WhatsApp Session
-// @Description	Initiates connection for a WhatsApp session. Returns session info with QR code if generated.
+// @Description	Connects a WhatsApp session. If already connected, returns current status with appropriate message.
 // @Tags			Sessions
 // @Accept			json
 // @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"	Format(uuid)
-// @Success		200			{object}	dto.SessionResponse		"Session info with QR code (if generated)"
-// @Failure		400			{object}	dto.ErrorResponse		"Invalid session ID"
-// @Failure		404			{object}	dto.ErrorResponse		"Session not found"
-// @Failure		500			{object}	dto.ErrorResponse		"Connection error"
+// @Param			sessionId	path		string						true	"Session ID"	Format(uuid)
+// @Success		200			{object}	dto.SessionStatusResponse	"Session connected successfully or already connected"
+// @Failure		400			{object}	dto.ErrorResponse			"Invalid session ID"
+// @Failure		404			{object}	dto.ErrorResponse			"Session not found"
+// @Failure		500			{object}	dto.ErrorResponse			"Connection error"
 // @Security		ApiKeyAuth
 // @Router			/sessions/{sessionId}/connect [post]
 func (h *SessionHandler) ConnectSession(w http.ResponseWriter, r *http.Request) {
@@ -160,15 +177,15 @@ func (h *SessionHandler) ConnectSession(w http.ResponseWriter, r *http.Request) 
 }
 
 // @Summary		Disconnect WhatsApp Session
-// @Description	Disconnects an active WhatsApp session temporarily. Credentials are kept for reconnection without QR code.
+// @Description	Disconnects an active WhatsApp session temporarily. If already disconnected, returns current status with appropriate message.
 // @Tags			Sessions
 // @Accept			json
 // @Produce		json
-// @Param			sessionId	path		string					true	"Session ID"	Format(uuid)
-// @Success		200			{object}	dto.SessionResponse		"Session disconnected successfully"
-// @Failure		400			{object}	dto.ErrorResponse		"Invalid session ID"
-// @Failure		404			{object}	dto.ErrorResponse		"Session not found"
-// @Failure		500			{object}	dto.ErrorResponse		"Disconnection error"
+// @Param			sessionId	path		string						true	"Session ID"	Format(uuid)
+// @Success		200			{object}	dto.SessionStatusResponse	"Session disconnected successfully or already disconnected"
+// @Failure		400			{object}	dto.ErrorResponse			"Invalid session ID"
+// @Failure		404			{object}	dto.ErrorResponse			"Session not found"
+// @Failure		500			{object}	dto.ErrorResponse			"Disconnection error"
 // @Security		ApiKeyAuth
 // @Router			/sessions/{sessionId}/disconnect [post]
 func (h *SessionHandler) DisconnectSession(w http.ResponseWriter, r *http.Request) {
@@ -221,9 +238,11 @@ func (h *SessionHandler) LogoutSession(w http.ResponseWriter, r *http.Request) {
 			Str("session_id", sessionID).
 			Msg("Failed to logout session")
 		if err == dto.ErrSessionNotFound {
-			h.writeErrorResponse(w, http.StatusNotFound, dto.ErrorCodeNotFound, "session not found")
+			h.writeErrorResponse(w, http.StatusNotFound, dto.ErrorCodeNotFound, "Session not found")
+		} else if err.Error() == "session is already logged out" {
+			h.writeErrorResponse(w, http.StatusConflict, dto.ErrorCodeConflict, "Session is already logged out")
 		} else {
-			h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "failed to logout session")
+			h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to logout session")
 		}
 		return
 	}

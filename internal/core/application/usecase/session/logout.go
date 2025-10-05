@@ -39,12 +39,20 @@ func (uc *LogoutUseCase) Execute(ctx context.Context, sessionID string) error {
 		return fmt.Errorf("failed to get session from domain: %w", err)
 	}
 
+	// Check if session is already logged out (not connected and no device JID)
+	if !domainSession.IsConnected && domainSession.DeviceJID == "" {
+		return fmt.Errorf("session is already logged out")
+	}
+
 	err = uc.whatsappClient.LogoutSession(ctx, sessionID)
 	if err != nil {
 		if waErr, ok := err.(*output.WhatsAppError); ok {
 			switch waErr.Code {
 			case "SESSION_NOT_FOUND":
-
+				// Session not found in WhatsApp, but we still need to clean up domain
+				break
+			case "ALREADY_LOGGED_OUT":
+				// Already logged out at WhatsApp level, just clean up domain
 				break
 			default:
 				return fmt.Errorf("whatsapp logout error: %w", err)
@@ -54,6 +62,7 @@ func (uc *LogoutUseCase) Execute(ctx context.Context, sessionID string) error {
 		}
 	}
 
+	// Clean up domain session
 	domainSession.SetDisconnected()
 	domainSession.DeviceJID = ""
 	domainSession.QRCode = ""
@@ -61,7 +70,7 @@ func (uc *LogoutUseCase) Execute(ctx context.Context, sessionID string) error {
 
 	err = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusDisconnected)
 	if err != nil {
-
+		// Log error but don't fail the operation
 	}
 
 	return nil

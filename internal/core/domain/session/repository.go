@@ -9,6 +9,8 @@ type Repository interface {
 
 	GetByID(ctx context.Context, id string) (*Session, error)
 
+	GetByName(ctx context.Context, name string) (*Session, error)
+
 	GetByJID(ctx context.Context, jid string) (*Session, error)
 
 	Update(ctx context.Context, session *Session) error
