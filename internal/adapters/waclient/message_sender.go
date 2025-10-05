@@ -10,19 +10,14 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// MessageSenderImpl implements the MessageSender interface
 type MessageSenderImpl struct {
 	waClient *WAClient
 }
 
-// NewMessageSender creates a new message sender
 func NewMessageSender(waClient *WAClient) *MessageSenderImpl {
-	return &MessageSenderImpl{
-		waClient: waClient,
-	}
+	return &MessageSenderImpl{waClient: waClient}
 }
 
-// SendTextMessage sends a text message
 func (ms *MessageSenderImpl) SendTextMessage(ctx context.Context, sessionID string, to string, text string) error {
 	client, err := ms.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -33,20 +28,14 @@ func (ms *MessageSenderImpl) SendTextMessage(ctx context.Context, sessionID stri
 		return ErrNotConnected
 	}
 
-	// Parse recipient JID
 	recipientJID, err := parseJID(to)
 	if err != nil {
 		return ErrInvalidJID
 	}
 
-	// Create text message
-	message := &waE2E.Message{
-		Conversation: proto.String(text),
-	}
+	message := &waE2E.Message{Conversation: proto.String(text)}
 
-	// Send message
-	_, err = client.WAClient.SendMessage(ctx, recipientJID, message)
-	if err != nil {
+	if _, err = client.WAClient.SendMessage(ctx, recipientJID, message); err != nil {
 		return fmt.Errorf("failed to send text message: %w", err)
 	}
 
