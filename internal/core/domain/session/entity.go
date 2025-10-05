@@ -2,6 +2,8 @@ package session
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Session struct {
@@ -12,7 +14,7 @@ type Session struct {
 	ConnectionError string     `json:"connection_error,omitempty" db:"connectionError"`
 	QRCode          string     `json:"qr_code,omitempty" db:"qrCode"`
 	QRCodeExpiresAt *time.Time `json:"qr_code_expires_at,omitempty" db:"qrCodeExpiresAt"`
-	ProxyConfig     string     `json:"proxy_config,omitempty" db:"proxyConfig"`
+	ProxyConfig     *string    `json:"proxy_config,omitempty" db:"proxyConfig"`
 	CreatedAt       time.Time  `json:"created_at" db:"createdAt"`
 	UpdatedAt       time.Time  `json:"updated_at" db:"updatedAt"`
 	ConnectedAt     *time.Time `json:"connected_at,omitempty" db:"connectedAt"`
@@ -40,7 +42,9 @@ func (s Status) IsValid() bool {
 
 func NewSession(name string) *Session {
 	now := time.Now()
+	sessionID := uuid.New().String()
 	return &Session{
+		ID:          sessionID,
 		Name:        name,
 		IsConnected: false,
 		CreatedAt:   now,

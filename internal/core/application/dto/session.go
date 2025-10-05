@@ -106,7 +106,7 @@ type SessionDetailResponse struct {
 	ConnectionError string     `json:"connectionError,omitempty" example:"Connection timeout" description:"Connection error message if any"`
 	QRCode          string     `json:"qrCode,omitempty" description:"QR code for authentication"`
 	QRCodeExpiresAt *time.Time `json:"qrCodeExpiresAt,omitempty" example:"2025-01-15T10:35:00Z" description:"QR code expiration time"`
-	ProxyConfig     string     `json:"proxyConfig,omitempty" description:"Proxy configuration as JSON string"`
+	ProxyConfig     *string    `json:"proxyConfig,omitempty" description:"Proxy configuration as JSON string"`
 	CreatedAt       time.Time  `json:"createdAt" example:"2025-01-15T10:30:00Z" description:"Session creation timestamp"`
 	UpdatedAt       time.Time  `json:"updatedAt" example:"2025-01-15T10:35:00Z" description:"Last update timestamp"`
 	ConnectedAt     *time.Time `json:"connectedAt,omitempty" example:"2025-01-15T10:32:00Z" description:"Connection timestamp"`

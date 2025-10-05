@@ -60,19 +60,19 @@ type Handlers struct {
 
 func initializeHandlers(container *container.Container) *Handlers {
 
-	sessionRepo := repository.NewSessionRepository(container.GetDatabase().DB)
+	sessionRepository := repository.NewSessionRepository(container.GetDatabase().DB)
 
-	sessionRepoAdapter := repository.NewSessionRepositoryAdapter(sessionRepo)
+	sessionRepo := repository.NewSessionRepo(sessionRepository)
 
 	waContainer := waclient.NewWAStoreContainer(container.GetDatabase().DB, container.GetLogger())
 
-	waClient := waclient.NewWAClient(waContainer, container.GetLogger(), sessionRepoAdapter)
+	waClient := waclient.NewWAClient(waContainer, container.GetLogger(), sessionRepo)
 
-	whatsappAdapter := waclient.NewWhatsAppAdapter(waClient)
+	waClientAdapter := waclient.NewWAClientAdapter(waClient)
 
 	sessionUseCases := sessionUseCase.NewUseCases(
 		container.GetSessionService(),
-		whatsappAdapter,
+		waClientAdapter,
 	)
 
 	messageSender := waclient.NewMessageSender(waClient)

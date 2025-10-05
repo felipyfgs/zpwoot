@@ -20,6 +20,11 @@ import (
 	waLog "go.mau.fi/whatsmeow/util/log"
 )
 
+// QR code expiration buffer for display purposes
+const (
+	QRExpirationBuffer = 2 * time.Minute
+)
+
 type WAClient struct {
 	sessions       map[string]*Client
 	sessionsMutex  sync.RWMutex
@@ -32,12 +37,12 @@ type WAClient struct {
 }
 
 type SessionRepository interface {
-	GetSession(ctx context.Context, sessionID string) (*session.Session, error)
-	GetSessionByName(ctx context.Context, name string) (*session.Session, error)
-	CreateSession(ctx context.Context, sess *session.Session) error
-	UpdateSession(ctx context.Context, sess *session.Session) error
-	DeleteSession(ctx context.Context, sessionID string) error
-	ListSessions(ctx context.Context) ([]*session.Session, error)
+	GetByID(ctx context.Context, sessionID string) (*session.Session, error)
+	GetByName(ctx context.Context, name string) (*session.Session, error)
+	Create(ctx context.Context, sess *session.Session) error
+	Update(ctx context.Context, sess *session.Session) error
+	Delete(ctx context.Context, sessionID string) error
+	List(ctx context.Context, limit, offset int) ([]*session.Session, error)
 }
 
 func NewWAClient(container *sqlstore.Container, logger *logger.Logger, sessionRepo SessionRepository) *WAClient {
@@ -54,7 +59,7 @@ func NewWAClient(container *sqlstore.Container, logger *logger.Logger, sessionRe
 func (wac *WAClient) loadSessionsFromDatabase() {
 
 	ctx := context.Background()
-	sessions, err := wac.sessionRepo.ListSessions(ctx)
+	sessions, err := wac.sessionRepo.List(ctx, 1000, 0)
 	if err != nil {
 		wac.logger.Error().Err(err).Msg("Failed to load sessions from database")
 		return
@@ -173,25 +178,18 @@ func (wac *WAClient) CreateSession(ctx context.Context, config *SessionConfig) (
 		return nil, ErrSessionExists
 	}
 
-	if existingSession, err := wac.sessionRepo.GetSessionByName(ctx, config.Name); err == nil && existingSession != nil {
-		return nil, ErrSessionExists
+	// Get the existing session from database (created by domain service)
+	sess, err := wac.sessionRepo.GetByID(ctx, config.SessionID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get session from database: %w", err)
 	}
 
 	deviceStore := wac.container.NewDevice()
 	wac.logger.Debug().
 		Str("session_id", config.SessionID).
-		Str("session_name", config.Name).
+		Str("session_name", sess.Name).
 		Str("device_id", fmt.Sprintf("%p", deviceStore)).
 		Msg("Created new device for session")
-
-	now := time.Now()
-	sess := &session.Session{
-		ID:          config.SessionID,
-		Name:        config.Name,
-		IsConnected: false,
-		CreatedAt:   now,
-		UpdatedAt:   now,
-	}
 
 	client := wac.createClient(ctx, sess, deviceStore)
 	client.Config = config
@@ -200,12 +198,7 @@ func (wac *WAClient) CreateSession(ctx context.Context, config *SessionConfig) (
 
 	wac.sessions[config.SessionID] = client
 
-	if err := wac.sessionRepo.CreateSession(ctx, sess); err != nil {
-		delete(wac.sessions, config.SessionID)
-		return nil, fmt.Errorf("failed to persist session: %w", err)
-	}
-
-	wac.logger.Info().Str("session_id", config.SessionID).Msg("Session created")
+	wac.logger.Info().Str("session_id", config.SessionID).Msg("WhatsApp session initialized")
 	return client, nil
 }
 
@@ -246,7 +239,7 @@ func (wac *WAClient) ListSessions(ctx context.Context) ([]*Client, error) {
 func (wac *WAClient) ConnectSession(ctx context.Context, sessionID string) error {
 	client, err := wac.GetSession(ctx, sessionID)
 	if err == ErrSessionNotFound {
-		sess, dbErr := wac.sessionRepo.GetSession(ctx, sessionID)
+		sess, dbErr := wac.sessionRepo.GetByID(ctx, sessionID)
 		if dbErr != nil {
 			return fmt.Errorf("session not found: %w", dbErr)
 		}
@@ -266,20 +259,16 @@ func (wac *WAClient) ConnectSession(ctx context.Context, sessionID string) error
 	wac.updateSessionStatus(ctx, client)
 
 	if client.WAClient.Store.ID == nil {
-		qrChan, err := client.WAClient.GetQRChannel(ctx)
-		if err != nil {
-			client.Status = session.StatusError
-			wac.updateSessionStatus(ctx, client)
-			return fmt.Errorf("failed to get QR channel: %w", err)
-		}
-
+		// No ID stored, new login - use events.QR instead of QR Channel
 		if err = client.WAClient.Connect(); err != nil {
+			wac.logger.Error().Err(err).Msg("Failed to connect client")
 			client.Status = session.StatusError
 			wac.updateSessionStatus(ctx, client)
 			return fmt.Errorf("failed to connect: %w", err)
 		}
 
-		go wac.handleQRCode(client.ctx, client, qrChan)
+		// QR codes will be processed via events.QR event handler
+		wac.logger.Info().Str("session_id", client.SessionID).Msg("Connected - waiting for QR codes via events")
 	} else {
 		if err = client.WAClient.Connect(); err != nil {
 			client.Status = session.StatusError
@@ -364,7 +353,7 @@ func (wac *WAClient) LogoutSession(ctx context.Context, sessionID string) error 
 		LastSeen:    &now,
 	}
 
-	if err := wac.sessionRepo.UpdateSession(ctx, sess); err != nil {
+	if err := wac.sessionRepo.Update(ctx, sess); err != nil {
 		wac.logger.Error().Err(err).Str("session_id", client.SessionID).Msg("Failed to update session after logout")
 	}
 
@@ -395,7 +384,7 @@ func (wac *WAClient) DeleteSession(ctx context.Context, sessionID string) error 
 	client.WAClient.RemoveEventHandler(client.EventHandler)
 	delete(wac.sessions, sessionID)
 
-	if err := wac.sessionRepo.DeleteSession(ctx, sessionID); err != nil {
+	if err := wac.sessionRepo.Delete(ctx, sessionID); err != nil {
 		wac.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to delete session from database")
 	}
 
@@ -413,7 +402,7 @@ func (wac *WAClient) createEventHandler(client *Client) func(interface{}) {
 		case *events.LoggedOut:
 			wac.handleLoggedOut(client, v)
 		case *events.QR:
-			wac.handleQR(client, v)
+			wac.handleQREvent(client, v)
 		case *events.Message:
 			wac.handleMessage(client, v)
 		default:
@@ -457,20 +446,103 @@ func (wac *WAClient) handleLoggedOut(client *Client, evt *events.LoggedOut) {
 	wac.sendWebhook(client, EventLoggedOut, evt)
 }
 
-func (wac *WAClient) handleQR(client *Client, evt *events.QR) {
-	client.Status = session.StatusQRCode
-	client.QRCode = evt.Codes[0]
-	client.QRExpiresAt = time.Now().Add(2 * time.Minute)
+// handleQREvent processes the QR codes received from WhatsApp via events.QR
+// This event contains all QR codes that will be shown sequentially
+func (wac *WAClient) handleQREvent(client *Client, evt *events.QR) {
+	wac.logger.Info().
+		Str("session_id", client.SessionID).
+		Int("total_codes", len(evt.Codes)).
+		Msg("Received QR codes from WhatsApp via events")
 
-	wac.logger.Debug().Str("session_id", client.SessionID).Msg("QR generated")
+	if len(evt.Codes) == 0 {
+		wac.logger.Error().
+			Str("session_id", client.SessionID).
+			Msg("No QR codes received")
+		return
+	}
+
+	client.Status = session.StatusQRCode
 	wac.updateSessionStatus(client.ctx, client)
 
-	qrEvent := &QREvent{
-		Event:     "qr",
-		Code:      evt.Codes[0],
-		ExpiresAt: client.QRExpiresAt,
+	// Process all QR codes sequentially with proper WhatsApp timing
+	go wac.processAllQRCodesFromEvent(client, evt.Codes)
+}
+
+// processAllQRCodesFromEvent displays QR codes one by one with WhatsApp timing
+// First QR code: 60 seconds, subsequent QR codes: 20 seconds each
+func (wac *WAClient) processAllQRCodesFromEvent(client *Client, codes []string) {
+	for i, code := range codes {
+		// Check if client is still in QR mode
+		if client.Status != session.StatusQRCode {
+			wac.logger.Info().
+				Str("session_id", client.SessionID).
+				Int("qr_number", i+1).
+				Msg("QR processing stopped - client status changed")
+			return
+		}
+
+		wac.logger.Info().
+			Str("session_id", client.SessionID).
+			Int("qr_number", i+1).
+			Int("total_codes", len(codes)).
+			Msg("Displaying QR code")
+
+		// Display QR code in terminal
+		qrterminal.GenerateHalfBlock(code, qrterminal.L, os.Stdout)
+
+		// Calculate timeout based on WhatsApp's timing
+		var timeout time.Duration
+		if i == 0 {
+			timeout = 60 * time.Second // First QR code: 60 seconds
+		} else {
+			timeout = 20 * time.Second // Subsequent QR codes: 20 seconds
+		}
+
+		fmt.Printf("\n📱 Scan QR code | Session: %s | QR: %d/%d | Timeout: %d seconds\n\n",
+			client.SessionID, i+1, len(codes), int(timeout.Seconds()))
+
+		// Update client state
+		client.QRCode = code
+		client.QRExpiresAt = time.Now().Add(timeout)
+		wac.updateSessionStatus(client.ctx, client)
+
+		// Send webhook
+		qrEvent := &QREvent{
+			Event:     "code",
+			Code:      code,
+			ExpiresAt: client.QRExpiresAt,
+		}
+		wac.sendWebhook(client, EventQR, qrEvent)
+
+		// Wait for timeout or status change
+		select {
+		case <-time.After(timeout):
+			wac.logger.Info().
+				Str("session_id", client.SessionID).
+				Int("qr_number", i+1).
+				Msg("QR code expired - showing next QR code")
+
+			// Clear current QR code
+			wac.clearQRCode(client)
+			wac.updateSessionStatus(client.ctx, client)
+
+		case <-client.ctx.Done():
+			wac.logger.Info().
+				Str("session_id", client.SessionID).
+				Msg("QR processing cancelled")
+			return
+		}
 	}
-	wac.sendWebhook(client, EventQR, qrEvent)
+
+	// All QR codes have expired
+	wac.logger.Info().
+		Str("session_id", client.SessionID).
+		Int("total_codes", len(codes)).
+		Msg("All QR codes expired - disconnecting")
+
+	wac.clearQRCode(client)
+	client.Status = session.StatusDisconnected
+	wac.updateSessionStatus(client.ctx, client)
 }
 
 func (wac *WAClient) handleMessage(client *Client, evt *events.Message) {
@@ -499,75 +571,11 @@ func (wac *WAClient) sendWebhook(client *Client, eventType EventType, event inte
 	}
 }
 
-func (wac *WAClient) handleQRCode(ctx context.Context, client *Client, qrChan <-chan whatsmeow.QRChannelItem) {
-	for evt := range qrChan {
-		switch evt.Event {
-		case "code":
-			wac.handleQRCodeGenerated(ctx, client, evt.Code)
-		case "success":
-			wac.handleQRSuccess(ctx, client)
-		case "timeout":
-			wac.handleQRTimeout(ctx, client)
-		case "error":
-			wac.handleQRError(ctx, client, evt.Event)
-		default:
-			wac.logger.Debug().Str("event", evt.Event).Str("session_id", client.SessionID).Msg("QR event")
-		}
-	}
+// Removed old QR Channel processing - now using events.QR approach
 
-	if client.QRCode != "" && client.Status != session.StatusConnected {
-		wac.logger.Info().Str("session_id", client.SessionID).Msg("QR code channel closed - clearing QR code")
-		wac.clearQRCode(client)
-		if client.Status == session.StatusQRCode {
-			client.Status = session.StatusDisconnected
-		}
-		wac.updateSessionStatus(ctx, client)
-	}
-}
+// Removed handleQRCodeGenerated - QR processing is now handled directly in processQRChannelLikeWuzapi
 
-func (wac *WAClient) handleQRCodeGenerated(ctx context.Context, client *Client, code string) {
-	client.Status = session.StatusQRCode
-	client.QRCode = code
-	client.QRExpiresAt = time.Now().Add(2 * time.Minute)
-
-	wac.logger.Info().Str("session_id", client.SessionID).Msg("QR code ready - scan to connect")
-
-	qrterminal.GenerateHalfBlock(code, qrterminal.L, os.Stdout)
-	fmt.Printf("\n📱 Scan QR code | Session: %s | Expires: %s\n\n",
-		client.SessionID, client.QRExpiresAt.Format("15:04:05"))
-
-	wac.updateSessionStatus(ctx, client)
-
-	qrEvent := &QREvent{
-		Event:     "code",
-		Code:      code,
-		ExpiresAt: client.QRExpiresAt,
-	}
-	wac.sendWebhook(client, EventQR, qrEvent)
-}
-
-func (wac *WAClient) handleQRSuccess(ctx context.Context, client *Client) {
-	wac.logger.Info().Str("session_id", client.SessionID).Msg("QR scanned - connected")
-	wac.clearQRCode(client)
-	client.Status = session.StatusConnected
-	client.ConnectedAt = time.Now()
-	wac.updateSessionStatus(ctx, client)
-}
-
-func (wac *WAClient) handleQRTimeout(ctx context.Context, client *Client) {
-	wac.logger.Info().Str("session_id", client.SessionID).Msg("QR expired")
-	wac.clearQRCode(client)
-	client.Status = session.StatusDisconnected
-	wac.updateSessionStatus(ctx, client)
-}
-
-func (wac *WAClient) handleQRError(ctx context.Context, client *Client, event string) {
-	wac.logger.Warn().Str("event", event).Str("session_id", client.SessionID).Msg("QR code error")
-	wac.clearQRCode(client)
-	client.Status = session.StatusError
-	wac.updateSessionStatus(ctx, client)
-}
-
+// clearQRCode clears the QR code data from the client
 func (wac *WAClient) clearQRCode(client *Client) {
 	client.QRCode = ""
 	client.QRExpiresAt = time.Time{}
@@ -584,6 +592,8 @@ func (wac *WAClient) updateSessionStatus(ctx context.Context, client *Client) {
 		Str("session_name", client.Name).
 		Str("device_jid", deviceJID).
 		Str("status", string(client.Status)).
+		Str("qr_code", client.QRCode).
+		Time("qr_expires_at", client.QRExpiresAt).
 		Msg("Updating session status")
 
 	now := time.Now()
@@ -606,7 +616,9 @@ func (wac *WAClient) updateSessionStatus(ctx context.Context, client *Client) {
 		sess.LastSeen = &client.LastSeen
 	}
 
-	if err := wac.sessionRepo.UpdateSession(ctx, sess); err != nil {
+	// Use background context for database operations to avoid cancellation issues
+	dbCtx := context.Background()
+	if err := wac.sessionRepo.Update(dbCtx, sess); err != nil {
 		wac.logger.Error().Err(err).Str("session_id", client.SessionID).Str("device_jid", deviceJID).Msg("Failed to update session status")
 	}
 }

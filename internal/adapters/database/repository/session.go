@@ -25,13 +25,16 @@ func NewSessionRepository(db *sqlx.DB) *SessionRepository {
 func (r *SessionRepository) Create(ctx context.Context, sess *session.Session) error {
 	query := `
 		INSERT INTO "zpSessions" (
-			"id", "name", "deviceJid", "isConnected", "connectionError", 
-			"qrCode", "qrCodeExpiresAt", "proxyConfig", "createdAt", 
+			"id", "name", "deviceJid", "isConnected", "connectionError",
+			"qrCode", "qrCodeExpiresAt", "proxyConfig", "createdAt",
 			"updatedAt", "connectedAt", "lastSeen"
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
 		)
 	`
+
+	// Handle JSON fields - use the pointer directly
+	var proxyConfig interface{} = sess.ProxyConfig
 
 	_, err := r.db.ExecContext(ctx, query,
 		sess.ID,
@@ -41,7 +44,7 @@ func (r *SessionRepository) Create(ctx context.Context, sess *session.Session) e
 		sess.ConnectionError,
 		sess.QRCode,
 		sess.QRCodeExpiresAt,
-		sess.ProxyConfig,
+		proxyConfig,
 		sess.CreatedAt,
 		sess.UpdatedAt,
 		sess.ConnectedAt,
@@ -153,6 +156,9 @@ func (r *SessionRepository) Update(ctx context.Context, sess *session.Session) e
 		WHERE "id" = $1
 	`
 
+	// Handle JSON fields - use the pointer directly
+	var proxyConfig interface{} = sess.ProxyConfig
+
 	result, err := r.db.ExecContext(ctx, query,
 		sess.ID,
 		sess.Name,
@@ -161,7 +167,7 @@ func (r *SessionRepository) Update(ctx context.Context, sess *session.Session) e
 		sess.ConnectionError,
 		sess.QRCode,
 		sess.QRCodeExpiresAt,
-		sess.ProxyConfig,
+		proxyConfig,
 		time.Now(),
 		sess.ConnectedAt,
 		sess.LastSeen,

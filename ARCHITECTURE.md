@@ -74,15 +74,24 @@ zpwoot/
 │   │   │   └── shared/errors.go         # Domain errors
 │   │   ├── application/                  # Use Cases
 │   │   │   ├── dto/                     # Data Transfer Objects
+│   │   │   │   ├── responses.go         # API response structures
+│   │   │   │   ├── session.go           # Session DTOs
+│   │   │   │   └── message.go           # Message DTOs
 │   │   │   ├── usecase/session/         # Session use cases
+│   │   │   │   └── container.go         # Use cases container
 │   │   │   └── validators/              # Input validation
 │   │   └── ports/                       # Interfaces (Hexagonal Architecture)
 │   │       ├── input/                   # Use case interfaces
 │   │       └── output/                  # Dependency interfaces
 │   ├── adapters/                        # INFRASTRUCTURE
 │   │   ├── database/                    # PostgreSQL + migrations
+│   │   │   └── repository/
+│   │   │       └── adapter.go          # Repository adapter
 │   │   ├── http/                        # REST API handlers
-│   │   ├── logger/                      # Structured logging
+│   │   │   └── router/
+│   │   │       └── routes.go           # HTTP routes configuration
+│   │   ├── logger/
+│   │   │   └── adapter.go              # Logger adapter
 │   │   └── waclient/                    # WhatsApp integration
 │   │       ├── adapter.go              # WhatsApp adapter (implements port)
 │   │       ├── manager.go              # Session management
@@ -92,7 +101,11 @@ zpwoot/
 │   │       └── types.go                # Type definitions
 │   ├── config/config.go                 # Configuration
 │   └── container/container.go           # Dependency injection
-└── [docs, docker files, etc.]
+├── docs/swagger/
+│   └── spec.go                         # Swagger specification
+├── examples/
+│   └── logger.go                       # Logger usage example
+└── [docker files, etc.]
 ```
 
 ## Layers
@@ -118,7 +131,7 @@ zpwoot/
 - **Infrastructure implementations**
 - **HTTP handlers** (implement input ports)
 - **Database repository** (implements domain interface)
-- **WhatsApp client** (implements output port)
+- **WaClient client** (implements output port)
 - **Logger** (implements output port)
 
 ## Key Principles
@@ -156,7 +169,7 @@ internal/core/ports/       → adapters (only interfaces, no implementations)
 - **Web Framework**: Chi router
 - **Database**: PostgreSQL with migrations
 - **Logging**: Zerolog (structured logging)
-- **WhatsApp**: whatsmeow library
+- **WaClient**: whatsmeow library
 - **Configuration**: Environment variables
 - **Development**: Air (hot reload), Docker Compose
 

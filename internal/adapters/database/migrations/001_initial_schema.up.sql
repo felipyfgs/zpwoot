@@ -18,7 +18,7 @@ $$ language 'plpgsql';
 CREATE TABLE IF NOT EXISTS "zpSessions" (
     "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     "name" VARCHAR(255) NOT NULL UNIQUE,
-    "deviceJid" VARCHAR(255) UNIQUE,
+    "deviceJid" VARCHAR(255),
     "isConnected" BOOLEAN NOT NULL DEFAULT false,
     "connectionError" TEXT,
     "qrCode" TEXT,
@@ -34,6 +34,10 @@ CREATE TABLE IF NOT EXISTS "zpSessions" (
 CREATE INDEX IF NOT EXISTS "idx_zp_sessions_name" ON "zpSessions" ("name");
 CREATE INDEX IF NOT EXISTS "idx_zp_sessions_is_connected" ON "zpSessions" ("isConnected");
 CREATE INDEX IF NOT EXISTS "idx_zp_sessions_device_jid" ON "zpSessions" ("deviceJid");
+
+-- Unique constraint for deviceJid - only when not NULL and not empty
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_zp_sessions_device_jid_unique" ON "zpSessions" ("deviceJid")
+WHERE "deviceJid" IS NOT NULL AND "deviceJid" != '';
 CREATE INDEX IF NOT EXISTS "idx_zp_sessions_created_at" ON "zpSessions" ("createdAt");
 CREATE INDEX IF NOT EXISTS "idx_zp_sessions_updated_at" ON "zpSessions" ("updatedAt");
 CREATE INDEX IF NOT EXISTS "idx_zp_sessions_connected_at" ON "zpSessions" ("connectedAt");
