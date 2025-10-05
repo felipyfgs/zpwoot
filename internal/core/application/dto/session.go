@@ -9,6 +9,7 @@ import (
 	"zpwoot/internal/core/domain/session"
 )
 
+// ProxySettings represents proxy configuration for WhatsApp sessions
 type ProxySettings struct {
 	Enabled bool   `json:"enabled" example:"true" description:"Enable proxy"`
 	Type    string `json:"type,omitempty" example:"http" enums:"http,https,socks5" description:"Proxy type (http, https, socks5)"`
@@ -16,31 +17,35 @@ type ProxySettings struct {
 	Port    string `json:"port,omitempty" example:"8080" description:"Proxy port"`
 	User    string `json:"user,omitempty" example:"proxyUser123" description:"Proxy username (optional)"`
 	Pass    string `json:"pass,omitempty" example:"proxyPass123" description:"Proxy password (optional)"`
-}
+} //@name ProxySettings
 
+// WebhookSettings represents webhook configuration for WhatsApp sessions
 type WebhookSettings struct {
 	Enabled bool     `json:"enabled" example:"true" description:"Enable webhook"`
 	URL     string   `json:"url,omitempty" example:"https://api.example.com/webhook" validate:"omitempty,url" description:"Webhook URL"`
 	Events  []string `json:"events,omitempty" example:"Message,Receipt,Connected" description:"Events to subscribe (Message, Receipt, Connected, Disconnected, CallOffer, Presence, NewsletterJoin, All)"`
 	Secret  string   `json:"secret,omitempty" example:"supersecrettoken123" description:"Webhook secret for validation (optional)"`
-}
+} //@name WebhookSettings
 
+// SessionSettings represents configuration settings for WhatsApp sessions
 type SessionSettings struct {
 	Proxy   *ProxySettings   `json:"proxy,omitempty" description:"Proxy configuration"`
 	Webhook *WebhookSettings `json:"webhook,omitempty" description:"Webhook configuration"`
-}
+} //@name SessionSettings
 
+// CreateSessionRequest represents the request to create a new WhatsApp session
 type CreateSessionRequest struct {
 	Name           string           `json:"name" example:"my-session" validate:"required,min=1,max=100" description:"Session name for identification"`
 	Settings       *SessionSettings `json:"settings,omitempty" description:"Session settings (proxy, webhook)"`
 	GenerateQRCode bool             `json:"qrCode,omitempty" example:"true" description:"Auto-generate QR code after creation (default: false)"`
-}
+} //@name CreateSessionRequest
 
 type UpdateSessionRequest struct {
 	Name     *string          `json:"name,omitempty" example:"updated-session" validate:"omitempty,min=1,max=100" description:"Session name for identification"`
 	Settings *SessionSettings `json:"settings,omitempty" description:"Session settings (proxy, webhook)"`
 }
 
+// SessionResponse represents the response when creating or updating a session
 type SessionResponse struct {
 	SessionID       string           `json:"sessionId" example:"550e8400-e29b-41d4-a716-446655440000" description:"Unique session identifier"`
 	Name            string           `json:"name" example:"my-session" description:"Session name"`
@@ -55,8 +60,9 @@ type SessionResponse struct {
 	UpdatedAt       time.Time        `json:"updatedAt" example:"2025-01-15T10:35:00Z" description:"Last update timestamp"`
 	ConnectedAt     *time.Time       `json:"connectedAt,omitempty" example:"2025-01-15T10:32:00Z" description:"Connection timestamp"`
 	LastSeen        *time.Time       `json:"lastSeen,omitempty" example:"2025-01-15T10:35:00Z" description:"Last activity timestamp"`
-}
+} //@name SessionResponse
 
+// SessionListInfo represents session information in list responses
 type SessionListInfo struct {
 	SessionID   string           `json:"sessionId" example:"550e8400-e29b-41d4-a716-446655440000" description:"Unique session identifier"`
 	Name        string           `json:"name" example:"my-session" description:"Session name"`
@@ -68,12 +74,13 @@ type SessionListInfo struct {
 	UpdatedAt   time.Time        `json:"updatedAt" example:"2025-01-15T10:35:00Z" description:"Last update timestamp"`
 	ConnectedAt *time.Time       `json:"connectedAt,omitempty" example:"2025-01-15T10:32:00Z" description:"Connection timestamp"`
 	LastSeen    *time.Time       `json:"lastSeen,omitempty" example:"2025-01-15T10:35:00Z" description:"Last activity timestamp"`
-}
+} //@name SessionListInfo
 
+// SessionListResponse represents the response for listing sessions
 type SessionListResponse struct {
 	Sessions []SessionListInfo `json:"sessions" description:"List of sessions (without QR codes)"`
 	Total    int               `json:"total" example:"5" description:"Total number of sessions"`
-}
+} //@name SessionListResponse
 
 type SessionActionResponse struct {
 	SessionID string `json:"sessionId" example:"550e8400-e29b-41d4-a716-446655440000" description:"Session ID"`
@@ -82,12 +89,13 @@ type SessionActionResponse struct {
 	Message   string `json:"message,omitempty" example:"Session connected successfully" description:"Action message"`
 }
 
+// QRCodeResponse represents QR code information for WhatsApp authentication
 type QRCodeResponse struct {
 	QRCode       string `json:"qrCode" example:"2@abc123..." description:"QR code string (original from WhatsApp)"`
 	QRCodeBase64 string `json:"qrCodeBase64" example:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..." description:"Base64 encoded QR code image"`
 	ExpiresAt    string `json:"expiresAt" example:"2025-01-15T10:35:00Z" description:"QR code expiration time"`
 	Status       string `json:"status" example:"generated" description:"QR code status"`
-}
+} //@name QRCodeResponse
 
 type CreateSessionResponse struct {
 	ID              string     `json:"id" example:"550e8400-e29b-41d4-a716-446655440000" description:"Session identifier"`

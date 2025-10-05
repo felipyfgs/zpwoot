@@ -30,11 +30,11 @@ func NewSessionHandler(useCases input.SessionUseCases, sessionManager input.Sess
 // @Tags			Sessions
 // @Accept			json
 // @Produce		json
-// @Param			request	body		dto.CreateSessionRequest	true	"Session configuration"
-// @Success		201		{object}	dto.SessionResponse			"Session created successfully"
-// @Failure		400		{object}	dto.ErrorResponse			"Invalid request body or validation error"
-// @Failure		409		{object}	dto.ErrorResponse			"Session already exists"
-// @Failure		500		{object}	dto.ErrorResponse			"Internal server error"
+// @Param			request	body		CreateSessionRequest	true	"Session configuration"
+// @Success		201		{object}	SessionResponse			"Session created successfully"
+// @Failure		400		{object}	ErrorResponse			"Invalid request body or validation error"
+// @Failure		409		{object}	ErrorResponse			"Session already exists"
+// @Failure		500		{object}	ErrorResponse			"Internal server error"
 // @Security		ApiKeyAuth
 // @Router			/sessions/create [post]
 func (h *SessionHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
@@ -100,7 +100,7 @@ func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
 // @Tags			Sessions
 // @Accept			json
 // @Produce		json
-// @Success		200	{object}	dto.SessionListResponse	"List of sessions (without QR codes)"
+// @Success		200	{object}	dto.APIResponse	"List of sessions (without QR codes)"
 // @Failure		500	{object}	dto.ErrorResponse		"Internal server error"
 // @Security		ApiKeyAuth
 // @Router			/sessions/list [get]

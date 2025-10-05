@@ -41,7 +41,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.CreateSessionRequest"
+                            "$ref": "#/definitions/CreateSessionRequest"
                         }
                     }
                 ],
@@ -49,25 +49,25 @@
                     "201": {
                         "description": "Session created successfully",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.SessionResponse"
+                            "$ref": "#/definitions/SessionResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request body or validation error",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Session already exists",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -95,13 +95,13 @@
                     "200": {
                         "description": "List of sessions (without QR codes)",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.SessionListResponse"
+                            "$ref": "#/definitions/APIResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -114,7 +114,7 @@
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Initiates connection for a WhatsApp session. Use QR code endpoint to get QR for scanning.",
+                "description": "Initiates connection for a WhatsApp session. Returns session info with QR code if generated.",
                 "consumes": [
                     "application/json"
                 ],
@@ -137,27 +137,27 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Session connection initiated",
+                        "description": "Session info with QR code (if generated)",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.SessionResponse"
+                            "$ref": "#/definitions/SessionResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid session ID",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Session not found",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Connection error",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -195,25 +195,25 @@
                     "200": {
                         "description": "Session deleted successfully",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.SessionResponse"
+                            "$ref": "#/definitions/SessionResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid session ID",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Session not found",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Deletion error",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -251,25 +251,25 @@
                     "200": {
                         "description": "Session disconnected successfully",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.SessionResponse"
+                            "$ref": "#/definitions/SessionResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid session ID",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Session not found",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Disconnection error",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -307,25 +307,25 @@
                     "200": {
                         "description": "Session information (without QR code)",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.SessionListInfo"
+                            "$ref": "#/definitions/SessionListInfo"
                         }
                     },
                     "400": {
                         "description": "Invalid session ID",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Session not found",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -363,25 +363,25 @@
                     "200": {
                         "description": "Session logged out successfully",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.SessionResponse"
+                            "$ref": "#/definitions/SessionResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid session ID",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Session not found",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Logout error",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -419,31 +419,31 @@
                     "200": {
                         "description": "QR code data",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.QRCodeResponse"
+                            "$ref": "#/definitions/QRCodeResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid session ID",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Session not found",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Session already connected",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "QR code generation error",
                         "schema": {
-                            "$ref": "#/definitions/zpwoot_internal_application_dto.ErrorResponse"
+                            "$ref": "#/definitions/ErrorResponse"
                         }
                     }
                 }
@@ -451,7 +451,24 @@
         }
     },
     "definitions": {
-        "zpwoot_internal_application_dto.CreateSessionRequest": {
+        "APIResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "error": {
+                    "$ref": "#/definitions/ErrorInfo"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "timestamp": {
+                    "type": "string",
+                    "example": "2025-01-15T10:30:00Z"
+                }
+            }
+        },
+        "CreateSessionRequest": {
             "type": "object",
             "required": [
                 "name"
@@ -468,11 +485,28 @@
                     "example": true
                 },
                 "settings": {
-                    "$ref": "#/definitions/zpwoot_internal_application_dto.SessionSettings"
+                    "$ref": "#/definitions/SessionSettings"
                 }
             }
         },
-        "zpwoot_internal_application_dto.ErrorResponse": {
+        "ErrorInfo": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "validation_error"
+                },
+                "details": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Validation failed"
+                }
+            }
+        },
+        "ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
@@ -485,7 +519,7 @@
                 }
             }
         },
-        "zpwoot_internal_application_dto.ProxySettings": {
+        "ProxySettings": {
             "type": "object",
             "properties": {
                 "enabled": {
@@ -519,7 +553,7 @@
                 }
             }
         },
-        "zpwoot_internal_application_dto.QRCodeResponse": {
+        "QRCodeResponse": {
             "type": "object",
             "properties": {
                 "expiresAt": {
@@ -527,6 +561,10 @@
                     "example": "2025-01-15T10:35:00Z"
                 },
                 "qrCode": {
+                    "type": "string",
+                    "example": "2@abc123..."
+                },
+                "qrCodeBase64": {
                     "type": "string",
                     "example": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
                 },
@@ -536,7 +574,7 @@
                 }
             }
         },
-        "zpwoot_internal_application_dto.SessionListInfo": {
+        "SessionListInfo": {
             "type": "object",
             "properties": {
                 "connected": {
@@ -568,7 +606,7 @@
                     "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
                 "settings": {
-                    "$ref": "#/definitions/zpwoot_internal_application_dto.SessionSettings"
+                    "$ref": "#/definitions/SessionSettings"
                 },
                 "status": {
                     "type": "string",
@@ -580,22 +618,7 @@
                 }
             }
         },
-        "zpwoot_internal_application_dto.SessionListResponse": {
-            "type": "object",
-            "properties": {
-                "sessions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/zpwoot_internal_application_dto.SessionListInfo"
-                    }
-                },
-                "total": {
-                    "type": "integer",
-                    "example": 5
-                }
-            }
-        },
-        "zpwoot_internal_application_dto.SessionResponse": {
+        "SessionResponse": {
             "type": "object",
             "properties": {
                 "connected": {
@@ -623,7 +646,12 @@
                     "example": "my-session"
                 },
                 "qrCode": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2@abc123..."
+                },
+                "qrCodeBase64": {
+                    "type": "string",
+                    "example": "data:image/png;base64,iVBORw0KGgo..."
                 },
                 "qrCodeExpiresAt": {
                     "type": "string",
@@ -634,7 +662,7 @@
                     "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
                 "settings": {
-                    "$ref": "#/definitions/zpwoot_internal_application_dto.SessionSettings"
+                    "$ref": "#/definitions/SessionSettings"
                 },
                 "status": {
                     "type": "string",
@@ -646,18 +674,18 @@
                 }
             }
         },
-        "zpwoot_internal_application_dto.SessionSettings": {
+        "SessionSettings": {
             "type": "object",
             "properties": {
                 "proxy": {
-                    "$ref": "#/definitions/zpwoot_internal_application_dto.ProxySettings"
+                    "$ref": "#/definitions/ProxySettings"
                 },
                 "webhook": {
-                    "$ref": "#/definitions/zpwoot_internal_application_dto.WebhookSettings"
+                    "$ref": "#/definitions/WebhookSettings"
                 }
             }
         },
-        "zpwoot_internal_application_dto.WebhookSettings": {
+        "WebhookSettings": {
             "type": "object",
             "properties": {
                 "enabled": {
@@ -693,5 +721,23 @@
             "name": "Authorization",
             "in": "header"
         }
-    }
+    },
+    "tags": [
+        {
+            "description": "WhatsApp session management operations",
+            "name": "Sessions"
+        },
+        {
+            "description": "Message sending and retrieval operations",
+            "name": "Messages"
+        },
+        {
+            "description": "Contact management operations",
+            "name": "Contacts"
+        },
+        {
+            "description": "Health check and system status",
+            "name": "Health"
+        }
+    ]
 }
