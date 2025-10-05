@@ -384,9 +384,9 @@ func (wac *WAClient) DeleteSession(ctx context.Context, sessionID string) error 
 	client.WAClient.RemoveEventHandler(client.EventHandler)
 	delete(wac.sessions, sessionID)
 
-	if err := wac.sessionRepo.Delete(ctx, sessionID); err != nil {
-		wac.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to delete session from database")
-	}
+	// Don't delete from database here - let the domain service handle it
+	// This prevents the race condition where WhatsApp client deletes first
+	// and then domain service can't find the session to delete
 
 	wac.logger.Info().Str("session_id", sessionID).Msg("Session deleted")
 	return nil
@@ -465,12 +465,13 @@ func (wac *WAClient) handleQREvent(client *Client, evt *events.QR) {
 	wac.updateSessionStatus(client.ctx, client)
 
 	// Process all QR codes sequentially with proper WhatsApp timing
-	go wac.processAllQRCodesFromEvent(client, evt.Codes)
+	// Use background context to avoid cancellation during QR processing
+	go wac.processAllQRCodesFromEvent(context.Background(), client, evt.Codes)
 }
 
 // processAllQRCodesFromEvent displays QR codes one by one with WhatsApp timing
 // First QR code: 60 seconds, subsequent QR codes: 20 seconds each
-func (wac *WAClient) processAllQRCodesFromEvent(client *Client, codes []string) {
+func (wac *WAClient) processAllQRCodesFromEvent(ctx context.Context, client *Client, codes []string) {
 	for i, code := range codes {
 		// Check if client is still in QR mode
 		if client.Status != session.StatusQRCode {
@@ -504,7 +505,7 @@ func (wac *WAClient) processAllQRCodesFromEvent(client *Client, codes []string) 
 		// Update client state
 		client.QRCode = code
 		client.QRExpiresAt = time.Now().Add(timeout)
-		wac.updateSessionStatus(client.ctx, client)
+		wac.updateSessionStatus(ctx, client)
 
 		// Send webhook
 		qrEvent := &QREvent{
@@ -524,9 +525,9 @@ func (wac *WAClient) processAllQRCodesFromEvent(client *Client, codes []string) 
 
 			// Clear current QR code
 			wac.clearQRCode(client)
-			wac.updateSessionStatus(client.ctx, client)
+			wac.updateSessionStatus(ctx, client)
 
-		case <-client.ctx.Done():
+		case <-ctx.Done():
 			wac.logger.Info().
 				Str("session_id", client.SessionID).
 				Msg("QR processing cancelled")
@@ -542,7 +543,7 @@ func (wac *WAClient) processAllQRCodesFromEvent(client *Client, codes []string) 
 
 	wac.clearQRCode(client)
 	client.Status = session.StatusDisconnected
-	wac.updateSessionStatus(client.ctx, client)
+	wac.updateSessionStatus(ctx, client)
 }
 
 func (wac *WAClient) handleMessage(client *Client, evt *events.Message) {

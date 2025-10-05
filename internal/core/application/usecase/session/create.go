@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"zpwoot/internal/core/application/dto"
 	"zpwoot/internal/core/domain/session"
@@ -57,6 +58,26 @@ func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateSessionRequ
 			}
 		}
 		return nil, fmt.Errorf("failed to create WhatsApp session: %w", err)
+	}
+
+	// If QR code generation is requested, connect the session and wait for QR code
+	if req.GenerateQRCode {
+		// Connect the session to generate QR code
+		err = uc.whatsappClient.ConnectSession(ctx, sessionID)
+		if err != nil {
+			// Don't fail the creation, just log the error
+			// The session is created but QR code generation failed
+		} else {
+			// Wait a bit for QR code to be generated via events, then try to get it
+			time.Sleep(2 * time.Second)
+
+			// Try to get the QR code (it should be available now via events)
+			qrInfo, qrErr := uc.whatsappClient.GetQRCode(ctx, sessionID)
+			if qrErr == nil && qrInfo.Code != "" {
+				domainSession.SetQRCode(qrInfo.Code, qrInfo.ExpiresAt)
+				_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusQRCode)
+			}
+		}
 	}
 
 	response := dto.SessionToCreateResponse(domainSession)

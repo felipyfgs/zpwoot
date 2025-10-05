@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"zpwoot/internal/core/application/dto"
@@ -33,7 +34,7 @@ func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.Sessi
 
 	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
 	if err != nil {
-		if err == shared.ErrSessionNotFound {
+		if errors.Is(err, shared.ErrSessionNotFound) {
 			return nil, dto.ErrSessionNotFound
 		}
 		return nil, fmt.Errorf("failed to get session from domain: %w", err)

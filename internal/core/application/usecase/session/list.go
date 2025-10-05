@@ -36,10 +36,10 @@ func (uc *ListUseCase) Execute(ctx context.Context, pagination *dto.PaginationRe
 		return nil, fmt.Errorf("failed to list sessions from domain: %w", err)
 	}
 
-	sessionResponses := make([]dto.SessionResponse, len(domainSessions))
+	sessionResponses := make([]dto.SessionListInfo, len(domainSessions))
 	for i, domainSession := range domainSessions {
 
-		sessionResponse := dto.SessionToListResponse(domainSession)
+		sessionResponse := dto.SessionToListInfo(domainSession)
 
 		if uc.whatsappClient != nil {
 			waStatus, err := uc.whatsappClient.GetSessionStatus(ctx, domainSession.ID)

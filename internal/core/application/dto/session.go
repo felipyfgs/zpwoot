@@ -90,11 +90,14 @@ type QRCodeResponse struct {
 }
 
 type CreateSessionResponse struct {
-	ID        string    `json:"id" example:"550e8400-e29b-41d4-a716-446655440000" description:"Session identifier"`
-	Name      string    `json:"name" example:"My WhatsApp Session" description:"Session name"`
-	Status    string    `json:"status" example:"disconnected" description:"Initial session status"`
-	Connected bool      `json:"connected" example:"false" description:"Whether session is connected"`
-	CreatedAt time.Time `json:"createdAt" example:"2025-01-15T10:30:00Z" description:"Session creation timestamp"`
+	ID              string     `json:"id" example:"550e8400-e29b-41d4-a716-446655440000" description:"Session identifier"`
+	Name            string     `json:"name" example:"My WhatsApp Session" description:"Session name"`
+	Status          string     `json:"status" example:"disconnected" description:"Initial session status"`
+	Connected       bool       `json:"connected" example:"false" description:"Whether session is connected"`
+	QRCode          string     `json:"qrCode,omitempty" example:"2@abc123..." description:"QR code string (if generated)"`
+	QRCodeBase64    string     `json:"qrCodeBase64,omitempty" example:"data:image/png;base64,iVBORw0KGgo..." description:"QR code as base64 image (if generated)"`
+	QRCodeExpiresAt *time.Time `json:"qrCodeExpiresAt,omitempty" example:"2025-01-15T10:35:00Z" description:"QR code expiration time (if generated)"`
+	CreatedAt       time.Time  `json:"createdAt" example:"2025-01-15T10:30:00Z" description:"Session creation timestamp"`
 }
 
 type SessionDetailResponse struct {
@@ -219,13 +222,24 @@ func SessionToDetailResponse(s *session.Session) *SessionDetailResponse {
 }
 
 func SessionToCreateResponse(s *session.Session) *CreateSessionResponse {
-	return &CreateSessionResponse{
+	response := &CreateSessionResponse{
 		ID:        s.ID,
 		Name:      s.Name,
 		Status:    string(s.GetStatus()),
 		Connected: s.IsConnected,
 		CreatedAt: s.CreatedAt,
 	}
+
+	// Include QR code information if available
+	if s.QRCode != "" {
+		response.QRCode = s.QRCode
+		response.QRCodeBase64 = GenerateQRCodeBase64(s.QRCode)
+		if s.QRCodeExpiresAt != nil {
+			response.QRCodeExpiresAt = s.QRCodeExpiresAt
+		}
+	}
+
+	return response
 }
 
 func SessionToStatusResponse(s *session.Session) *SessionStatusResponse {
@@ -238,6 +252,20 @@ func SessionToStatusResponse(s *session.Session) *SessionStatusResponse {
 
 func SessionToListResponse(s *session.Session) *SessionResponse {
 	return FromDomainSession(s)
+}
+
+func SessionToListInfo(s *session.Session) *SessionListInfo {
+	return &SessionListInfo{
+		SessionID:   s.ID,
+		Name:        s.Name,
+		Status:      string(s.GetStatus()),
+		Connected:   s.IsConnected,
+		DeviceJID:   s.DeviceJID,
+		CreatedAt:   s.CreatedAt,
+		UpdatedAt:   s.UpdatedAt,
+		ConnectedAt: s.ConnectedAt,
+		LastSeen:    s.LastSeen,
+	}
 }
 
 func GenerateQRCodeBase64(qrString string) string {
