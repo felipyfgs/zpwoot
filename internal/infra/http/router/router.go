@@ -31,10 +31,7 @@ func NewRouter(container *container.Container) http.Handler {
 		MaxAge:           300,
 	}))
 
-	// Initialize container
-	if err := container.Initialize(); err != nil {
-		panic("Failed to initialize container: " + err.Error())
-	}
+	// Container should already be initialized by main.go
 
 	// Health check
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {

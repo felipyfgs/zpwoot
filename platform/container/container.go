@@ -31,21 +31,29 @@ func (c *Container) Initialize() error {
 	logger.Init(c.config.LogLevel)
 	c.logger = logger.NewFromAppConfig(c.config)
 
+	c.logger.Info("Initializing zpwoot container...")
+
 	// Initialize database
+	c.logger.Info("Connecting to database...")
 	db, err := database.New(c.config, c.logger)
 	if err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 	c.database = db
+	c.logger.Info("Database connection established")
 
 	// Initialize migrator
+	c.logger.Info("Initializing database migrator...")
 	c.migrator = database.NewMigrator(db, c.logger)
 
 	// Run migrations automatically
+	c.logger.Info("Running database migrations...")
 	if err := c.migrator.RunMigrations(); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
+	c.logger.Info("Database migrations completed")
 
+	c.logger.Info("Container initialization completed successfully")
 	return nil
 }
 

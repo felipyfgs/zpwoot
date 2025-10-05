@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
-	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,19 +11,10 @@ import (
 	"zpwoot/internal/infra/http/router"
 	"zpwoot/platform/config"
 	"zpwoot/platform/container"
-	"zpwoot/platform/database"
 	"zpwoot/platform/logger"
 )
 
 func main() {
-	// Parse command line flags
-	var (
-		migrateUp     = flag.Bool("migrate-up", false, "Run database migrations up")
-		migrateDown   = flag.Bool("migrate-down", false, "Run database migrations down (rollback last)")
-		migrateStatus = flag.Bool("migrate-status", false, "Show migration status")
-	)
-	flag.Parse()
-
 	// Load configuration
 	cfg := config.Load()
 
@@ -35,12 +23,6 @@ func main() {
 	log := logger.NewFromAppConfig(cfg)
 
 	log.Info("Starting zpwoot application...")
-
-	// Handle migration commands
-	if *migrateUp || *migrateDown || *migrateStatus {
-		handleMigrationCommands(cfg, log, *migrateUp, *migrateDown, *migrateStatus)
-		return
-	}
 
 	// Initialize dependencies container
 	container := container.NewContainer(cfg)
@@ -92,50 +74,4 @@ func main() {
 	}
 
 	log.Info("Server exited")
-}
-
-func handleMigrationCommands(cfg *config.Config, log *logger.Logger, migrateUp, migrateDown, migrateStatus bool) {
-	// Initialize database connection
-	db, err := database.New(cfg, log)
-	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
-	}
-	defer db.Close()
-
-	// Initialize migrator
-	migrator := database.NewMigrator(db, log)
-
-	switch {
-	case migrateUp:
-		log.Info("Running migrations up...")
-		if err := migrator.RunMigrations(); err != nil {
-			log.Fatalf("Failed to run migrations: %v", err)
-		}
-		log.Info("Migrations completed successfully")
-
-	case migrateDown:
-		log.Info("Rolling back last migration...")
-		if err := migrator.Rollback(); err != nil {
-			log.Fatalf("Failed to rollback migration: %v", err)
-		}
-		log.Info("Rollback completed successfully")
-
-	case migrateStatus:
-		log.Info("Checking migration status...")
-		migrations, err := migrator.GetMigrationStatus()
-		if err != nil {
-			log.Fatalf("Failed to get migration status: %v", err)
-		}
-
-		fmt.Println("\nMigration Status:")
-		fmt.Println("=================")
-		for _, migration := range migrations {
-			status := "PENDING"
-			if migration.AppliedAt != nil {
-				status = "APPLIED"
-			}
-			fmt.Printf("Version %d: %s [%s]\n", migration.Version, migration.Name, status)
-		}
-		fmt.Println()
-	}
 }
