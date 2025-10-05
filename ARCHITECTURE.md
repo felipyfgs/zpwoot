@@ -1,63 +1,379 @@
-# 🏗️ Arquitetura zpwoot - Clean Architecture Pragmática
+# 🏗️ Arquitetura zpwoot - Clean Architecture Idiomática
 
 ## 📋 Visão Geral
 
-O **zpwoot** é uma **API Gateway para WhatsApp Business** que implementa uma **Clean Architecture Pragmática** rigorosamente estruturada. A arquitetura combina os princípios da Clean Architecture com padrões modernos como DDD, CQRS e Event-Driven Architecture, garantindo alta performance, escalabilidade e manutenibilidade.
+O **zpwoot** é uma **API Gateway para WhatsApp Business** que implementa **Clean Architecture** seguindo rigorosamente as práticas idiomáticas da comunidade Go e os princípios fundamentais de Robert C. Martin. A arquitetura garante separação total de responsabilidades, testabilidade máxima e conformidade com padrões modernos de desenvolvimento.
 
 ## 🎯 Princípios Fundamentais
 
-### 1. **Separação Rigorosa de Responsabilidades**
-- Cada camada tem uma responsabilidade específica e bem definida
-- Dependências fluem sempre para dentro (Dependency Inversion Principle)
-- Lógica de negócio completamente isolada de detalhes de implementação
-- Zero dependências externas no core domain
+### 1. **Dependency Rule (Regra de Dependência)**
+- Dependências fluem **SEMPRE** para dentro (camadas externas → internas)
+- Domain Layer **ZERO** dependências externas
+- Application Layer depende apenas do Domain
+- Adapters dependem de Application e Domain via interfaces
 
-### 2. **Domain-Driven Design (DDD)**
-- Bounded contexts bem definidos (Session, Messaging, Group, Contact)
-- Rich domain models com comportamento encapsulado
-- Value objects para conceitos de negócio
-- Domain services para lógica que não pertence a entidades
+### 2. **Separation of Concerns (Separação de Responsabilidades)**
+- Cada camada tem responsabilidade única e bem definida
+- DTOs específicos por camada (sem vazamento de abstrações)
+- Mappers dedicados para conversão entre camadas
+- Interfaces segregadas e coesas
 
-### 3. **Testabilidade e Qualidade**
-- 100% das interfaces mockáveis para testes unitários
-- Dependency injection em todas as camadas
-- Lógica de negócio testável isoladamente
-- Cobertura completa: unitários, integração e end-to-end
+### 3. **Testabilidade e Manutenibilidade**
+- Domain completamente isolado e testável
+- Interfaces facilitam mocking e testing
+- Baixo acoplamento, alta coesão
+- Facilita refatoração e evolução
 
-## 🏛️ Estrutura de Camadas
+### 4. **Práticas Idiomáticas Go**
+- Entidades de domínio sem tags de serialização
+- Interfaces pequenas e específicas
+- Error handling idiomático
+- Estruturas de dados imutáveis quando apropriado
+
+## 🏛️ Estrutura Arquitetural Corrigida
 
 ```
 zpwoot/
-├── internal/                    # 🏠 Application Core
-│   ├── core/                    # 🎯 Domain Layer (Business Logic)
-│   │   ├── session/             # Session domain (WhatsApp sessions)
-│   │   ├── messaging/           # Messaging domain (Messages & sync)
-│   │   ├── group/               # Group domain (WhatsApp groups)
-│   │   ├── contact/             # Contact domain (Contact management)
-│   │   └── shared/              # Shared domain concepts
-│   ├── usecases/                # 🔧 Application Layer (Use Cases)
-│   │   ├── session_usecase.go   # Session orchestration
-│   │   ├── message_usecase.go   # Message orchestration
-│   │   ├── group_usecase.go     # Group orchestration
-│   │   └── shared/              # Shared application services
-│   └── adapters/                # 🔌 Infrastructure Layer
-│       ├── repository/          # Data persistence implementations
-│       ├── server/              # HTTP server, routing & handlers
-│       └── waclient/            # WhatsApp client integration
-├── platform/                   # 🏗️ Platform Layer (Cross-cutting)
+├── internal/
+│   ├── domain/                  # 🎯 DOMAIN LAYER (Enterprise Business Rules)
+│   │   ├── session/             # Session bounded context
+│   │   │   ├── entity.go        # Session entity (SEM tags JSON)
+│   │   │   ├── value_object.go  # ProxyConfig, DeviceInfo (puros)
+│   │   │   ├── repository.go    # Repository interface
+│   │   │   ├── service.go       # Domain service
+│   │   │   └── error.go         # Domain-specific errors
+│   │   ├── messaging/           # Messaging bounded context
+│   │   │   ├── entity.go        # Message entity (puro)
+│   │   │   ├── value_object.go  # MessageType, SyncStatus
+│   │   │   ├── repository.go    # Repository interface
+│   │   │   ├── service.go       # Domain service
+│   │   │   └── error.go         # Domain-specific errors
+│   │   ├── group/               # Group bounded context
+│   │   │   ├── entity.go        # Group entity (puro)
+│   │   │   ├── value_object.go  # GroupSettings, Participant
+│   │   │   ├── repository.go    # Repository interface
+│   │   │   ├── service.go       # Domain service
+│   │   │   └── error.go         # Domain-specific errors
+│   │   └── contact/             # Contact bounded context
+│   │       ├── entity.go        # Contact entity (puro)
+│   │       ├── value_object.go  # ContactInfo, SyncStatus
+│   │       ├── repository.go    # Repository interface
+│   │       ├── service.go       # Domain service
+│   │       └── error.go         # Domain-specific errors
+│   ├── application/             # 🔧 APPLICATION LAYER (Application Business Rules)
+│   │   ├── dto/                 # Application DTOs (para use cases)
+│   │   │   ├── session_dto.go   # CreateSessionCommand, SessionQuery
+│   │   │   ├── message_dto.go   # CreateMessageCommand, MessageQuery
+│   │   │   ├── group_dto.go     # CreateGroupCommand, GroupQuery
+│   │   │   └── contact_dto.go   # CreateContactCommand, ContactQuery
+│   │   ├── usecase/             # Use cases (orquestração)
+│   │   │   ├── session_usecase.go
+│   │   │   ├── message_usecase.go
+│   │   │   ├── group_usecase.go
+│   │   │   └── contact_usecase.go
+│   │   ├── port/                # Application interfaces (ports)
+│   │   │   ├── input/           # Input ports (para handlers)
+│   │   │   │   ├── session_port.go
+│   │   │   │   ├── message_port.go
+│   │   │   │   ├── group_port.go
+│   │   │   │   └── contact_port.go
+│   │   │   └── output/          # Output ports (para gateways)
+│   │   │       ├── whatsapp_port.go
+│   │   │       ├── chatwoot_port.go
+│   │   │       └── notification_port.go
+│   │   └── service/             # Application services
+│   │       ├── session_service.go
+│   │       ├── message_service.go
+│   │       ├── group_service.go
+│   │       └── contact_service.go
+│   ├── infrastructure/          # 🔌 INFRASTRUCTURE LAYER (Frameworks & Drivers)
+│   │   ├── persistence/         # Database implementations
+│   │   │   └── postgres/
+│   │   │       ├── session_repository.go
+│   │   │       ├── message_repository.go
+│   │   │       ├── group_repository.go
+│   │   │       └── contact_repository.go
+│   │   ├── external/            # External service integrations
+│   │   │   ├── whatsapp/        # WhatsApp gateway implementation
+│   │   │   ├── chatwoot/        # Chatwoot integration
+│   │   │   └── notification/    # Notification services
+│   │   ├── cache/               # Cache implementations
+│   │   └── event/               # Event publishing implementations
+│   └── adapter/                 # 🌐 INTERFACE ADAPTERS (Controllers, Gateways, Presenters)
+│       ├── http/                # HTTP interface adapter
+│       │   ├── dto/             # HTTP-specific DTOs
+│       │   │   ├── session_http.go  # HTTP requests/responses
+│       │   │   ├── message_http.go  # HTTP requests/responses
+│       │   │   ├── group_http.go    # HTTP requests/responses
+│       │   │   ├── contact_http.go  # HTTP requests/responses
+│       │   │   └── common_http.go   # Common HTTP DTOs
+│       │   ├── handler/         # HTTP handlers
+│       │   │   ├── session_handler.go
+│       │   │   ├── message_handler.go
+│       │   │   ├── group_handler.go
+│       │   │   └── contact_handler.go
+│       │   ├── mapper/          # HTTP ↔ Application mappers
+│       │   │   ├── session_mapper.go
+│       │   │   ├── message_mapper.go
+│       │   │   ├── group_mapper.go
+│       │   │   └── contact_mapper.go
+│       │   ├── middleware/      # HTTP middlewares
+│       │   └── router/          # HTTP routing
+│       ├── grpc/                # gRPC interface adapter (futuro)
+│       │   ├── dto/
+│       │   ├── handler/
+│       │   └── mapper/
+│       └── cli/                 # CLI interface adapter (futuro)
+│           ├── dto/
+│           ├── command/
+│           └── mapper/
+├── platform/                   # 🛠️ PLATFORM (Cross-cutting Concerns)
 │   ├── config/                  # Configuration management
-│   ├── database/                # Database connection & migrations
+│   ├── database/                # Database connections & migrations
 │   ├── logger/                  # Structured logging
-│   └── container/               # Dependency injection container
-└── cmd/                        # 🚀 Entry Points
-    └── server/                  # HTTP server entry point
+│   ├── monitoring/              # Metrics & health checks
+│   └── container/               # Dependency injection
+├── cmd/                        # 🚀 APPLICATION ENTRY POINTS
+│   └── server/                  # HTTP server main
+├── docs/                       # 📚 DOCUMENTATION
+├── scripts/                    # 🔧 BUILD & DEPLOYMENT SCRIPTS
+└── tests/                      # 🧪 INTEGRATION & E2E TESTS
 ```
 
 ## 📁 Detalhamento das Camadas
 
-### 🎯 **CORE - Domain Layer (Camada de Domínio)**
+### 🎯 **DOMAIN LAYER (Camada de Domínio)**
 
-**Responsabilidade:** Contém a lógica de negócio pura, entidades ricas, value objects e contratos. É o coração do sistema, completamente isolado de detalhes externos.
+**Responsabilidade:** Contém as regras de negócio da empresa (Enterprise Business Rules). Entidades puras, value objects imutáveis, interfaces de repositório e serviços de domínio. **ZERO** dependências externas.
+
+**Características:**
+- ✅ Entidades **SEM** tags JSON/GORM/etc
+- ✅ Value Objects imutáveis com validação
+- ✅ Interfaces de repositório (ports)
+- ✅ Serviços de domínio para lógica complexa
+- ✅ Erros específicos do domínio
+- ❌ **NUNCA** importa outras camadas
+- ❌ **NUNCA** conhece detalhes de persistência/HTTP/etc
+
+**Exemplo de Entidade Pura:**
+```go
+// internal/domain/session/entity.go
+type Session struct {
+    id          uuid.UUID
+    name        string
+    isConnected bool
+    proxyConfig *ProxyConfig
+    createdAt   time.Time
+    updatedAt   time.Time
+}
+
+// Métodos de negócio
+func (s *Session) Connect() error {
+    if s.isConnected {
+        return ErrSessionAlreadyConnected
+    }
+    s.isConnected = true
+    s.updatedAt = time.Now()
+    return nil
+}
+
+// Getters para acesso controlado
+func (s *Session) ID() uuid.UUID { return s.id }
+func (s *Session) Name() string { return s.name }
+```
+
+### 🔧 **APPLICATION LAYER (Camada de Aplicação)**
+
+**Responsabilidade:** Contém as regras de negócio da aplicação (Application Business Rules). Orquestra use cases, coordena operações entre domínios, gerencia transações.
+
+**Características:**
+- ✅ DTOs específicos para use cases
+- ✅ Use cases que orquestram operações
+- ✅ Ports (interfaces) para adapters
+- ✅ Application services para lógica de aplicação
+- ✅ Depende apenas do Domain Layer
+- ❌ **NUNCA** conhece detalhes de HTTP/Database/etc
+
+**Exemplo de Use Case:**
+```go
+// internal/application/usecase/session_usecase.go
+type SessionUseCase struct {
+    sessionRepo session.Repository
+    sessionSvc  session.Service
+}
+
+func (uc *SessionUseCase) CreateSession(ctx context.Context, cmd *dto.CreateSessionCommand) (*dto.SessionQuery, error) {
+    // Converter DTO para Domain
+    sess, err := session.NewSession(cmd.Name, cmd.ProxyConfig)
+    if err != nil {
+        return nil, err
+    }
+
+    // Persistir via interface
+    if err := uc.sessionRepo.Save(ctx, sess); err != nil {
+        return nil, err
+    }
+
+    // Converter Domain para DTO
+    return &dto.SessionQuery{
+        ID:          sess.ID().String(),
+        Name:        sess.Name(),
+        IsConnected: sess.IsConnected(),
+    }, nil
+}
+```
+
+### 🔌 **INFRASTRUCTURE LAYER (Camada de Infraestrutura)**
+
+**Responsabilidade:** Implementa detalhes técnicos (Frameworks & Drivers). Bancos de dados, APIs externas, sistemas de arquivos, etc.
+
+**Características:**
+- ✅ Implementações concretas de repositórios
+- ✅ Integrações com APIs externas
+- ✅ Configurações de banco de dados
+- ✅ Implementa interfaces do Domain/Application
+- ❌ **NUNCA** é importada por outras camadas
+
+### 🌐 **ADAPTER LAYER (Camada de Adaptadores)**
+
+**Responsabilidade:** Adapta interfaces externas para o sistema (Interface Adapters). Controllers, Presenters, Gateways.
+
+**Características:**
+- ✅ DTOs específicos por interface (HTTP, gRPC, CLI)
+- ✅ Handlers que recebem requests externos
+- ✅ Mappers para conversão entre DTOs
+- ✅ Middleware e routing
+- ✅ Depende de Application Layer via interfaces
+
+## 🔄 **Fluxo de Dados e Dependency Rule**
+
+### **Fluxo de Request (HTTP → Domain)**
+
+```
+1. HTTP Request
+   ↓
+2. HTTP Handler (adapter/http/handler/)
+   ↓ (converte HTTP DTO → Application DTO)
+3. HTTP Mapper (adapter/http/mapper/)
+   ↓
+4. Use Case (application/usecase/)
+   ↓ (converte Application DTO → Domain Entity)
+5. Domain Service (domain/*/service.go)
+   ↓
+6. Domain Entity (domain/*/entity.go)
+   ↓ (via Repository interface)
+7. Infrastructure Repository (infrastructure/persistence/)
+```
+
+### **Dependency Direction (sempre para dentro)**
+
+```
+HTTP Handler → Application Use Case → Domain Service → Domain Entity
+     ↑                ↑                    ↑              ↑
+     |                |                    |              |
+  Adapter         Application           Domain         Domain
+   Layer            Layer               Layer          Layer
+     |                |                    |              |
+     └────────────────┴────────────────────┴──────────────┘
+                    Dependencies flow inward
+```
+
+### **Exemplo Prático: Criar Sessão**
+
+**1. HTTP DTO (adapter/http/dto/session_http.go):**
+```go
+type CreateSessionRequest struct {
+    Name        string       `json:"name" validate:"required"`
+    ProxyConfig *ProxyConfig `json:"proxyConfig,omitempty"`
+}
+```
+
+**2. Application DTO (application/dto/session_dto.go):**
+```go
+type CreateSessionCommand struct {
+    Name        string
+    ProxyConfig *ProxyConfigDTO
+}
+```
+
+**3. Domain Entity (domain/session/entity.go):**
+```go
+type Session struct {
+    id          uuid.UUID
+    name        string
+    proxyConfig *ProxyConfig  // Domain Value Object
+}
+```
+
+**4. Mapper HTTP → Application (adapter/http/mapper/session_mapper.go):**
+```go
+func ToCreateSessionCommand(req *http_dto.CreateSessionRequest) *app_dto.CreateSessionCommand {
+    return &app_dto.CreateSessionCommand{
+        Name: req.Name,
+        ProxyConfig: toProxyConfigDTO(req.ProxyConfig),
+    }
+}
+```
+
+**5. Use Case (application/usecase/session_usecase.go):**
+```go
+func (uc *SessionUseCase) CreateSession(ctx context.Context, cmd *dto.CreateSessionCommand) (*dto.SessionQuery, error) {
+    // Application DTO → Domain Entity
+    sess, err := session.NewSession(cmd.Name, toDomainProxyConfig(cmd.ProxyConfig))
+    if err != nil {
+        return nil, err
+    }
+
+    // Persist via Domain interface
+    if err := uc.sessionRepo.Save(ctx, sess); err != nil {
+        return nil, err
+    }
+
+    // Domain Entity → Application DTO
+    return &dto.SessionQuery{
+        ID:   sess.ID().String(),
+        Name: sess.Name(),
+    }, nil
+}
+```
+
+## 🚨 **Regras de Importação (Dependency Rule)**
+
+### ✅ **PERMITIDO**
+
+```go
+// Domain Layer - ZERO imports de outras camadas
+import "github.com/google/uuid"  // Bibliotecas padrão OK
+
+// Application Layer - apenas Domain
+import "zpwoot/internal/domain/session"
+import "zpwoot/internal/domain/messaging"
+
+// Infrastructure Layer - Domain + Application
+import "zpwoot/internal/domain/session"
+import "zpwoot/internal/application/dto"
+
+// Adapter Layer - Application + Domain (via interfaces)
+import "zpwoot/internal/application/usecase"
+import "zpwoot/internal/application/dto"
+```
+
+### ❌ **PROIBIDO**
+
+```go
+// Domain NUNCA importa outras camadas
+import "zpwoot/internal/application/dto"     // ❌
+import "zpwoot/internal/adapter/http"        // ❌
+import "zpwoot/internal/infrastructure"      // ❌
+
+// Application NUNCA importa Adapter/Infrastructure
+import "zpwoot/internal/adapter/http"        // ❌
+import "zpwoot/internal/infrastructure"      // ❌
+
+// Imports de frameworks no Domain
+import "github.com/gin-gonic/gin"           // ❌
+import "gorm.io/gorm"                       // ❌
+```
 
 **Estrutura Detalhada:**
 ```

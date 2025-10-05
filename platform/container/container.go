@@ -11,15 +11,13 @@ import (
 	_ "github.com/lib/pq"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 
-	"zpwoot/internal/core/group"
-	"zpwoot/internal/core/messaging"
-	"zpwoot/internal/core/session"
+	"zpwoot/internal/domain/group"
+	"zpwoot/internal/domain/message"
+	"zpwoot/internal/domain/session"
 
-	"zpwoot/internal/usecases"
-
-	"zpwoot/internal/adapters/http"
-	"zpwoot/internal/adapters/repository"
-	"zpwoot/internal/adapters/waclient"
+	"zpwoot/internal/api"
+	"zpwoot/internal/infrastructure/repository"
+	"zpwoot/internal/infrastructure/whatsapp"
 
 	"zpwoot/platform/config"
 	"zpwoot/platform/database"
