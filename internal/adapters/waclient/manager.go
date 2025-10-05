@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -598,18 +599,45 @@ func (wac *WAClient) updateSessionStatus(ctx context.Context, client *Client) {
 	}
 }
 
-func NewWAStoreContainer(db *sqlx.DB, logger *logger.Logger) *sqlstore.Container {
-
-	dbURL := "postgres://zpwoot:zpwoot123@localhost:5432/zpwoot?sslmode=disable"
-
+func NewWAStoreContainer(db *sqlx.DB, logger *logger.Logger, dbURL string) *sqlstore.Container {
 	container, err := sqlstore.New(context.Background(), "postgres", dbURL, waLog.Noop)
 	if err != nil {
 		logger.Error().
 			Err(err).
-			Str("db_url", dbURL).
+			Str("db_url", maskDBURL(dbURL)).
 			Msg("Failed to create WhatsApp store container")
 		return nil
 	}
 
 	return container
+}
+
+func maskDBURL(dbURL string) string {
+
+	if dbURL == "" {
+		return ""
+	}
+
+	start := strings.Index(dbURL, "://")
+	if start == -1 {
+		return "***"
+	}
+
+	userPassEnd := strings.Index(dbURL[start+3:], "@")
+	if userPassEnd == -1 {
+		return dbURL
+	}
+
+	userPassStart := start + 3
+	userPassSection := dbURL[userPassStart : userPassStart+userPassEnd]
+
+	colonIndex := strings.Index(userPassSection, ":")
+	if colonIndex == -1 {
+		return dbURL
+	}
+
+	user := userPassSection[:colonIndex]
+	maskedSection := user + ":***"
+
+	return dbURL[:userPassStart] + maskedSection + dbURL[userPassStart+userPassEnd:]
 }

@@ -72,7 +72,11 @@ func createSessionHandler(container *container.Container) *handlers.SessionHandl
 
 	sessionRepository := repository.NewSessionRepository(container.GetDatabase().DB)
 	sessionRepo := repository.NewSessionRepo(sessionRepository)
-	waContainer := waclient.NewWAStoreContainer(container.GetDatabase().DB, container.GetLogger())
+	waContainer := waclient.NewWAStoreContainer(
+		container.GetDatabase().DB,
+		container.GetLogger(),
+		container.GetConfig().Database.URL,
+	)
 	waClient := waclient.NewWAClient(waContainer, container.GetLogger(), sessionRepo)
 
 	sessionManager := waclient.NewSessionManagerAdapter(waClient)
@@ -88,7 +92,11 @@ func createMessageHandler(container *container.Container) *handlers.MessageHandl
 
 	sessionRepository := repository.NewSessionRepository(container.GetDatabase().DB)
 	sessionRepo := repository.NewSessionRepo(sessionRepository)
-	waContainer := waclient.NewWAStoreContainer(container.GetDatabase().DB, container.GetLogger())
+	waContainer := waclient.NewWAStoreContainer(
+		container.GetDatabase().DB,
+		container.GetLogger(),
+		container.GetConfig().Database.URL,
+	)
 	waClient := waclient.NewWAClient(waContainer, container.GetLogger(), sessionRepo)
 
 	messageSender := waclient.NewMessageSender(waClient)
