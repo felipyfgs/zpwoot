@@ -7,18 +7,18 @@ import (
 	"zpwoot/internal/adapters/logger"
 	"zpwoot/internal/adapters/waclient"
 	"zpwoot/internal/core/application/dto"
-	sessionUseCase "zpwoot/internal/core/application/usecase/session"
+	"zpwoot/internal/core/ports/input"
 
 	"github.com/go-chi/chi/v5"
 )
 
 type SessionHandler struct {
-	useCases *sessionUseCase.UseCases
+	useCases input.SessionUseCases
 	waClient *waclient.WAClient
 	logger   *logger.Logger
 }
 
-func NewSessionHandler(useCases *sessionUseCase.UseCases, waClient *waclient.WAClient, logger *logger.Logger) *SessionHandler {
+func NewSessionHandler(useCases input.SessionUseCases, waClient *waclient.WAClient, logger *logger.Logger) *SessionHandler {
 	return &SessionHandler{
 		useCases: useCases,
 		waClient: waClient,
@@ -45,7 +45,7 @@ func (h *SessionHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := h.useCases.Create.Execute(r.Context(), &req)
+	response, err := h.useCases.CreateSession(r.Context(), &req)
 	if err != nil {
 		h.logger.Error().
 			Err(err).
@@ -83,7 +83,7 @@ func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := h.useCases.Get.Execute(r.Context(), sessionID)
+	response, err := h.useCases.GetSession(r.Context(), sessionID)
 	if err != nil {
 		if err == dto.ErrSessionNotFound {
 			h.writeErrorResponse(w, http.StatusNotFound, dto.ErrorCodeNotFound, "session not found")
@@ -112,7 +112,7 @@ func (h *SessionHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
 		Offset: 0,
 	}
 
-	response, err := h.useCases.List.Execute(r.Context(), pagination)
+	response, err := h.useCases.ListSessions(r.Context(), pagination)
 	if err != nil {
 		h.logger.Error().
 			Err(err).
@@ -143,7 +143,7 @@ func (h *SessionHandler) ConnectSession(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	response, err := h.useCases.Connect.Execute(r.Context(), sessionID)
+	response, err := h.useCases.ConnectSession(r.Context(), sessionID)
 	if err != nil {
 		h.logger.Error().
 			Err(err).
@@ -179,7 +179,7 @@ func (h *SessionHandler) DisconnectSession(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	statusResponse, err := h.useCases.Disconnect.Execute(r.Context(), sessionID)
+	statusResponse, err := h.useCases.DisconnectSession(r.Context(), sessionID)
 	if err != nil {
 		h.logger.Error().
 			Err(err).
@@ -215,7 +215,7 @@ func (h *SessionHandler) LogoutSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.useCases.Logout.Execute(r.Context(), sessionID)
+	err := h.useCases.LogoutSession(r.Context(), sessionID)
 	if err != nil {
 		h.logger.Error().
 			Err(err).
@@ -258,7 +258,7 @@ func (h *SessionHandler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.useCases.Delete.Execute(r.Context(), sessionID)
+	err := h.useCases.DeleteSession(r.Context(), sessionID)
 	if err != nil {
 		h.logger.Error().
 			Err(err).
@@ -302,7 +302,7 @@ func (h *SessionHandler) GetQRCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := h.useCases.QR.GetQRCode(r.Context(), sessionID)
+	response, err := h.useCases.GetQRCode(r.Context(), sessionID)
 	if err != nil {
 		h.logger.Error().
 			Err(err).

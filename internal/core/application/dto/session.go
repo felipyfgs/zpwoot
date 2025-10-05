@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/skip2/go-qrcode"
-	"zpwoot/internal/adapters/waclient"
 	"zpwoot/internal/core/application/validators"
 	"zpwoot/internal/core/domain/session"
 )
@@ -144,40 +143,6 @@ func (r *CreateSessionRequest) Validate() error {
 	return nil
 }
 
-func (r *CreateSessionRequest) ToSessionConfig() *waclient.SessionConfig {
-	config := &waclient.SessionConfig{
-		Name:          r.Name,
-		AutoReconnect: true,
-	}
-
-	if r.Settings != nil && r.Settings.Webhook != nil && r.Settings.Webhook.Enabled {
-		config.WebhookURL = r.Settings.Webhook.URL
-
-		events := make([]waclient.EventType, 0, len(r.Settings.Webhook.Events))
-		for _, event := range r.Settings.Webhook.Events {
-			events = append(events, waclient.EventType(event))
-		}
-		config.Events = events
-	}
-
-	if r.Settings != nil && r.Settings.Proxy != nil && r.Settings.Proxy.Enabled {
-		config.ProxyConfig = map[string]string{
-			"enabled": "true",
-			"type":    r.Settings.Proxy.Type,
-			"host":    r.Settings.Proxy.Host,
-			"port":    r.Settings.Proxy.Port,
-		}
-		if r.Settings.Proxy.User != "" {
-			config.ProxyConfig["user"] = r.Settings.Proxy.User
-		}
-		if r.Settings.Proxy.Pass != "" {
-			config.ProxyConfig["pass"] = r.Settings.Proxy.Pass
-		}
-	}
-
-	return config
-}
-
 func (r *CreateSessionRequest) ToDomain() *session.Session {
 	return session.NewSession(r.Name)
 }
@@ -206,76 +171,6 @@ func FromDomainSession(s *session.Session) *SessionResponse {
 	return response
 }
 
-func FromWAClient(client *waclient.Client) *SessionResponse {
-	deviceJID := ""
-	if client.WAClient.Store.ID != nil {
-		deviceJID = client.WAClient.Store.ID.String()
-	}
-
-	response := &SessionResponse{
-		SessionID: client.SessionID,
-		Name:      client.Name,
-		Status:    string(client.Status),
-		Connected: client.Status == session.StatusConnected,
-		DeviceJID: deviceJID,
-		QRCode:    client.QRCode,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
-
-	if client.QRCode != "" {
-		response.QRCodeBase64 = GenerateQRCodeBase64(client.QRCode)
-		if !client.QRExpiresAt.IsZero() {
-			response.QRCodeExpiresAt = &client.QRExpiresAt
-		}
-	}
-
-	if client.Config != nil {
-		settings := &SessionSettings{}
-
-		if client.WebhookURL != "" || len(client.Events) > 0 {
-			events := make([]string, len(client.Events))
-			for i, event := range client.Events {
-				events[i] = string(event)
-			}
-
-			settings.Webhook = &WebhookSettings{
-				Enabled: client.WebhookURL != "",
-				URL:     client.WebhookURL,
-				Events:  events,
-			}
-		}
-
-		if client.Config.ProxyConfig != nil && len(client.Config.ProxyConfig) > 0 {
-			if enabled, ok := client.Config.ProxyConfig["enabled"]; ok && enabled == "true" {
-				settings.Proxy = &ProxySettings{
-					Enabled: true,
-					Type:    client.Config.ProxyConfig["type"],
-					Host:    client.Config.ProxyConfig["host"],
-					Port:    client.Config.ProxyConfig["port"],
-					User:    client.Config.ProxyConfig["user"],
-				}
-			}
-		}
-
-		if settings.Webhook != nil || settings.Proxy != nil {
-			response.Settings = settings
-		}
-	}
-
-	if !client.QRExpiresAt.IsZero() {
-		response.QRCodeExpiresAt = &client.QRExpiresAt
-	}
-	if !client.ConnectedAt.IsZero() {
-		response.ConnectedAt = &client.ConnectedAt
-	}
-	if !client.LastSeen.IsZero() {
-		response.LastSeen = &client.LastSeen
-	}
-
-	return response
-}
-
 func (s *SessionResponse) ToListInfo() *SessionListInfo {
 	return &SessionListInfo{
 		SessionID:   s.SessionID,
@@ -288,28 +183,6 @@ func (s *SessionResponse) ToListInfo() *SessionListInfo {
 		UpdatedAt:   s.UpdatedAt,
 		ConnectedAt: s.ConnectedAt,
 		LastSeen:    s.LastSeen,
-	}
-}
-
-func FromWAClientList(clients []*waclient.Client) *SessionListResponse {
-	sessions := make([]SessionListInfo, len(clients))
-	for i, client := range clients {
-		sessionResp := FromWAClient(client)
-		sessions[i] = *sessionResp.ToListInfo()
-	}
-
-	return &SessionListResponse{
-		Sessions: sessions,
-		Total:    len(sessions),
-	}
-}
-
-func FromQREvent(qrEvent *waclient.QREvent) *QRCodeResponse {
-	return &QRCodeResponse{
-		QRCode:       qrEvent.Code,
-		QRCodeBase64: GenerateQRCodeBase64(qrEvent.Code),
-		ExpiresAt:    qrEvent.ExpiresAt.Format(time.RFC3339),
-		Status:       "generated",
 	}
 }
 

@@ -21,9 +21,8 @@ Na **Arquitetura Hexagonal (Ports & Adapters)**, os **Ports** são interfaces qu
 internal/core/ports/
 ├── output/                    # Portas de Saída (Output Ports)
 │   ├── whatsapp.go           # Interface para cliente WhatsApp
-│   ├── notification.go       # Interface para serviço de notificação
 │   └── logger.go             # Interface para logging
-└── input/                     # Portas de Entrada (Input Ports) - OPCIONAL
+└── input/                     # Portas de Entrada (Input Ports) - IMPLEMENTADO
     ├── session.go            # Interfaces de use cases de sessão
     └── message.go            # Interfaces de use cases de mensagem
 ```
