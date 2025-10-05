@@ -8,7 +8,11 @@ import (
 	"zpwoot/internal/adapters/database"
 	"zpwoot/internal/adapters/database/repository"
 	"zpwoot/internal/adapters/logger"
+	"zpwoot/internal/adapters/waclient"
 	"zpwoot/internal/config"
+	"zpwoot/internal/core/application/dto"
+	"zpwoot/internal/core/application/usecase/message"
+	"zpwoot/internal/core/application/usecase/session"
 	domainSession "zpwoot/internal/core/domain/session"
 	"zpwoot/internal/core/ports/input"
 	"zpwoot/internal/core/ports/output"
@@ -61,6 +65,9 @@ func (c *Container) Initialize() error {
 	c.logger.Info().Msg("Initializing domain services")
 	sessionRepo := repository.NewSessionRepository(c.database.DB)
 	c.sessionService = domainSession.NewService(sessionRepo)
+
+	c.logger.Info().Msg("Initializing WhatsApp client")
+	c.initializeWhatsAppClient()
 
 	c.logger.Info().Msg("Initializing use cases")
 	c.initializeUseCases()
@@ -121,20 +128,33 @@ func (c *Container) Handler() http.Handler {
 	return mux
 }
 
-func (c *Container) initializeUseCases() {
+func (c *Container) initializeWhatsAppClient() {
 
+	sessionRepository := repository.NewSessionRepository(c.database.DB)
+	sessionRepo := repository.NewSessionRepo(sessionRepository)
+	waContainer := waclient.NewWAStoreContainer(
+		c.database.DB,
+		c.logger,
+		c.config.Database.URL,
+	)
+	waClient := waclient.NewWAClient(waContainer, c.logger, sessionRepo)
+	c.whatsappClient = waclient.NewWAClientAdapter(waClient)
+}
+
+func (c *Container) initializeUseCases() {
 	c.sessionUseCases = c.createSessionUseCases()
 	c.messageUseCases = c.createMessageUseCases()
 }
 
 func (c *Container) createSessionUseCases() input.SessionUseCases {
-
-	return nil
+	return session.NewUseCases(c.sessionService, c.whatsappClient)
 }
 
 func (c *Container) createMessageUseCases() input.MessageUseCases {
-
-	return nil
+	return &MessageUseCasesImpl{
+		Send:    message.NewSendUseCase(c.sessionService, c.whatsappClient),
+		Receive: message.NewReceiveUseCase(c.sessionService),
+	}
 }
 
 func (c *Container) GetSessionService() *domainSession.Service {
@@ -159,4 +179,72 @@ func (c *Container) SetMessageUseCases(useCases input.MessageUseCases) {
 
 func (c *Container) SetWhatsAppClient(client output.WhatsAppClient) {
 	c.whatsappClient = client
+}
+
+type MessageUseCasesImpl struct {
+	Send    *message.SendUseCase
+	Receive *message.ReceiveUseCase
+}
+
+func (m *MessageUseCasesImpl) SendTextMessage(ctx context.Context, sessionID, to, text string) error {
+	req := &dto.SendMessageRequest{
+		To:   to,
+		Type: "text",
+		Text: text,
+	}
+	_, err := m.Send.Execute(ctx, sessionID, req)
+	return err
+}
+
+func (m *MessageUseCasesImpl) SendMediaMessage(ctx context.Context, sessionID, to string, media *dto.MediaData) error {
+	req := &dto.SendMessageRequest{
+		To:    to,
+		Type:  "media",
+		Media: media,
+	}
+	_, err := m.Send.Execute(ctx, sessionID, req)
+	return err
+}
+
+func (m *MessageUseCasesImpl) SendLocationMessage(ctx context.Context, sessionID, to string, latitude, longitude float64, name string) error {
+	req := &dto.SendMessageRequest{
+		To:   to,
+		Type: "location",
+		Location: &dto.Location{
+			Latitude:  latitude,
+			Longitude: longitude,
+			Name:      name,
+		},
+	}
+	_, err := m.Send.Execute(ctx, sessionID, req)
+	return err
+}
+
+func (m *MessageUseCasesImpl) SendContactMessage(ctx context.Context, sessionID, to string, contact *dto.ContactInfo) error {
+	req := &dto.SendMessageRequest{
+		To:      to,
+		Type:    "contact",
+		Contact: contact,
+	}
+	_, err := m.Send.Execute(ctx, sessionID, req)
+	return err
+}
+
+func (m *MessageUseCasesImpl) Execute(ctx context.Context, req *dto.ReceiveMessageRequest) error {
+	return m.Receive.ProcessIncomingMessage(ctx, req)
+}
+
+func (m *MessageUseCasesImpl) GetChatInfo(ctx context.Context, sessionID, chatJID string) (interface{}, error) {
+
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (m *MessageUseCasesImpl) GetContacts(ctx context.Context, sessionID string) (interface{}, error) {
+
+	return nil, fmt.Errorf("not implemented")
+}
+
+func (m *MessageUseCasesImpl) GetChats(ctx context.Context, sessionID string) (interface{}, error) {
+
+	return nil, fmt.Errorf("not implemented")
 }

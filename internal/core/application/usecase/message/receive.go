@@ -41,7 +41,8 @@ func (uc *ReceiveUseCase) ProcessIncomingMessage(ctx context.Context, req *dto.R
 	}
 
 	go func() {
-		_ = uc.sessionService.UpdateSessionStatus(ctx, req.SessionID, session.StatusConnected)
+
+		_ = uc.sessionService.UpdateSessionStatus(context.Background(), req.SessionID, session.StatusConnected)
 	}()
 
 	return nil
@@ -66,7 +67,8 @@ func (uc *ReceiveUseCase) ProcessIncomingMessageBatch(ctx context.Context, sessi
 	}
 
 	go func() {
-		_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusConnected)
+
+		_ = uc.sessionService.UpdateSessionStatus(context.Background(), sessionID, session.StatusConnected)
 	}()
 
 	for _, message := range messages {
@@ -76,7 +78,8 @@ func (uc *ReceiveUseCase) ProcessIncomingMessageBatch(ctx context.Context, sessi
 		}
 
 		go func(msgReq *dto.ReceiveMessageRequest) {
-			_ = uc.ProcessIncomingMessage(ctx, msgReq)
+
+			_ = uc.ProcessIncomingMessage(context.Background(), msgReq)
 		}(req)
 	}
 

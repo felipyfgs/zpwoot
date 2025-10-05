@@ -67,10 +67,12 @@ func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.Sessi
 		}
 
 		go func() {
+
+			bgCtx := context.Background()
 			if waStatus.Connected {
-				_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusConnected)
+				_ = uc.sessionService.UpdateSessionStatus(bgCtx, sessionID, session.StatusConnected)
 			} else {
-				_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusDisconnected)
+				_ = uc.sessionService.UpdateSessionStatus(bgCtx, sessionID, session.StatusDisconnected)
 			}
 		}()
 	}

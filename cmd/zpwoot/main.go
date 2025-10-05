@@ -87,13 +87,15 @@ func main() {
 
 	logger.WithComponent("main").Info().Msg("Shutting down server")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		logger.WithComponent("main").Fatal().
+		logger.WithComponent("main").Error().
 			Err(err).
 			Msg("Server forced to shutdown")
+	} else {
+		logger.WithComponent("main").Info().Msg("Server shutdown completed")
 	}
 
 	if err := container.Stop(ctx); err != nil {

@@ -2,6 +2,7 @@ package waclient
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -419,7 +420,9 @@ func (wac *WAClient) handleConnected(client *Client, evt *events.Connected) {
 		wac.logger.Info().Str("session_id", client.SessionID).Msg("Connected")
 	}
 
-	wac.updateSessionStatus(client.ctx, client)
+	go func() {
+		wac.updateSessionStatus(context.Background(), client)
+	}()
 	wac.sendWebhook(client, EventConnected, evt)
 }
 
@@ -428,7 +431,10 @@ func (wac *WAClient) handleDisconnected(client *Client, evt *events.Disconnected
 	client.LastSeen = time.Now()
 
 	wac.logger.Debug().Str("session_id", client.SessionID).Msg("Disconnected")
-	wac.updateSessionStatus(client.ctx, client)
+
+	go func() {
+		wac.updateSessionStatus(context.Background(), client)
+	}()
 	wac.sendWebhook(client, EventDisconnected, evt)
 }
 
@@ -437,7 +443,10 @@ func (wac *WAClient) handleLoggedOut(client *Client, evt *events.LoggedOut) {
 	client.LastSeen = time.Now()
 
 	wac.logger.Info().Str("session_id", client.SessionID).Msg("Logged out")
-	wac.updateSessionStatus(client.ctx, client)
+
+	go func() {
+		wac.updateSessionStatus(context.Background(), client)
+	}()
 	wac.sendWebhook(client, EventLoggedOut, evt)
 }
 
@@ -594,8 +603,14 @@ func (wac *WAClient) updateSessionStatus(ctx context.Context, client *Client) {
 		sess.LastSeen = &client.LastSeen
 	}
 
-	if err := wac.sessionRepo.Update(ctx, sess); err != nil {
-		wac.logger.Error().Err(err).Str("session_id", client.SessionID).Str("device_jid", deviceJID).Msg("Failed to update session status")
+	dbCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	if err := wac.sessionRepo.Update(dbCtx, sess); err != nil {
+
+		if !errors.Is(err, context.Canceled) {
+			wac.logger.Error().Err(err).Str("session_id", client.SessionID).Str("device_jid", deviceJID).Msg("Failed to update session status")
+		}
 	}
 }
 

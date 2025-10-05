@@ -82,7 +82,8 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 	}
 
 	go func() {
-		_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusConnected)
+
+		_ = uc.sessionService.UpdateSessionStatus(context.Background(), sessionID, session.StatusConnected)
 	}()
 
 	finalMessageID := messageID
