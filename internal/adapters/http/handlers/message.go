@@ -10,12 +10,10 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-
 type MessageHandler struct {
 	messageSender *waclient.MessageSenderImpl
 	logger        *logger.Logger
 }
-
 
 func NewMessageHandler(messageSender *waclient.MessageSenderImpl, logger *logger.Logger) *MessageHandler {
 	return &MessageHandler{
@@ -23,7 +21,6 @@ func NewMessageHandler(messageSender *waclient.MessageSenderImpl, logger *logger
 		logger:        logger,
 	}
 }
-
 
 func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
@@ -38,9 +35,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	req.SessionID = sessionID
-
 
 	if req.To == "" {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "to is required")
@@ -54,7 +49,6 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 	messageID := "msg_" + generateID()
-
 
 	switch req.Type {
 	case "text":
@@ -120,7 +114,6 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusOK, response)
 }
 
-
 func (h *MessageHandler) GetChatInfo(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	chatJID := r.URL.Query().Get("chatJid")
@@ -161,7 +154,6 @@ func (h *MessageHandler) GetChatInfo(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusOK, chatInfo)
 }
 
-
 func (h *MessageHandler) GetContacts(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -196,7 +188,6 @@ func (h *MessageHandler) GetContacts(w http.ResponseWriter, r *http.Request) {
 
 	h.writeJSON(w, http.StatusOK, response)
 }
-
 
 func (h *MessageHandler) GetChats(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
@@ -233,7 +224,6 @@ func (h *MessageHandler) GetChats(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusOK, response)
 }
 
-
 func (h *MessageHandler) writeJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(data)
@@ -246,7 +236,6 @@ func (h *MessageHandler) writeError(w http.ResponseWriter, status int, code, mes
 		"message": message,
 	})
 }
-
 
 func generateID() string {
 	return "123456789"

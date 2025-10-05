@@ -17,14 +17,12 @@ import (
 
 var globalLogger zerolog.Logger
 
-
 type LogFormat string
 
 const (
 	FormatJSON    LogFormat = "json"
 	FormatConsole LogFormat = "console"
 )
-
 
 type LogOutput string
 
@@ -33,11 +31,9 @@ const (
 	OutputStderr LogOutput = "stderr"
 )
 
-
 func shortCaller(file string, line int) string {
 	return fmt.Sprintf("%s:%d", filepath.Base(file), line)
 }
-
 
 func extractPackageFromFile(file string) string {
 
@@ -51,9 +47,6 @@ func extractPackageFromFile(file string) string {
 				return "main"
 			}
 
-
-
-
 			pathParts := strings.Split(dir, "/")
 			if len(pathParts) > 0 {
 				lastPart := pathParts[len(pathParts)-1]
@@ -64,7 +57,6 @@ func extractPackageFromFile(file string) string {
 			}
 		}
 	}
-
 
 	dir := filepath.Dir(file)
 	if dir == "." {
@@ -78,7 +70,6 @@ func extractPackageFromFile(file string) string {
 
 	return "unknown"
 }
-
 
 type packageHook struct{}
 
@@ -102,27 +93,22 @@ func (h packageHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
 		}
 	}
 
-
 	e.Str("pkg", "main")
 }
-
 
 func Init(level string) {
 
 	logLevel := parseLogLevel(level)
 
-
 	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
 		return shortCaller(file, line)
 	}
-
 
 	consoleWriter := zerolog.ConsoleWriter{
 		Out:        os.Stderr,
 		TimeFormat: time.RFC3339,
 		NoColor:    false,
 	}
-
 
 	globalLogger = zerolog.New(consoleWriter).
 		Level(logLevel).
@@ -132,20 +118,16 @@ func Init(level string) {
 		Caller().
 		Logger()
 
-
 	log.Logger = globalLogger
 }
-
 
 func InitWithConfig(cfg *config.Config) {
 
 	logLevel := parseLogLevel(cfg.LogLevel)
 
-
 	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
 		return shortCaller(file, line)
 	}
-
 
 	var output *os.File
 	switch LogOutput(strings.ToLower(cfg.LogOutput)) {
@@ -156,7 +138,6 @@ func InitWithConfig(cfg *config.Config) {
 	default:
 		output = os.Stderr
 	}
-
 
 	var logger zerolog.Logger
 	switch LogFormat(strings.ToLower(cfg.LogFormat)) {
@@ -197,11 +178,9 @@ func InitWithConfig(cfg *config.Config) {
 			Logger()
 	}
 
-
 	globalLogger = logger
 	log.Logger = logger
 }
-
 
 func parseLogLevel(level string) zerolog.Level {
 	switch strings.ToLower(level) {
@@ -226,11 +205,9 @@ func parseLogLevel(level string) zerolog.Level {
 	}
 }
 
-
 type Logger struct {
 	logger zerolog.Logger
 }
-
 
 func New() *Logger {
 	return &Logger{
@@ -238,13 +215,11 @@ func New() *Logger {
 	}
 }
 
-
 func NewFromAppConfig(cfg *config.Config) *Logger {
 	return &Logger{
 		logger: globalLogger,
 	}
 }
-
 
 func GetGlobalLogger() *Logger {
 	return &Logger{
@@ -252,20 +227,17 @@ func GetGlobalLogger() *Logger {
 	}
 }
 
-
 func (l *Logger) WithContext(ctx context.Context) *Logger {
 	return &Logger{
 		logger: l.logger.With().Ctx(ctx).Logger(),
 	}
 }
 
-
 func (l *Logger) WithField(key string, value interface{}) *Logger {
 	return &Logger{
 		logger: l.logger.With().Interface(key, value).Logger(),
 	}
 }
-
 
 func (l *Logger) WithFields(fields map[string]interface{}) *Logger {
 	logContext := l.logger.With()
@@ -277,13 +249,11 @@ func (l *Logger) WithFields(fields map[string]interface{}) *Logger {
 	}
 }
 
-
 func (l *Logger) WithError(err error) *Logger {
 	return &Logger{
 		logger: l.logger.With().Err(err).Logger(),
 	}
 }
-
 
 func (l *Logger) WithComponent(component string) *Logger {
 	return &Logger{
@@ -291,13 +261,11 @@ func (l *Logger) WithComponent(component string) *Logger {
 	}
 }
 
-
 func (l *Logger) WithRequestID(requestID string) *Logger {
 	return &Logger{
 		logger: l.logger.With().Str("request_id", requestID).Logger(),
 	}
 }
-
 
 func (l *Logger) WithSessionID(sessionID string) *Logger {
 	return &Logger{
@@ -305,129 +273,97 @@ func (l *Logger) WithSessionID(sessionID string) *Logger {
 	}
 }
 
-
-
-
 func (l *Logger) Trace() *zerolog.Event {
 	return l.logger.Trace()
 }
-
 
 func (l *Logger) Debug() *zerolog.Event {
 	return l.logger.Debug()
 }
 
-
 func (l *Logger) Info() *zerolog.Event {
 	return l.logger.Info()
 }
-
 
 func (l *Logger) Warn() *zerolog.Event {
 	return l.logger.Warn()
 }
 
-
 func (l *Logger) Error() *zerolog.Event {
 	return l.logger.Error()
 }
-
 
 func (l *Logger) Fatal() *zerolog.Event {
 	return l.logger.Fatal()
 }
 
-
 func (l *Logger) Panic() *zerolog.Event {
 	return l.logger.Panic()
 }
-
 
 func (l *Logger) WithLevel(level zerolog.Level) *zerolog.Event {
 	return l.logger.WithLevel(level)
 }
 
-
-
-
 func (l *Logger) TraceMsg(msg string) {
 	l.logger.Trace().Msg(msg)
 }
-
 
 func (l *Logger) DebugMsg(msg string) {
 	l.logger.Debug().Msg(msg)
 }
 
-
 func (l *Logger) InfoMsg(msg string) {
 	l.logger.Info().Msg(msg)
 }
-
 
 func (l *Logger) WarnMsg(msg string) {
 	l.logger.Warn().Msg(msg)
 }
 
-
 func (l *Logger) ErrorMsg(msg string) {
 	l.logger.Error().Msg(msg)
 }
-
 
 func (l *Logger) FatalMsg(msg string) {
 	l.logger.Fatal().Msg(msg)
 }
 
-
 func (l *Logger) PanicMsg(msg string) {
 	l.logger.Panic().Msg(msg)
 }
-
-
-
 
 func Trace() *zerolog.Event {
 	return globalLogger.Trace()
 }
 
-
 func Debug() *zerolog.Event {
 	return globalLogger.Debug()
 }
-
 
 func Info() *zerolog.Event {
 	return globalLogger.Info()
 }
 
-
 func Warn() *zerolog.Event {
 	return globalLogger.Warn()
 }
-
 
 func Error() *zerolog.Event {
 	return globalLogger.Error()
 }
 
-
 func Fatal() *zerolog.Event {
 	return globalLogger.Fatal()
 }
-
 
 func Panic() *zerolog.Event {
 	return globalLogger.Panic()
 }
 
-
 func WithLevel(level zerolog.Level) *zerolog.Event {
 	return globalLogger.WithLevel(level)
 }
-
-
-
 
 func WithFields(fields map[string]interface{}) *Logger {
 	logContext := globalLogger.With()
@@ -439,13 +375,11 @@ func WithFields(fields map[string]interface{}) *Logger {
 	}
 }
 
-
 func WithError(err error) *Logger {
 	return &Logger{
 		logger: globalLogger.With().Err(err).Logger(),
 	}
 }
-
 
 func WithComponent(component string) *Logger {
 	return &Logger{
@@ -453,20 +387,17 @@ func WithComponent(component string) *Logger {
 	}
 }
 
-
 func WithRequestID(requestID string) *Logger {
 	return &Logger{
 		logger: globalLogger.With().Str("request_id", requestID).Logger(),
 	}
 }
 
-
 func WithSessionID(sessionID string) *Logger {
 	return &Logger{
 		logger: globalLogger.With().Str("session_id", sessionID).Logger(),
 	}
 }
-
 
 func GetZerologLogger() zerolog.Logger {
 	return globalLogger

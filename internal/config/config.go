@@ -7,9 +7,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-
 type Config struct {
-
 	Port       string
 	ServerHost string
 	LogLevel   string
@@ -17,27 +15,20 @@ type Config struct {
 	LogOutput  string
 	APIKey     string
 
-
 	Database DatabaseConfig
-
 
 	Postgres PostgresConfig
 
-
 	WALogLevel string
 
-
 	GlobalWebhookURL string
-
 
 	Environment string
 }
 
-
 type DatabaseConfig struct {
 	URL string
 }
-
 
 type PostgresConfig struct {
 	DB       string
@@ -45,7 +36,6 @@ type PostgresConfig struct {
 	Password string
 	Port     int
 }
-
 
 func Load() *Config {
 
@@ -60,11 +50,9 @@ func Load() *Config {
 		LogOutput:  getEnv("LOG_OUTPUT", "stdout"),
 		APIKey:     getEnv("ZP_API_KEY", "a0b1125a0eb3364d98e2c49ec6f7d6ba"),
 
-
 		Database: DatabaseConfig{
 			URL: getEnv("DATABASE_URL", "postgres://zpwoot:zpwoot123@localhost:5432/zpwoot?sslmode=disable"),
 		},
-
 
 		Postgres: PostgresConfig{
 			DB:       getEnv("POSTGRES_DB", "zpwoot"),
@@ -73,17 +61,13 @@ func Load() *Config {
 			Port:     getEnvAsInt("POSTGRES_PORT", 5432),
 		},
 
-
 		WALogLevel: getEnv("WA_LOG_LEVEL", "INFO"),
 
-
 		GlobalWebhookURL: getEnv("GLOBAL_WEBHOOK_URL", ""),
-
 
 		Environment: getEnv("NODE_ENV", "development"),
 	}
 }
-
 
 func getEnv(key, fallback string) string {
 	if value := os.Getenv(key); value != "" {
@@ -91,7 +75,6 @@ func getEnv(key, fallback string) string {
 	}
 	return fallback
 }
-
 
 func getEnvAsInt(key string, fallback int) int {
 	if value := os.Getenv(key); value != "" {
@@ -102,7 +85,6 @@ func getEnvAsInt(key string, fallback int) int {
 	return fallback
 }
 
-
 func getEnvAsBool(key string, fallback bool) bool {
 	if value := os.Getenv(key); value != "" {
 		if boolValue, err := strconv.ParseBool(value); err == nil {
@@ -112,16 +94,13 @@ func getEnvAsBool(key string, fallback bool) bool {
 	return fallback
 }
 
-
 func (c *Config) GetServerAddress() string {
 	return c.ServerHost + ":" + c.Port
 }
 
-
 func (c *Config) IsDevelopment() bool {
 	return c.Environment == "development"
 }
-
 
 func (c *Config) IsProduction() bool {
 	return c.Environment == "production"

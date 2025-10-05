@@ -12,18 +12,15 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-
 type SessionRepository struct {
 	db *sqlx.DB
 }
-
 
 func NewSessionRepository(db *sqlx.DB) *SessionRepository {
 	return &SessionRepository{
 		db: db,
 	}
 }
-
 
 func (r *SessionRepository) Create(ctx context.Context, sess *session.Session) error {
 	query := `
@@ -58,7 +55,6 @@ func (r *SessionRepository) Create(ctx context.Context, sess *session.Session) e
 	return nil
 }
 
-
 func (r *SessionRepository) GetByID(ctx context.Context, id string) (*session.Session, error) {
 	query := `
 		SELECT "id", "name", "deviceJid", "isConnected", "connectionError", 
@@ -79,7 +75,6 @@ func (r *SessionRepository) GetByID(ctx context.Context, id string) (*session.Se
 
 	return &sess, nil
 }
-
 
 func (r *SessionRepository) GetByJID(ctx context.Context, jid string) (*session.Session, error) {
 	query := `
@@ -102,7 +97,6 @@ func (r *SessionRepository) GetByJID(ctx context.Context, jid string) (*session.
 	return &sess, nil
 }
 
-
 func (r *SessionRepository) GetByName(ctx context.Context, name string) (*session.Session, error) {
 	query := `
 		SELECT "id", "name", "deviceJid", "isConnected", "connectionError", 
@@ -124,7 +118,6 @@ func (r *SessionRepository) GetByName(ctx context.Context, name string) (*sessio
 	return &sess, nil
 }
 
-
 func (r *SessionRepository) List(ctx context.Context, limit, offset int) ([]*session.Session, error) {
 	query := `
 		SELECT "id", "name", "deviceJid", "isConnected", "connectionError",
@@ -143,7 +136,6 @@ func (r *SessionRepository) List(ctx context.Context, limit, offset int) ([]*ses
 
 	return sessions, nil
 }
-
 
 func (r *SessionRepository) Update(ctx context.Context, sess *session.Session) error {
 	query := `
@@ -191,7 +183,6 @@ func (r *SessionRepository) Update(ctx context.Context, sess *session.Session) e
 	return nil
 }
 
-
 func (r *SessionRepository) UpdateStatus(ctx context.Context, id string, status session.Status) error {
 	query := `
 		UPDATE "zpSessions" SET
@@ -217,7 +208,6 @@ func (r *SessionRepository) UpdateStatus(ctx context.Context, id string, status 
 	return nil
 }
 
-
 func (r *SessionRepository) Delete(ctx context.Context, id string) error {
 	query := `DELETE FROM "zpSessions" WHERE "id" = $1`
 
@@ -237,7 +227,6 @@ func (r *SessionRepository) Delete(ctx context.Context, id string) error {
 
 	return nil
 }
-
 
 func (r *SessionRepository) UpdateQRCode(ctx context.Context, id string, qrCode string) error {
 	query := `

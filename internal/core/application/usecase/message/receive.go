@@ -6,28 +6,21 @@ import (
 	"time"
 
 	"zpwoot/internal/core/application/dto"
-	"zpwoot/internal/core/application/interfaces"
 	"zpwoot/internal/core/domain/session"
 	"zpwoot/internal/core/domain/shared"
 )
 
-
 type ReceiveUseCase struct {
-	sessionService  *session.Service
-	notificationSvc interfaces.NotificationService
+	sessionService *session.Service
 }
-
 
 func NewReceiveUseCase(
 	sessionService *session.Service,
-	notificationSvc interfaces.NotificationService,
 ) *ReceiveUseCase {
 	return &ReceiveUseCase{
-		sessionService:  sessionService,
-		notificationSvc: notificationSvc,
+		sessionService: sessionService,
 	}
 }
-
 
 func (uc *ReceiveUseCase) ProcessIncomingMessage(ctx context.Context, req *dto.ReceiveMessageRequest) error {
 
@@ -39,7 +32,6 @@ func (uc *ReceiveUseCase) ProcessIncomingMessage(ctx context.Context, req *dto.R
 		return fmt.Errorf("message ID is required")
 	}
 
-
 	_, err := uc.sessionService.GetSession(ctx, req.SessionID)
 	if err != nil {
 		if err == shared.ErrSessionNotFound {
@@ -48,33 +40,12 @@ func (uc *ReceiveUseCase) ProcessIncomingMessage(ctx context.Context, req *dto.R
 		return fmt.Errorf("failed to get session: %w", err)
 	}
 
-
 	go func() {
 		_ = uc.sessionService.UpdateSessionStatus(ctx, req.SessionID, session.StatusConnected)
 	}()
 
-
-	if uc.notificationSvc != nil {
-		messageEvent := &interfaces.MessageEvent{
-			ID:        req.Message.ID,
-			Chat:      req.Message.Chat,
-			Sender:    req.Message.Sender,
-			PushName:  req.Message.PushName,
-			Timestamp: req.Message.Timestamp,
-			FromMe:    req.Message.FromMe,
-			Type:      req.Message.Type,
-			IsGroup:   req.Message.IsGroup,
-			Content:   req.Message.Content,
-		}
-
-		go func() {
-			_ = uc.notificationSvc.NotifyMessageReceived(ctx, req.SessionID, messageEvent)
-		}()
-	}
-
 	return nil
 }
-
 
 func (uc *ReceiveUseCase) ProcessIncomingMessageBatch(ctx context.Context, sessionID string, messages []dto.MessageInfo) error {
 
@@ -86,7 +57,6 @@ func (uc *ReceiveUseCase) ProcessIncomingMessageBatch(ctx context.Context, sessi
 		return nil
 	}
 
-
 	_, err := uc.sessionService.GetSession(ctx, sessionID)
 	if err != nil {
 		if err == shared.ErrSessionNotFound {
@@ -95,18 +65,15 @@ func (uc *ReceiveUseCase) ProcessIncomingMessageBatch(ctx context.Context, sessi
 		return fmt.Errorf("failed to get session: %w", err)
 	}
 
-
 	go func() {
 		_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusConnected)
 	}()
-
 
 	for _, message := range messages {
 		req := &dto.ReceiveMessageRequest{
 			SessionID: sessionID,
 			Message:   message,
 		}
-
 
 		go func(msgReq *dto.ReceiveMessageRequest) {
 			_ = uc.ProcessIncomingMessage(ctx, msgReq)
@@ -115,7 +82,6 @@ func (uc *ReceiveUseCase) ProcessIncomingMessageBatch(ctx context.Context, sessi
 
 	return nil
 }
-
 
 func (uc *ReceiveUseCase) ValidateMessage(message *dto.MessageInfo) error {
 	if message.ID == "" {
@@ -140,7 +106,6 @@ func (uc *ReceiveUseCase) ValidateMessage(message *dto.MessageInfo) error {
 
 	return nil
 }
-
 
 func (uc *ReceiveUseCase) CreateMessageInfo(
 	messageID, chatJID, senderJID, pushName, messageType, content string,

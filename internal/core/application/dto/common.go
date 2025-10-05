@@ -5,7 +5,6 @@ import (
 	"time"
 )
 
-
 type APIResponse struct {
 	Success   bool        `json:"success" example:"true" description:"Whether the request was successful"`
 	Data      interface{} `json:"data,omitempty" description:"Response data (present on success)"`
@@ -13,12 +12,10 @@ type APIResponse struct {
 	Timestamp time.Time   `json:"timestamp" example:"2025-01-15T10:30:00Z" description:"Response timestamp"`
 }
 
-
 type ErrorResponse struct {
 	Error   string `json:"error" example:"validation_error" description:"Error code"`
 	Message string `json:"message" example:"name is required" description:"Human readable error message"`
 }
-
 
 type ErrorInfo struct {
 	Code    string                 `json:"code" example:"validation_error" description:"Error code"`
@@ -26,28 +23,23 @@ type ErrorInfo struct {
 	Details map[string]interface{} `json:"details,omitempty" description:"Additional error details"`
 }
 
-
 type ValidationError struct {
 	Field   string `json:"field" example:"name" description:"Field that failed validation"`
 	Message string `json:"message" example:"name is required" description:"Validation error message"`
 }
 
-
 func (e *ErrorInfo) Error() string {
 	return e.Message
 }
-
 
 func (e *ValidationError) Error() string {
 	return fmt.Sprintf("%s: %s", e.Field, e.Message)
 }
 
-
 type PaginationRequest struct {
 	Limit  int `json:"limit" form:"limit" example:"20" validate:"min=1,max=100" description:"Number of items per page (1-100)"`
 	Offset int `json:"offset" form:"offset" example:"0" validate:"min=0" description:"Number of items to skip"`
 }
-
 
 type PaginationResponse struct {
 	Items   interface{} `json:"items" description:"Paginated items"`
@@ -57,16 +49,12 @@ type PaginationResponse struct {
 	HasMore bool        `json:"hasMore" example:"true" description:"Whether there are more items"`
 }
 
-
 type HealthResponse struct {
 	Status    string            `json:"status" example:"healthy" description:"Overall health status"`
 	Version   string            `json:"version" example:"1.0.0" description:"Application version"`
 	Timestamp time.Time         `json:"timestamp" example:"2025-01-15T10:30:00Z" description:"Health check timestamp"`
 	Services  map[string]string `json:"services" description:"Status of individual services"`
 }
-
-
-
 
 func NewSuccessResponse(data interface{}) *APIResponse {
 	return &APIResponse{
@@ -75,7 +63,6 @@ func NewSuccessResponse(data interface{}) *APIResponse {
 		Timestamp: time.Now(),
 	}
 }
-
 
 func NewErrorResponse(code, message string) *APIResponse {
 	return &APIResponse{
@@ -87,7 +74,6 @@ func NewErrorResponse(code, message string) *APIResponse {
 		Timestamp: time.Now(),
 	}
 }
-
 
 func NewErrorResponseWithDetails(code, message string, details map[string]interface{}) *APIResponse {
 	return &APIResponse{
@@ -101,14 +87,12 @@ func NewErrorResponseWithDetails(code, message string, details map[string]interf
 	}
 }
 
-
 func NewValidationError(field, message string) *ValidationError {
 	return &ValidationError{
 		Field:   field,
 		Message: message,
 	}
 }
-
 
 func NewValidationErrorResponse(field, message string) *APIResponse {
 	return NewErrorResponseWithDetails(
@@ -120,7 +104,6 @@ func NewValidationErrorResponse(field, message string) *APIResponse {
 		},
 	)
 }
-
 
 const (
 	ErrorCodeValidation    = "validation_error"
@@ -135,13 +118,11 @@ const (
 	ErrorCodeRateLimit     = "rate_limit"
 )
 
-
 const (
 	DefaultLimit  = 20
 	MaxLimit      = 100
 	DefaultOffset = 0
 )
-
 
 func (p *PaginationRequest) ApplyDefaults() {
 	if p.Limit <= 0 {
@@ -154,7 +135,6 @@ func (p *PaginationRequest) ApplyDefaults() {
 		p.Offset = DefaultOffset
 	}
 }
-
 
 func (p *PaginationRequest) Validate() error {
 	if p.Limit < 1 || p.Limit > MaxLimit {

@@ -5,38 +5,31 @@ import (
 	"fmt"
 
 	"zpwoot/internal/core/application/dto"
-	"zpwoot/internal/core/application/interfaces"
 	"zpwoot/internal/core/domain/session"
 	"zpwoot/internal/core/domain/shared"
+	"zpwoot/internal/core/ports/output"
 )
 
-
 type DisconnectUseCase struct {
-	sessionService  *session.Service
-	whatsappClient  interfaces.WhatsAppClient
-	notificationSvc interfaces.NotificationService
+	sessionService *session.Service
+	whatsappClient output.WhatsAppClient
 }
-
 
 func NewDisconnectUseCase(
 	sessionService *session.Service,
-	whatsappClient interfaces.WhatsAppClient,
-	notificationSvc interfaces.NotificationService,
+	whatsappClient output.WhatsAppClient,
 ) *DisconnectUseCase {
 	return &DisconnectUseCase{
-		sessionService:  sessionService,
-		whatsappClient:  whatsappClient,
-		notificationSvc: notificationSvc,
+		sessionService: sessionService,
+		whatsappClient: whatsappClient,
 	}
 }
-
 
 func (uc *DisconnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.SessionStatusResponse, error) {
 
 	if sessionID == "" {
 		return nil, fmt.Errorf("session ID is required")
 	}
-
 
 	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
 	if err != nil {
@@ -46,7 +39,6 @@ func (uc *DisconnectUseCase) Execute(ctx context.Context, sessionID string) (*dt
 		return nil, fmt.Errorf("failed to get session from domain: %w", err)
 	}
 
-
 	if !domainSession.IsConnected {
 		return &dto.SessionStatusResponse{
 			ID:        sessionID,
@@ -55,10 +47,9 @@ func (uc *DisconnectUseCase) Execute(ctx context.Context, sessionID string) (*dt
 		}, nil
 	}
 
-
 	err = uc.whatsappClient.DisconnectSession(ctx, sessionID)
 	if err != nil {
-		if waErr, ok := err.(*interfaces.WhatsAppError); ok {
+		if waErr, ok := err.(*output.WhatsAppError); ok {
 			switch waErr.Code {
 			case "SESSION_NOT_FOUND":
 
@@ -85,18 +76,10 @@ func (uc *DisconnectUseCase) Execute(ctx context.Context, sessionID string) (*dt
 		return nil, fmt.Errorf("failed to disconnect WhatsApp session: %w", err)
 	}
 
-
 	domainSession.SetDisconnected()
 	err = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusDisconnected)
 	if err != nil {
 
-	}
-
-
-	if uc.notificationSvc != nil {
-		go func() {
-			_ = uc.notificationSvc.NotifySessionDisconnected(ctx, sessionID)
-		}()
 	}
 
 	return &dto.SessionStatusResponse{
@@ -106,13 +89,11 @@ func (uc *DisconnectUseCase) Execute(ctx context.Context, sessionID string) (*dt
 	}, nil
 }
 
-
 func (uc *DisconnectUseCase) ExecuteForce(ctx context.Context, sessionID string) (*dto.SessionStatusResponse, error) {
 
 	if sessionID == "" {
 		return nil, fmt.Errorf("session ID is required")
 	}
-
 
 	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
 	if err != nil {
@@ -122,19 +103,10 @@ func (uc *DisconnectUseCase) ExecuteForce(ctx context.Context, sessionID string)
 		return nil, fmt.Errorf("failed to get session from domain: %w", err)
 	}
 
-
 	_ = uc.whatsappClient.DisconnectSession(ctx, sessionID)
-
 
 	domainSession.SetDisconnected()
 	_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusDisconnected)
-
-
-	if uc.notificationSvc != nil {
-		go func() {
-			_ = uc.notificationSvc.NotifySessionDisconnected(ctx, sessionID)
-		}()
-	}
 
 	return &dto.SessionStatusResponse{
 		ID:        sessionID,

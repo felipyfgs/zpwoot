@@ -44,7 +44,6 @@ func (ms *MessageSenderImpl) SendTextMessage(ctx context.Context, sessionID stri
 	return nil
 }
 
-
 func (ms *MessageSenderImpl) SendMediaMessage(ctx context.Context, sessionID string, to string, media *MediaData) error {
 	client, err := ms.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -55,13 +54,10 @@ func (ms *MessageSenderImpl) SendMediaMessage(ctx context.Context, sessionID str
 		return ErrNotConnected
 	}
 
-
 	recipientJID, err := parseJID(to)
 	if err != nil {
 		return ErrInvalidJID
 	}
-
-
 
 	message := &waE2E.Message{
 		Conversation: proto.String(fmt.Sprintf("Media message: %s (%s)", media.FileName, media.MimeType)),
@@ -75,7 +71,6 @@ func (ms *MessageSenderImpl) SendMediaMessage(ctx context.Context, sessionID str
 	return nil
 }
 
-
 func (ms *MessageSenderImpl) SendLocationMessage(ctx context.Context, sessionID string, to string, lat, lng float64, name string) error {
 	client, err := ms.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -86,12 +81,10 @@ func (ms *MessageSenderImpl) SendLocationMessage(ctx context.Context, sessionID 
 		return ErrNotConnected
 	}
 
-
 	recipientJID, err := parseJID(to)
 	if err != nil {
 		return ErrInvalidJID
 	}
-
 
 	message := &waE2E.Message{
 		LocationMessage: &waE2E.LocationMessage{
@@ -109,7 +102,6 @@ func (ms *MessageSenderImpl) SendLocationMessage(ctx context.Context, sessionID 
 	return nil
 }
 
-
 func (ms *MessageSenderImpl) SendContactMessage(ctx context.Context, sessionID string, to string, contact *ContactInfo) error {
 	client, err := ms.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -120,18 +112,15 @@ func (ms *MessageSenderImpl) SendContactMessage(ctx context.Context, sessionID s
 		return ErrNotConnected
 	}
 
-
 	recipientJID, err := parseJID(to)
 	if err != nil {
 		return ErrInvalidJID
 	}
 
-
 	vcard := contact.VCard
 	if vcard == "" {
 		vcard = fmt.Sprintf("BEGIN:VCARD\nVERSION:3.0\nFN:%s\nTEL:%s\nEND:VCARD", contact.Name, contact.Phone)
 	}
-
 
 	message := &waE2E.Message{
 		ContactMessage: &waE2E.ContactMessage{
@@ -147,7 +136,6 @@ func (ms *MessageSenderImpl) SendContactMessage(ctx context.Context, sessionID s
 
 	return nil
 }
-
 
 func parseJID(jidStr string) (types.JID, error) {
 	if jidStr == "" {
@@ -172,7 +160,6 @@ func parseJID(jidStr string) (types.JID, error) {
 	return jid, nil
 }
 
-
 func (ms *MessageSenderImpl) GetChatInfo(ctx context.Context, sessionID string, chatJID string) (*ChatInfo, error) {
 	client, err := ms.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -188,12 +175,10 @@ func (ms *MessageSenderImpl) GetChatInfo(ctx context.Context, sessionID string, 
 		return nil, ErrInvalidJID
 	}
 
-
 	chatInfo := &ChatInfo{
 		JID:     jid.String(),
 		IsGroup: jid.Server == types.GroupServer,
 	}
-
 
 	if chatInfo.IsGroup {
 		groupInfo, err := client.WAClient.GetGroupInfo(jid)
@@ -207,7 +192,6 @@ func (ms *MessageSenderImpl) GetChatInfo(ctx context.Context, sessionID string, 
 	return chatInfo, nil
 }
 
-
 type ChatInfo struct {
 	JID              string `json:"jid"`
 	Name             string `json:"name,omitempty"`
@@ -215,7 +199,6 @@ type ChatInfo struct {
 	IsGroup          bool   `json:"isGroup"`
 	ParticipantCount int    `json:"participantCount,omitempty"`
 }
-
 
 func (ms *MessageSenderImpl) GetContacts(ctx context.Context, sessionID string) ([]*ContactInfo, error) {
 	client, err := ms.waClient.GetSession(ctx, sessionID)
@@ -226,7 +209,6 @@ func (ms *MessageSenderImpl) GetContacts(ctx context.Context, sessionID string) 
 	if client.Status != session.StatusConnected {
 		return nil, ErrNotConnected
 	}
-
 
 	contacts, err := client.WAClient.Store.Contacts.GetAllContacts(ctx)
 	if err != nil {
@@ -248,7 +230,6 @@ func (ms *MessageSenderImpl) GetContacts(ctx context.Context, sessionID string) 
 	return contactList, nil
 }
 
-
 func (ms *MessageSenderImpl) GetChats(ctx context.Context, sessionID string) ([]*ChatInfo, error) {
 	client, err := ms.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -258,8 +239,6 @@ func (ms *MessageSenderImpl) GetChats(ctx context.Context, sessionID string) ([]
 	if client.Status != session.StatusConnected {
 		return nil, ErrNotConnected
 	}
-
-
 
 	var chatList []*ChatInfo
 

@@ -4,7 +4,6 @@ import (
 	"time"
 )
 
-
 type Session struct {
 	ID              string     `json:"id" db:"id"`
 	Name            string     `json:"name" db:"name"`
@@ -20,7 +19,6 @@ type Session struct {
 	LastSeen        *time.Time `json:"last_seen,omitempty" db:"lastSeen"`
 }
 
-
 type Status string
 
 const (
@@ -31,7 +29,6 @@ const (
 	StatusError        Status = "error"
 )
 
-
 func (s Status) IsValid() bool {
 	switch s {
 	case StatusDisconnected, StatusConnecting, StatusConnected, StatusQRCode, StatusError:
@@ -40,7 +37,6 @@ func (s Status) IsValid() bool {
 		return false
 	}
 }
-
 
 func NewSession(name string) *Session {
 	now := time.Now()
@@ -51,7 +47,6 @@ func NewSession(name string) *Session {
 		UpdatedAt:   now,
 	}
 }
-
 
 func (s *Session) GetStatus() Status {
 	if s.IsConnected {
@@ -66,20 +61,17 @@ func (s *Session) GetStatus() Status {
 	return StatusDisconnected
 }
 
-
 func (s *Session) SetQRCode(qrCode string, expiresAt time.Time) {
 	s.QRCode = qrCode
 	s.QRCodeExpiresAt = &expiresAt
 	s.UpdatedAt = time.Now()
 }
 
-
 func (s *Session) ClearQRCode() {
 	s.QRCode = ""
 	s.QRCodeExpiresAt = nil
 	s.UpdatedAt = time.Now()
 }
-
 
 func (s *Session) SetConnected(deviceJID string) {
 	s.IsConnected = true
@@ -92,7 +84,6 @@ func (s *Session) SetConnected(deviceJID string) {
 	s.ClearQRCode()
 }
 
-
 func (s *Session) SetDisconnected() {
 	s.IsConnected = false
 	now := time.Now()
@@ -100,7 +91,6 @@ func (s *Session) SetDisconnected() {
 	s.UpdatedAt = now
 	s.ClearQRCode()
 }
-
 
 func (s *Session) SetError(error string) {
 	s.IsConnected = false
@@ -110,7 +100,6 @@ func (s *Session) SetError(error string) {
 	s.UpdatedAt = now
 	s.ClearQRCode()
 }
-
 
 func (s *Session) UpdateLastSeen() {
 	now := time.Now()

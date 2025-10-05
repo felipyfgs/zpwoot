@@ -5,38 +5,31 @@ import (
 	"fmt"
 
 	"zpwoot/internal/core/application/dto"
-	"zpwoot/internal/core/application/interfaces"
 	"zpwoot/internal/core/domain/session"
 	"zpwoot/internal/core/domain/shared"
+	"zpwoot/internal/core/ports/output"
 )
 
-
 type CreateUseCase struct {
-	sessionService  *session.Service
-	whatsappClient  interfaces.WhatsAppClient
-	notificationSvc interfaces.NotificationService
+	sessionService *session.Service
+	whatsappClient output.WhatsAppClient
 }
-
 
 func NewCreateUseCase(
 	sessionService *session.Service,
-	whatsappClient interfaces.WhatsAppClient,
-	notificationSvc interfaces.NotificationService,
+	whatsappClient output.WhatsAppClient,
 ) *CreateUseCase {
 	return &CreateUseCase{
-		sessionService:  sessionService,
-		whatsappClient:  whatsappClient,
-		notificationSvc: notificationSvc,
+		sessionService: sessionService,
+		whatsappClient: whatsappClient,
 	}
 }
-
 
 func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateSessionRequest) (*dto.CreateSessionResponse, error) {
 
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
-
 
 	domainSession, err := uc.sessionService.CreateSession(ctx, req.Name)
 	if err != nil {
@@ -48,7 +41,6 @@ func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateSessionRequ
 
 	sessionID := domainSession.ID
 
-
 	err = uc.whatsappClient.CreateSession(ctx, sessionID)
 	if err != nil {
 
@@ -56,7 +48,7 @@ func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateSessionRequ
 
 		}
 
-		if waErr, ok := err.(*interfaces.WhatsAppError); ok {
+		if waErr, ok := err.(*output.WhatsAppError); ok {
 			switch waErr.Code {
 			case "SESSION_ALREADY_EXISTS":
 				return nil, dto.ErrSessionAlreadyExists
@@ -66,14 +58,6 @@ func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateSessionRequ
 		}
 		return nil, fmt.Errorf("failed to create WhatsApp session: %w", err)
 	}
-
-
-	if uc.notificationSvc != nil {
-		go func() {
-			_ = uc.notificationSvc.NotifySessionConnected(ctx, sessionID, "")
-		}()
-	}
-
 
 	response := dto.SessionToCreateResponse(domainSession)
 

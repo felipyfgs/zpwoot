@@ -573,13 +573,11 @@ func (wac *WAClient) clearQRCode(client *Client) {
 	client.QRExpiresAt = time.Time{}
 }
 
-
 func (wac *WAClient) updateSessionStatus(ctx context.Context, client *Client) {
 	deviceJID := ""
 	if client.WAClient.Store.ID != nil {
 		deviceJID = client.WAClient.Store.ID.String()
 	}
-
 
 	wac.logger.Debug().
 		Str("session_id", client.SessionID).
@@ -598,7 +596,6 @@ func (wac *WAClient) updateSessionStatus(ctx context.Context, client *Client) {
 		UpdatedAt:   now,
 	}
 
-
 	if !client.QRExpiresAt.IsZero() {
 		sess.QRCodeExpiresAt = &client.QRExpiresAt
 	}
@@ -614,11 +611,9 @@ func (wac *WAClient) updateSessionStatus(ctx context.Context, client *Client) {
 	}
 }
 
-
 func NewWAStoreContainer(db *sqlx.DB, logger *logger.Logger) *sqlstore.Container {
 
 	dbURL := "postgres://zpwoot:zpwoot123@localhost:5432/zpwoot?sslmode=disable"
-
 
 	container, err := sqlstore.New(context.Background(), "postgres", dbURL, waLog.Noop)
 	if err != nil {

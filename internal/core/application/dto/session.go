@@ -10,7 +10,6 @@ import (
 	"zpwoot/internal/core/domain/session"
 )
 
-
 type ProxySettings struct {
 	Enabled bool   `json:"enabled" example:"true" description:"Enable proxy"`
 	Type    string `json:"type,omitempty" example:"http" enums:"http,https,socks5" description:"Proxy type (http, https, socks5)"`
@@ -20,7 +19,6 @@ type ProxySettings struct {
 	Pass    string `json:"pass,omitempty" example:"proxyPass123" description:"Proxy password (optional)"`
 }
 
-
 type WebhookSettings struct {
 	Enabled bool     `json:"enabled" example:"true" description:"Enable webhook"`
 	URL     string   `json:"url,omitempty" example:"https://api.example.com/webhook" validate:"omitempty,url" description:"Webhook URL"`
@@ -28,12 +26,10 @@ type WebhookSettings struct {
 	Secret  string   `json:"secret,omitempty" example:"supersecrettoken123" description:"Webhook secret for validation (optional)"`
 }
 
-
 type SessionSettings struct {
 	Proxy   *ProxySettings   `json:"proxy,omitempty" description:"Proxy configuration"`
 	Webhook *WebhookSettings `json:"webhook,omitempty" description:"Webhook configuration"`
 }
-
 
 type CreateSessionRequest struct {
 	Name           string           `json:"name" example:"my-session" validate:"required,min=1,max=100" description:"Session name for identification"`
@@ -41,12 +37,10 @@ type CreateSessionRequest struct {
 	GenerateQRCode bool             `json:"qrCode,omitempty" example:"true" description:"Auto-generate QR code after creation (default: false)"`
 }
 
-
 type UpdateSessionRequest struct {
 	Name     *string          `json:"name,omitempty" example:"updated-session" validate:"omitempty,min=1,max=100" description:"Session name for identification"`
 	Settings *SessionSettings `json:"settings,omitempty" description:"Session settings (proxy, webhook)"`
 }
-
 
 type SessionResponse struct {
 	SessionID       string           `json:"sessionId" example:"550e8400-e29b-41d4-a716-446655440000" description:"Unique session identifier"`
@@ -64,7 +58,6 @@ type SessionResponse struct {
 	LastSeen        *time.Time       `json:"lastSeen,omitempty" example:"2025-01-15T10:35:00Z" description:"Last activity timestamp"`
 }
 
-
 type SessionListInfo struct {
 	SessionID   string           `json:"sessionId" example:"550e8400-e29b-41d4-a716-446655440000" description:"Unique session identifier"`
 	Name        string           `json:"name" example:"my-session" description:"Session name"`
@@ -78,12 +71,10 @@ type SessionListInfo struct {
 	LastSeen    *time.Time       `json:"lastSeen,omitempty" example:"2025-01-15T10:35:00Z" description:"Last activity timestamp"`
 }
 
-
 type SessionListResponse struct {
 	Sessions []SessionListInfo `json:"sessions" description:"List of sessions (without QR codes)"`
 	Total    int               `json:"total" example:"5" description:"Total number of sessions"`
 }
-
 
 type SessionActionResponse struct {
 	SessionID string `json:"sessionId" example:"550e8400-e29b-41d4-a716-446655440000" description:"Session ID"`
@@ -92,16 +83,12 @@ type SessionActionResponse struct {
 	Message   string `json:"message,omitempty" example:"Session connected successfully" description:"Action message"`
 }
 
-
 type QRCodeResponse struct {
 	QRCode       string `json:"qrCode" example:"2@abc123..." description:"QR code string (original from WhatsApp)"`
 	QRCodeBase64 string `json:"qrCodeBase64" example:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..." description:"Base64 encoded QR code image"`
 	ExpiresAt    string `json:"expiresAt" example:"2025-01-15T10:35:00Z" description:"QR code expiration time"`
 	Status       string `json:"status" example:"generated" description:"QR code status"`
 }
-
-
-
 
 type CreateSessionResponse struct {
 	ID        string    `json:"id" example:"550e8400-e29b-41d4-a716-446655440000" description:"Session identifier"`
@@ -110,7 +97,6 @@ type CreateSessionResponse struct {
 	Connected bool      `json:"connected" example:"false" description:"Whether session is connected"`
 	CreatedAt time.Time `json:"createdAt" example:"2025-01-15T10:30:00Z" description:"Session creation timestamp"`
 }
-
 
 type SessionDetailResponse struct {
 	ID              string     `json:"id" example:"550e8400-e29b-41d4-a716-446655440000" description:"Session identifier"`
@@ -128,29 +114,23 @@ type SessionDetailResponse struct {
 	LastSeen        *time.Time `json:"lastSeen,omitempty" example:"2025-01-15T10:35:00Z" description:"Last activity timestamp"`
 }
 
-
 type SessionStatusResponse struct {
 	ID        string `json:"id" example:"550e8400-e29b-41d4-a716-446655440000" description:"Session identifier"`
 	Status    string `json:"status" example:"connected" description:"Current session status"`
 	Connected bool   `json:"connected" example:"true" description:"Whether session is connected"`
 }
 
-
-
-
 func (r *CreateSessionRequest) Validate() error {
-	// Use validators package for consistent validation
+
 	if err := validators.ValidateSessionName(r.Name); err != nil {
 		return NewValidationError("name", err.Error())
 	}
-
 
 	if r.Settings != nil && r.Settings.Webhook != nil && r.Settings.Webhook.Enabled {
 		if err := validators.ValidateWebhookURL(r.Settings.Webhook.URL); err != nil {
 			return NewValidationError("settings.webhook.url", err.Error())
 		}
 	}
-
 
 	if r.Settings != nil && r.Settings.Proxy != nil && r.Settings.Proxy.Enabled {
 		if r.Settings.Proxy.Host == "" {
@@ -164,19 +144,14 @@ func (r *CreateSessionRequest) Validate() error {
 	return nil
 }
 
-
-
-
 func (r *CreateSessionRequest) ToSessionConfig() *waclient.SessionConfig {
 	config := &waclient.SessionConfig{
 		Name:          r.Name,
 		AutoReconnect: true,
 	}
 
-
 	if r.Settings != nil && r.Settings.Webhook != nil && r.Settings.Webhook.Enabled {
 		config.WebhookURL = r.Settings.Webhook.URL
-
 
 		events := make([]waclient.EventType, 0, len(r.Settings.Webhook.Events))
 		for _, event := range r.Settings.Webhook.Events {
@@ -184,7 +159,6 @@ func (r *CreateSessionRequest) ToSessionConfig() *waclient.SessionConfig {
 		}
 		config.Events = events
 	}
-
 
 	if r.Settings != nil && r.Settings.Proxy != nil && r.Settings.Proxy.Enabled {
 		config.ProxyConfig = map[string]string{
@@ -204,11 +178,9 @@ func (r *CreateSessionRequest) ToSessionConfig() *waclient.SessionConfig {
 	return config
 }
 
-
 func (r *CreateSessionRequest) ToDomain() *session.Session {
 	return session.NewSession(r.Name)
 }
-
 
 func FromDomainSession(s *session.Session) *SessionResponse {
 	response := &SessionResponse{
@@ -224,7 +196,6 @@ func FromDomainSession(s *session.Session) *SessionResponse {
 		LastSeen:    s.LastSeen,
 	}
 
-
 	if s.QRCode != "" {
 		response.QRCodeBase64 = GenerateQRCodeBase64(s.QRCode)
 		if s.QRCodeExpiresAt != nil {
@@ -232,12 +203,8 @@ func FromDomainSession(s *session.Session) *SessionResponse {
 		}
 	}
 
-
-
-
 	return response
 }
-
 
 func FromWAClient(client *waclient.Client) *SessionResponse {
 	deviceJID := ""
@@ -256,7 +223,6 @@ func FromWAClient(client *waclient.Client) *SessionResponse {
 		UpdatedAt: time.Now(),
 	}
 
-
 	if client.QRCode != "" {
 		response.QRCodeBase64 = GenerateQRCodeBase64(client.QRCode)
 		if !client.QRExpiresAt.IsZero() {
@@ -264,10 +230,8 @@ func FromWAClient(client *waclient.Client) *SessionResponse {
 		}
 	}
 
-
 	if client.Config != nil {
 		settings := &SessionSettings{}
-
 
 		if client.WebhookURL != "" || len(client.Events) > 0 {
 			events := make([]string, len(client.Events))
@@ -281,7 +245,6 @@ func FromWAClient(client *waclient.Client) *SessionResponse {
 				Events:  events,
 			}
 		}
-
 
 		if client.Config.ProxyConfig != nil && len(client.Config.ProxyConfig) > 0 {
 			if enabled, ok := client.Config.ProxyConfig["enabled"]; ok && enabled == "true" {
@@ -313,7 +276,6 @@ func FromWAClient(client *waclient.Client) *SessionResponse {
 	return response
 }
 
-
 func (s *SessionResponse) ToListInfo() *SessionListInfo {
 	return &SessionListInfo{
 		SessionID:   s.SessionID,
@@ -329,7 +291,6 @@ func (s *SessionResponse) ToListInfo() *SessionListInfo {
 	}
 }
 
-
 func FromWAClientList(clients []*waclient.Client) *SessionListResponse {
 	sessions := make([]SessionListInfo, len(clients))
 	for i, client := range clients {
@@ -343,7 +304,6 @@ func FromWAClientList(clients []*waclient.Client) *SessionListResponse {
 	}
 }
 
-
 func FromQREvent(qrEvent *waclient.QREvent) *QRCodeResponse {
 	return &QRCodeResponse{
 		QRCode:       qrEvent.Code,
@@ -352,7 +312,6 @@ func FromQREvent(qrEvent *waclient.QREvent) *QRCodeResponse {
 		Status:       "generated",
 	}
 }
-
 
 func NewQRCodeResponse(qrCode string, expiresAt time.Time, status string) *QRCodeResponse {
 	expiresAtStr := ""
@@ -367,9 +326,6 @@ func NewQRCodeResponse(qrCode string, expiresAt time.Time, status string) *QRCod
 		Status:       status,
 	}
 }
-
-
-
 
 func SessionToDetailResponse(s *session.Session) *SessionDetailResponse {
 	return &SessionDetailResponse{
@@ -389,7 +345,6 @@ func SessionToDetailResponse(s *session.Session) *SessionDetailResponse {
 	}
 }
 
-
 func SessionToCreateResponse(s *session.Session) *CreateSessionResponse {
 	return &CreateSessionResponse{
 		ID:        s.ID,
@@ -400,7 +355,6 @@ func SessionToCreateResponse(s *session.Session) *CreateSessionResponse {
 	}
 }
 
-
 func SessionToStatusResponse(s *session.Session) *SessionStatusResponse {
 	return &SessionStatusResponse{
 		ID:        s.ID,
@@ -409,27 +363,22 @@ func SessionToStatusResponse(s *session.Session) *SessionStatusResponse {
 	}
 }
 
-
 func SessionToListResponse(s *session.Session) *SessionResponse {
 	return FromDomainSession(s)
 }
-
 
 func GenerateQRCodeBase64(qrString string) string {
 	if qrString == "" {
 		return ""
 	}
 
-
 	qrImage, err := qrcode.Encode(qrString, qrcode.Medium, 256)
 	if err != nil {
 		return ""
 	}
 
-
 	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(qrImage)
 }
-
 
 var (
 	ErrInvalidSessionName   = NewValidationError("name", "Session name is required")

@@ -3,10 +3,9 @@ package dto
 import (
 	"time"
 
-	"zpwoot/internal/core/application/interfaces"
 	"zpwoot/internal/core/application/validators"
+	"zpwoot/internal/core/ports/output"
 )
-
 
 type SendMessageRequest struct {
 	To       string       `json:"to" validate:"required"`
@@ -17,7 +16,6 @@ type SendMessageRequest struct {
 	Contact  *ContactInfo `json:"contact,omitempty"`
 }
 
-
 type MediaData struct {
 	URL      string `json:"url,omitempty"`
 	Base64   string `json:"base64,omitempty"`
@@ -26,7 +24,6 @@ type MediaData struct {
 	Caption  string `json:"caption,omitempty"`
 }
 
-
 type Location struct {
 	Latitude  float64 `json:"latitude" validate:"required,min=-90,max=90"`
 	Longitude float64 `json:"longitude" validate:"required,min=-180,max=180"`
@@ -34,20 +31,17 @@ type Location struct {
 	Address   string  `json:"address,omitempty"`
 }
 
-
 type ContactInfo struct {
 	Name  string `json:"name" validate:"required"`
 	Phone string `json:"phone" validate:"required"`
 	VCard string `json:"vcard,omitempty"`
 }
 
-
 type SendMessageResponse struct {
 	MessageID string    `json:"messageId"`
 	Status    string    `json:"status"`
 	SentAt    time.Time `json:"sentAt"`
 }
-
 
 type MessageInfo struct {
 	ID        string    `json:"id"`
@@ -61,12 +55,10 @@ type MessageInfo struct {
 	Content   string    `json:"content,omitempty"`
 }
 
-
 type ReceiveMessageRequest struct {
 	SessionID string      `json:"sessionId"`
 	Message   MessageInfo `json:"message"`
 }
-
 
 type MessageHistoryRequest struct {
 	ChatJID string `json:"chatJid" validate:"required"`
@@ -74,13 +66,11 @@ type MessageHistoryRequest struct {
 	Offset  int    `json:"offset,omitempty"`
 }
 
-
 type MessageHistoryResponse struct {
 	Messages []MessageInfo `json:"messages"`
 	Total    int           `json:"total"`
 	HasMore  bool          `json:"hasMore"`
 }
-
 
 func (r *SendMessageRequest) Validate() error {
 	if r.To == "" {
@@ -159,7 +149,6 @@ func (c *ContactInfo) Validate() error {
 	return nil
 }
 
-
 var (
 	ErrRecipientRequired    = &ErrorInfo{Code: "RECIPIENT_REQUIRED", Message: "Recipient is required"}
 	ErrMessageTypeRequired  = &ErrorInfo{Code: "MESSAGE_TYPE_REQUIRED", Message: "Message type is required"}
@@ -175,17 +164,14 @@ var (
 	ErrContactPhoneRequired = &ErrorInfo{Code: "CONTACT_PHONE_REQUIRED", Message: "Contact phone is required"}
 )
 
-
-func (m *MediaData) ToInterfacesMediaData() *interfaces.MediaData {
+func (m *MediaData) ToInterfacesMediaData() *output.MediaData {
 	if m == nil {
 		return nil
 	}
 
-
 	var data []byte
 
-
-	return &interfaces.MediaData{
+	return &output.MediaData{
 		MimeType: m.MimeType,
 		Data:     data,
 		FileName: m.FileName,
@@ -193,12 +179,11 @@ func (m *MediaData) ToInterfacesMediaData() *interfaces.MediaData {
 	}
 }
 
-
-func (l *Location) ToInterfacesLocation() *interfaces.Location {
+func (l *Location) ToInterfacesLocation() *output.Location {
 	if l == nil {
 		return nil
 	}
-	return &interfaces.Location{
+	return &output.Location{
 		Latitude:  l.Latitude,
 		Longitude: l.Longitude,
 		Name:      l.Name,
@@ -206,12 +191,11 @@ func (l *Location) ToInterfacesLocation() *interfaces.Location {
 	}
 }
 
-
-func (c *ContactInfo) ToInterfacesContactInfo() *interfaces.ContactInfo {
+func (c *ContactInfo) ToInterfacesContactInfo() *output.ContactInfo {
 	if c == nil {
 		return nil
 	}
-	return &interfaces.ContactInfo{
+	return &output.ContactInfo{
 		Name:        c.Name,
 		PhoneNumber: c.Phone,
 	}

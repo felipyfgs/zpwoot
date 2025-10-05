@@ -30,7 +30,6 @@ func (wac *WAClient) GetQRCodeForSession(ctx context.Context, sessionID string) 
 			return nil, err
 		}
 
-
 		timer := time.NewTimer(1 * time.Second)
 		defer timer.Stop()
 
@@ -72,7 +71,6 @@ func (wac *WAClient) RefreshQRCode(ctx context.Context, sessionID string) (*QREv
 			wac.logger.Warn().Err(err).Str("session_id", sessionID).Msg("Failed to disconnect session for QR refresh")
 		}
 
-
 		timer := time.NewTimer(500 * time.Millisecond)
 		defer timer.Stop()
 
@@ -87,7 +85,6 @@ func (wac *WAClient) RefreshQRCode(ctx context.Context, sessionID string) (*QREv
 	if err = wac.ConnectSession(ctx, sessionID); err != nil {
 		return nil, err
 	}
-
 
 	maxWait := 10 * time.Second
 	checkInterval := 500 * time.Millisecond

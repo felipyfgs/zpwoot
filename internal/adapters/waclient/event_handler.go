@@ -11,12 +11,10 @@ import (
 	"go.mau.fi/whatsmeow/types/events"
 )
 
-
 type DefaultEventHandler struct {
 	logger        *logger.Logger
 	webhookSender WebhookSender
 }
-
 
 func NewDefaultEventHandler(logger *logger.Logger, webhookSender WebhookSender) *DefaultEventHandler {
 	return &DefaultEventHandler{
@@ -24,7 +22,6 @@ func NewDefaultEventHandler(logger *logger.Logger, webhookSender WebhookSender) 
 		webhookSender: webhookSender,
 	}
 }
-
 
 func (eh *DefaultEventHandler) HandleEvent(client *Client, event interface{}) error {
 	switch evt := event.(type) {
@@ -58,14 +55,12 @@ func (eh *DefaultEventHandler) HandleEvent(client *Client, event interface{}) er
 	}
 }
 
-
 func (eh *DefaultEventHandler) handleMessage(client *Client, evt *events.Message) error {
 	eh.logger.Debug().
 		Str("session_name", client.Name).
 		Str("message_id", evt.Info.ID).
 		Str("sender", evt.Info.Sender.String()).
 		Msg("Message event in session")
-
 
 	messageInfo := &MessageInfo{
 		ID:        evt.Info.ID,
@@ -78,7 +73,6 @@ func (eh *DefaultEventHandler) handleMessage(client *Client, evt *events.Message
 		IsGroup:   evt.Info.IsGroup,
 	}
 
-
 	if eh.shouldSendWebhook(client, EventMessage) {
 		webhookData := map[string]interface{}{
 			"messageInfo": messageInfo,
@@ -90,7 +84,6 @@ func (eh *DefaultEventHandler) handleMessage(client *Client, evt *events.Message
 
 	return nil
 }
-
 
 func (eh *DefaultEventHandler) handleReceipt(client *Client, evt *events.Receipt) error {
 	eh.logger.Debug().
@@ -105,7 +98,6 @@ func (eh *DefaultEventHandler) handleReceipt(client *Client, evt *events.Receipt
 	return nil
 }
 
-
 func (eh *DefaultEventHandler) handlePresence(client *Client, evt *events.Presence) error {
 	eh.logger.Debug().
 		Str("session_name", client.Name).
@@ -119,7 +111,6 @@ func (eh *DefaultEventHandler) handlePresence(client *Client, evt *events.Presen
 	return nil
 }
 
-
 func (eh *DefaultEventHandler) handleChatPresence(client *Client, evt *events.ChatPresence) error {
 	eh.logger.Debug().
 		Str("session_name", client.Name).
@@ -132,7 +123,6 @@ func (eh *DefaultEventHandler) handleChatPresence(client *Client, evt *events.Ch
 
 	return nil
 }
-
 
 func (eh *DefaultEventHandler) handleHistorySync(client *Client, evt *events.HistorySync) error {
 	eh.logger.Info().
@@ -152,7 +142,6 @@ func (eh *DefaultEventHandler) handleHistorySync(client *Client, evt *events.His
 
 	return nil
 }
-
 
 func (eh *DefaultEventHandler) handleAppStateSyncComplete(client *Client, evt *events.AppStateSyncComplete) error {
 	eh.logger.Info().
@@ -176,7 +165,6 @@ func (eh *DefaultEventHandler) handleBlocklistChange(client *Client, _ *events.B
 	return nil
 }
 
-
 func (eh *DefaultEventHandler) handleGroupInfo(client *Client, evt *events.GroupInfo) error {
 	eh.logger.Debug().
 		Str("session_name", client.Name).
@@ -184,7 +172,6 @@ func (eh *DefaultEventHandler) handleGroupInfo(client *Client, evt *events.Group
 		Msg("Group info event in session")
 	return nil
 }
-
 
 func (eh *DefaultEventHandler) handleJoinedGroup(client *Client, evt *events.JoinedGroup) error {
 	eh.logger.Info().
@@ -201,12 +188,10 @@ func (eh *DefaultEventHandler) handleOfflineSyncPreview(client *Client, _ *event
 	return nil
 }
 
-
 func (eh *DefaultEventHandler) shouldSendWebhook(client *Client, eventType EventType) bool {
 	if eh.webhookSender == nil || client.WebhookURL == "" {
 		return false
 	}
-
 
 	if len(client.Events) == 0 {
 		return true
@@ -221,7 +206,6 @@ func (eh *DefaultEventHandler) shouldSendWebhook(client *Client, eventType Event
 	return false
 }
 
-
 func (eh *DefaultEventHandler) sendWebhook(client *Client, eventType EventType, eventData interface{}) error {
 	webhookEvent := &WebhookEvent{
 		Type:      eventType,
@@ -230,19 +214,16 @@ func (eh *DefaultEventHandler) sendWebhook(client *Client, eventType EventType, 
 		Timestamp: time.Now(),
 	}
 
-
 	ctx, cancel := context.WithTimeout(client.ctx, 30*time.Second)
 	defer cancel()
 
 	return eh.webhookSender.SendWebhook(ctx, webhookEvent)
 }
 
-
 func getMessageType(msg interface{}) string {
 	if msg == nil {
 		return "unknown"
 	}
-
 
 	msgJSON, err := json.Marshal(msg)
 	if err != nil {
@@ -253,7 +234,6 @@ func getMessageType(msg interface{}) string {
 	if err := json.Unmarshal(msgJSON, &msgMap); err != nil {
 		return "unknown"
 	}
-
 
 	if _, ok := msgMap["conversation"]; ok {
 		return "text"
@@ -301,13 +281,11 @@ func getMessageType(msg interface{}) string {
 	return "unknown"
 }
 
-
 type EventFilter struct {
 	AllowedEvents  []EventType
 	BlockedChats   []string
 	BlockedSenders []string
 }
-
 
 func (ef *EventFilter) ShouldProcess(eventType EventType, chat, sender string) bool {
 
@@ -324,13 +302,11 @@ func (ef *EventFilter) ShouldProcess(eventType EventType, chat, sender string) b
 		}
 	}
 
-
 	for _, blockedChat := range ef.BlockedChats {
 		if blockedChat == chat {
 			return false
 		}
 	}
-
 
 	for _, blockedSender := range ef.BlockedSenders {
 		if blockedSender == sender {

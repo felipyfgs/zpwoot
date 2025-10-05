@@ -6,38 +6,31 @@ import (
 	"time"
 
 	"zpwoot/internal/core/application/dto"
-	"zpwoot/internal/core/application/interfaces"
 	"zpwoot/internal/core/domain/session"
 	"zpwoot/internal/core/domain/shared"
+	"zpwoot/internal/core/ports/output"
 )
 
-
 type QRUseCase struct {
-	sessionService  *session.Service
-	whatsappClient  interfaces.WhatsAppClient
-	notificationSvc interfaces.NotificationService
+	sessionService *session.Service
+	whatsappClient output.WhatsAppClient
 }
-
 
 func NewQRUseCase(
 	sessionService *session.Service,
-	whatsappClient interfaces.WhatsAppClient,
-	notificationSvc interfaces.NotificationService,
+	whatsappClient output.WhatsAppClient,
 ) *QRUseCase {
 	return &QRUseCase{
-		sessionService:  sessionService,
-		whatsappClient:  whatsappClient,
-		notificationSvc: notificationSvc,
+		sessionService: sessionService,
+		whatsappClient: whatsappClient,
 	}
 }
-
 
 func (uc *QRUseCase) GetQRCode(ctx context.Context, sessionID string) (*dto.QRCodeResponse, error) {
 
 	if sessionID == "" {
 		return nil, fmt.Errorf("session ID is required")
 	}
-
 
 	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
 	if err != nil {
@@ -47,15 +40,13 @@ func (uc *QRUseCase) GetQRCode(ctx context.Context, sessionID string) (*dto.QRCo
 		return nil, fmt.Errorf("failed to get session from domain: %w", err)
 	}
 
-
 	if domainSession.IsConnected {
 		return nil, fmt.Errorf("session is already connected")
 	}
 
-
 	qrInfo, err := uc.whatsappClient.GetQRCode(ctx, sessionID)
 	if err != nil {
-		if waErr, ok := err.(*interfaces.WhatsAppError); ok {
+		if waErr, ok := err.(*output.WhatsAppError); ok {
 			switch waErr.Code {
 			case "SESSION_NOT_FOUND":
 				return nil, dto.ErrSessionNotFound
@@ -71,7 +62,6 @@ func (uc *QRUseCase) GetQRCode(ctx context.Context, sessionID string) (*dto.QRCo
 		return nil, fmt.Errorf("failed to get QR code: %w", err)
 	}
 
-
 	if qrInfo.Code != "" {
 		domainSession.SetQRCode(qrInfo.Code, qrInfo.ExpiresAt)
 		_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusQRCode)
@@ -84,13 +74,11 @@ func (uc *QRUseCase) GetQRCode(ctx context.Context, sessionID string) (*dto.QRCo
 	), nil
 }
 
-
 func (uc *QRUseCase) RefreshQRCode(ctx context.Context, sessionID string) (*dto.QRCodeResponse, error) {
 
 	if sessionID == "" {
 		return nil, fmt.Errorf("session ID is required")
 	}
-
 
 	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
 	if err != nil {
@@ -100,15 +88,13 @@ func (uc *QRUseCase) RefreshQRCode(ctx context.Context, sessionID string) (*dto.
 		return nil, fmt.Errorf("failed to get session from domain: %w", err)
 	}
 
-
 	if domainSession.IsConnected {
 		return nil, fmt.Errorf("session is already connected")
 	}
 
-
 	qrInfo, err := uc.whatsappClient.GetQRCode(ctx, sessionID)
 	if err != nil {
-		if waErr, ok := err.(*interfaces.WhatsAppError); ok {
+		if waErr, ok := err.(*output.WhatsAppError); ok {
 			switch waErr.Code {
 			case "SESSION_NOT_FOUND":
 				return nil, dto.ErrSessionNotFound
@@ -121,17 +107,10 @@ func (uc *QRUseCase) RefreshQRCode(ctx context.Context, sessionID string) (*dto.
 		return nil, fmt.Errorf("failed to get QR code: %w", err)
 	}
 
-
 	if qrInfo.Code != "" {
 		domainSession.SetQRCode(qrInfo.Code, qrInfo.ExpiresAt)
 		_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusQRCode)
 
-
-		if uc.notificationSvc != nil {
-			go func() {
-				_ = uc.notificationSvc.NotifyQRCodeGenerated(ctx, sessionID, qrInfo.Code, qrInfo.ExpiresAt)
-			}()
-		}
 	}
 
 	return dto.NewQRCodeResponse(
@@ -141,13 +120,11 @@ func (uc *QRUseCase) RefreshQRCode(ctx context.Context, sessionID string) (*dto.
 	), nil
 }
 
-
 func (uc *QRUseCase) CheckQRCodeStatus(ctx context.Context, sessionID string) (*dto.QRCodeResponse, error) {
 
 	if sessionID == "" {
 		return nil, fmt.Errorf("session ID is required")
 	}
-
 
 	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
 	if err != nil {
@@ -157,7 +134,6 @@ func (uc *QRUseCase) CheckQRCodeStatus(ctx context.Context, sessionID string) (*
 		return nil, fmt.Errorf("failed to get session from domain: %w", err)
 	}
 
-
 	if domainSession.IsConnected {
 		return dto.NewQRCodeResponse(
 			"",
@@ -166,7 +142,6 @@ func (uc *QRUseCase) CheckQRCodeStatus(ctx context.Context, sessionID string) (*
 		), nil
 	}
 
-
 	if domainSession.QRCode == "" {
 		return dto.NewQRCodeResponse(
 			"",
@@ -174,7 +149,6 @@ func (uc *QRUseCase) CheckQRCodeStatus(ctx context.Context, sessionID string) (*
 			string(session.StatusDisconnected),
 		), nil
 	}
-
 
 	if domainSession.QRCodeExpiresAt != nil && time.Now().After(*domainSession.QRCodeExpiresAt) {
 
@@ -187,7 +161,6 @@ func (uc *QRUseCase) CheckQRCodeStatus(ctx context.Context, sessionID string) (*
 			string(session.StatusDisconnected),
 		), nil
 	}
-
 
 	expiresAt := time.Time{}
 	if domainSession.QRCodeExpiresAt != nil {

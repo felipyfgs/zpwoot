@@ -5,9 +5,8 @@ import (
 	"regexp"
 )
 
-// Message validation rules
 const (
-	MessageTextMaxLength     = 4096  // WhatsApp limit
+	MessageTextMaxLength     = 4096
 	MessageCaptionMaxLength  = 1024
 	PhoneNumberMinLength     = 10
 	PhoneNumberMaxLength     = 15
@@ -18,14 +17,11 @@ const (
 )
 
 var (
-	// PhoneNumberRegex validates phone numbers (digits only, with optional + prefix)
 	PhoneNumberRegex = regexp.MustCompile(`^\+?[0-9]{10,15}$`)
-	
-	// JIDRegex validates WhatsApp JID format (phone@s.whatsapp.net or phone@g.us)
+
 	JIDRegex = regexp.MustCompile(`^[0-9]+@(s\.whatsapp\.net|g\.us)$`)
 )
 
-// ValidatePhoneNumber validates a phone number
 func ValidatePhoneNumber(phone string) error {
 	if phone == "" {
 		return fmt.Errorf("phone number cannot be empty")
@@ -38,7 +34,6 @@ func ValidatePhoneNumber(phone string) error {
 	return nil
 }
 
-// ValidateJID validates a WhatsApp JID
 func ValidateJID(jid string) error {
 	if jid == "" {
 		return fmt.Errorf("JID cannot be empty")
@@ -51,7 +46,6 @@ func ValidateJID(jid string) error {
 	return nil
 }
 
-// ValidateMessageText validates message text
 func ValidateMessageText(text string) error {
 	if text == "" {
 		return fmt.Errorf("message text cannot be empty")
@@ -64,10 +58,9 @@ func ValidateMessageText(text string) error {
 	return nil
 }
 
-// ValidateCaption validates media caption
 func ValidateCaption(caption string) error {
 	if caption == "" {
-		return nil // Empty caption is allowed
+		return nil
 	}
 
 	if len(caption) > MessageCaptionMaxLength {
@@ -77,17 +70,15 @@ func ValidateCaption(caption string) error {
 	return nil
 }
 
-// ValidateFileName validates file name
 func ValidateFileName(fileName string) error {
 	if fileName == "" {
-		return nil // Empty file name is allowed
+		return nil
 	}
 
 	if len(fileName) > MediaFileNameMaxLength {
 		return fmt.Errorf("file name exceeds maximum length of %d characters", MediaFileNameMaxLength)
 	}
 
-	// Check for invalid characters
 	invalidChars := []string{"/", "\\", ":", "*", "?", "\"", "<", ">", "|"}
 	for _, char := range invalidChars {
 		if contains(fileName, char) {
@@ -98,7 +89,6 @@ func ValidateFileName(fileName string) error {
 	return nil
 }
 
-// ValidateLatitude validates latitude
 func ValidateLatitude(lat float64) error {
 	if lat < -90 || lat > 90 {
 		return fmt.Errorf("latitude must be between -90 and 90")
@@ -106,7 +96,6 @@ func ValidateLatitude(lat float64) error {
 	return nil
 }
 
-// ValidateLongitude validates longitude
 func ValidateLongitude(lon float64) error {
 	if lon < -180 || lon > 180 {
 		return fmt.Errorf("longitude must be between -180 and 180")
@@ -114,10 +103,9 @@ func ValidateLongitude(lon float64) error {
 	return nil
 }
 
-// ValidateLocationName validates location name
 func ValidateLocationName(name string) error {
 	if name == "" {
-		return nil // Empty name is allowed
+		return nil
 	}
 
 	if len(name) > LocationNameMaxLength {
@@ -127,10 +115,9 @@ func ValidateLocationName(name string) error {
 	return nil
 }
 
-// ValidateLocationAddress validates location address
 func ValidateLocationAddress(address string) error {
 	if address == "" {
-		return nil // Empty address is allowed
+		return nil
 	}
 
 	if len(address) > LocationAddressMaxLength {
@@ -140,7 +127,6 @@ func ValidateLocationAddress(address string) error {
 	return nil
 }
 
-// ValidateContactName validates contact name
 func ValidateContactName(name string) error {
 	if name == "" {
 		return fmt.Errorf("contact name cannot be empty")
@@ -153,7 +139,6 @@ func ValidateContactName(name string) error {
 	return nil
 }
 
-// Helper function
 func contains(s, substr string) bool {
 	for i := 0; i < len(s); i++ {
 		if i+len(substr) <= len(s) && s[i:i+len(substr)] == substr {
@@ -162,4 +147,3 @@ func contains(s, substr string) bool {
 	}
 	return false
 }
-

@@ -5,27 +5,24 @@ import (
 	"fmt"
 
 	"zpwoot/internal/core/application/dto"
-	"zpwoot/internal/core/application/interfaces"
 	"zpwoot/internal/core/domain/session"
+	"zpwoot/internal/core/ports/output"
 )
-
 
 type ListUseCase struct {
 	sessionService *session.Service
-	whatsappClient interfaces.WhatsAppClient
+	whatsappClient output.WhatsAppClient
 }
-
 
 func NewListUseCase(
 	sessionService *session.Service,
-	whatsappClient interfaces.WhatsAppClient,
+	whatsappClient output.WhatsAppClient,
 ) *ListUseCase {
 	return &ListUseCase{
 		sessionService: sessionService,
 		whatsappClient: whatsappClient,
 	}
 }
-
 
 func (uc *ListUseCase) Execute(ctx context.Context, pagination *dto.PaginationRequest) (*dto.PaginationResponse, error) {
 
@@ -34,18 +31,15 @@ func (uc *ListUseCase) Execute(ctx context.Context, pagination *dto.PaginationRe
 	}
 	pagination.Validate()
 
-
 	domainSessions, err := uc.sessionService.ListSessions(ctx, pagination.Limit, pagination.Offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list sessions from domain: %w", err)
 	}
 
-
 	sessionResponses := make([]dto.SessionResponse, len(domainSessions))
 	for i, domainSession := range domainSessions {
 
 		sessionResponse := dto.SessionToListResponse(domainSession)
-
 
 		if uc.whatsappClient != nil {
 			waStatus, err := uc.whatsappClient.GetSessionStatus(ctx, domainSession.ID)
@@ -71,10 +65,8 @@ func (uc *ListUseCase) Execute(ctx context.Context, pagination *dto.PaginationRe
 		sessionResponses[i] = *sessionResponse
 	}
 
-
 	totalCount := len(sessionResponses)
 	hasMore := len(sessionResponses) == pagination.Limit
-
 
 	response := &dto.PaginationResponse{
 		Items:   sessionResponses,
@@ -87,7 +79,6 @@ func (uc *ListUseCase) Execute(ctx context.Context, pagination *dto.PaginationRe
 	return response, nil
 }
 
-
 func (uc *ListUseCase) ExecuteSimple(ctx context.Context) ([]*dto.SessionListResponse, error) {
 
 	pagination := &dto.PaginationRequest{Limit: 100, Offset: 0}
@@ -97,7 +88,6 @@ func (uc *ListUseCase) ExecuteSimple(ctx context.Context) ([]*dto.SessionListRes
 		return nil, err
 	}
 
-
 	sessions, ok := result.Items.([]*dto.SessionListResponse)
 	if !ok {
 		return nil, fmt.Errorf("unexpected response type")
@@ -106,13 +96,10 @@ func (uc *ListUseCase) ExecuteSimple(ctx context.Context) ([]*dto.SessionListRes
 	return sessions, nil
 }
 
-
 func (uc *ListUseCase) ExecuteWithFilter(ctx context.Context, filter *SessionFilter, pagination *dto.PaginationRequest) (*dto.PaginationResponse, error) {
-
 
 	return uc.Execute(ctx, pagination)
 }
-
 
 type SessionFilter struct {
 	Status    string `json:"status,omitempty"`

@@ -1,10 +1,9 @@
 package session
 
 import (
-	"zpwoot/internal/core/application/interfaces"
 	"zpwoot/internal/core/domain/session"
+	"zpwoot/internal/core/ports/output"
 )
-
 
 type UseCases struct {
 	Create     *CreateUseCase
@@ -17,21 +16,18 @@ type UseCases struct {
 	QR         *QRUseCase
 }
 
-
 func NewUseCases(
 	sessionService *session.Service,
-	whatsappClient interfaces.WhatsAppClient,
-	notificationSvc interfaces.NotificationService,
+	whatsappClient output.WhatsAppClient,
 ) *UseCases {
 	return &UseCases{
-		Create:     NewCreateUseCase(sessionService, whatsappClient, notificationSvc),
-		Connect:    NewConnectUseCase(sessionService, whatsappClient, notificationSvc),
-		Disconnect: NewDisconnectUseCase(sessionService, whatsappClient, notificationSvc),
-		Logout:     NewLogoutUseCase(sessionService, whatsappClient, notificationSvc),
+		Create:     NewCreateUseCase(sessionService, whatsappClient),
+		Connect:    NewConnectUseCase(sessionService, whatsappClient),
+		Disconnect: NewDisconnectUseCase(sessionService, whatsappClient),
+		Logout:     NewLogoutUseCase(sessionService, whatsappClient),
 		Get:        NewGetUseCase(sessionService, whatsappClient),
 		List:       NewListUseCase(sessionService, whatsappClient),
-		Delete:     NewDeleteUseCase(sessionService, whatsappClient, notificationSvc),
-		QR:         NewQRUseCase(sessionService, whatsappClient, notificationSvc),
+		Delete:     NewDeleteUseCase(sessionService, whatsappClient),
+		QR:         NewQRUseCase(sessionService, whatsappClient),
 	}
 }
-

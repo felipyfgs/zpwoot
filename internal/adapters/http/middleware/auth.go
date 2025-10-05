@@ -7,7 +7,6 @@ import (
 	"zpwoot/internal/config"
 )
 
-
 func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -17,10 +16,7 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 				return
 			}
 
-
-
 			apiKey := r.Header.Get("Authorization")
-
 
 			if apiKey == "" || strings.HasPrefix(apiKey, "Bearer ") {
 
@@ -33,7 +29,6 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 				}
 			}
 
-
 			if apiKey == "" || apiKey != cfg.APIKey {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusUnauthorized)
@@ -45,7 +40,6 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 		})
 	}
 }
-
 
 func CORSMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -64,7 +58,6 @@ func CORSMiddleware() func(http.Handler) http.Handler {
 		})
 	}
 }
-
 
 func JSONMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {

@@ -5,21 +5,19 @@ import (
 	"fmt"
 
 	"zpwoot/internal/core/application/dto"
-	"zpwoot/internal/core/application/interfaces"
 	"zpwoot/internal/core/domain/session"
 	"zpwoot/internal/core/domain/shared"
+	"zpwoot/internal/core/ports/output"
 )
-
 
 type GetUseCase struct {
 	sessionService *session.Service
-	whatsappClient interfaces.WhatsAppClient
+	whatsappClient output.WhatsAppClient
 }
-
 
 func NewGetUseCase(
 	sessionService *session.Service,
-	whatsappClient interfaces.WhatsAppClient,
+	whatsappClient output.WhatsAppClient,
 ) *GetUseCase {
 	return &GetUseCase{
 		sessionService: sessionService,
@@ -27,13 +25,11 @@ func NewGetUseCase(
 	}
 }
 
-
 func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.SessionDetailResponse, error) {
 
 	if sessionID == "" {
 		return nil, fmt.Errorf("session ID is required")
 	}
-
 
 	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
 	if err != nil {
@@ -43,17 +39,15 @@ func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.Sessi
 		return nil, fmt.Errorf("failed to get session from domain: %w", err)
 	}
 
-
 	waStatus, err := uc.whatsappClient.GetSessionStatus(ctx, sessionID)
 	if err != nil {
 
-		if waErr, ok := err.(*interfaces.WhatsAppError); ok && waErr.Code == "SESSION_NOT_FOUND" {
+		if waErr, ok := err.(*output.WhatsAppError); ok && waErr.Code == "SESSION_NOT_FOUND" {
 			return dto.SessionToDetailResponse(domainSession), nil
 		}
 
 		return dto.SessionToDetailResponse(domainSession), nil
 	}
-
 
 	if waStatus != nil {
 
@@ -63,16 +57,13 @@ func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.Sessi
 			domainSession.SetDisconnected()
 		}
 
-
 		if waStatus.DeviceJID != "" {
 			domainSession.DeviceJID = waStatus.DeviceJID
 		}
 
-
 		if !waStatus.LastSeen.IsZero() {
 			domainSession.UpdateLastSeen()
 		}
-
 
 		go func() {
 			if waStatus.Connected {
@@ -83,12 +74,10 @@ func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.Sessi
 		}()
 	}
 
-
 	response := dto.SessionToDetailResponse(domainSession)
 
 	return response, nil
 }
-
 
 func (uc *GetUseCase) ExecuteWithSync(ctx context.Context, sessionID string) (*dto.SessionDetailResponse, error) {
 
@@ -97,13 +86,11 @@ func (uc *GetUseCase) ExecuteWithSync(ctx context.Context, sessionID string) (*d
 		return nil, err
 	}
 
-
 	waStatus, err := uc.whatsappClient.GetSessionStatus(ctx, sessionID)
 	if err != nil {
 
 		return response, nil
 	}
-
 
 	if waStatus != nil {
 		response.DeviceJID = waStatus.DeviceJID

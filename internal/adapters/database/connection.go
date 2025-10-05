@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"zpwoot/internal/config"
 	"zpwoot/internal/adapters/logger"
+	"zpwoot/internal/config"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
-
 
 type Database struct {
 	*sqlx.DB
@@ -19,18 +18,15 @@ type Database struct {
 	logger *logger.Logger
 }
 
-
 func New(cfg *config.Config, log *logger.Logger) (*Database, error) {
 	db, err := sqlx.Connect("postgres", cfg.Database.URL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(5)
 	db.SetConnMaxLifetime(5 * time.Minute)
-
 
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
@@ -45,11 +41,9 @@ func New(cfg *config.Config, log *logger.Logger) (*Database, error) {
 	}, nil
 }
 
-
 func NewFromAppConfig(cfg *config.Config, log *logger.Logger) (*Database, error) {
 	return New(cfg, log)
 }
-
 
 func (db *Database) Close() error {
 	if db.DB != nil {
@@ -58,26 +52,21 @@ func (db *Database) Close() error {
 	return nil
 }
 
-
 func (db *Database) Begin() (*sql.Tx, error) {
 	return db.DB.Begin()
 }
-
 
 func (db *Database) Exec(query string, args ...interface{}) (sql.Result, error) {
 	return db.DB.Exec(query, args...)
 }
 
-
 func (db *Database) Query(query string, args ...interface{}) (*sql.Rows, error) {
 	return db.DB.Query(query, args...)
 }
 
-
 func (db *Database) QueryRow(query string, args ...interface{}) *sql.Row {
 	return db.DB.QueryRow(query, args...)
 }
-
 
 func (db *Database) Health() error {
 	return db.Ping()

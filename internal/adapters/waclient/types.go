@@ -8,7 +8,6 @@ import (
 	"zpwoot/internal/core/domain/session"
 )
 
-
 type MediaType string
 
 const (
@@ -18,7 +17,6 @@ const (
 	MediaTypeDocument MediaType = "document"
 	MediaTypeSticker  MediaType = "sticker"
 )
-
 
 type EventType string
 
@@ -34,7 +32,6 @@ const (
 	EventLoggedOut    EventType = "LoggedOut"
 )
 
-
 var SupportedEventTypes = []EventType{
 	EventMessage,
 	EventConnected,
@@ -47,7 +44,6 @@ var SupportedEventTypes = []EventType{
 	EventLoggedOut,
 }
 
-
 type QREvent struct {
 	Event     string    `json:"event"`
 	Code      string    `json:"code,omitempty"`
@@ -55,14 +51,12 @@ type QREvent struct {
 	ExpiresAt time.Time `json:"expiresAt,omitempty"`
 }
 
-
 type MediaData struct {
 	Base64   string `json:"base64,omitempty"`
 	MimeType string `json:"mimeType,omitempty"`
 	FileName string `json:"fileName,omitempty"`
 	Size     int64  `json:"size,omitempty"`
 }
-
 
 type MessageInfo struct {
 	ID        string    `json:"id"`
@@ -75,14 +69,12 @@ type MessageInfo struct {
 	IsGroup   bool      `json:"isGroup"`
 }
 
-
 type WebhookEvent struct {
 	Type      EventType   `json:"type"`
 	SessionID string      `json:"sessionId"`
 	Event     interface{} `json:"event"`
 	Timestamp time.Time   `json:"timestamp"`
 }
-
 
 type SessionConfig struct {
 	SessionID     string            `json:"sessionId"`
@@ -93,7 +85,6 @@ type SessionConfig struct {
 	Events        []EventType       `json:"events,omitempty"`
 	AutoReconnect bool              `json:"autoReconnect"`
 }
-
 
 type Client struct {
 	SessionID    string
@@ -112,21 +103,17 @@ type Client struct {
 	cancel       context.CancelFunc
 }
 
-
 type EventHandler interface {
 	HandleEvent(client *Client, event interface{}) error
 }
-
 
 type MediaProcessor interface {
 	ProcessMedia(ctx context.Context, client *Client, media interface{}) (*MediaData, error)
 }
 
-
 type WebhookSender interface {
 	SendWebhook(ctx context.Context, event *WebhookEvent) error
 }
-
 
 type SessionManager interface {
 	CreateSession(ctx context.Context, config *SessionConfig) (*Client, error)
@@ -139,7 +126,6 @@ type SessionManager interface {
 	DisconnectSession(ctx context.Context, sessionID string) error
 }
 
-
 type MessageSender interface {
 	SendTextMessage(ctx context.Context, sessionID string, to string, text string) error
 	SendMediaMessage(ctx context.Context, sessionID string, to string, media *MediaData) error
@@ -147,13 +133,11 @@ type MessageSender interface {
 	SendContactMessage(ctx context.Context, sessionID string, to string, contact *ContactInfo) error
 }
 
-
 type ContactInfo struct {
 	Name  string `json:"name"`
 	Phone string `json:"phone"`
 	VCard string `json:"vcard,omitempty"`
 }
-
 
 type SendMessageRequest struct {
 	SessionID string       `json:"sessionId"`
@@ -165,7 +149,6 @@ type SendMessageRequest struct {
 	Contact   *ContactInfo `json:"contact,omitempty"`
 }
 
-
 type Location struct {
 	Latitude  float64 `json:"latitude"`
 	Longitude float64 `json:"longitude"`
@@ -173,15 +156,11 @@ type Location struct {
 	Address   string  `json:"address,omitempty"`
 }
 
-
 type MessageResponse struct {
 	Success   bool   `json:"success"`
 	MessageID string `json:"messageId,omitempty"`
 	Error     string `json:"error,omitempty"`
 }
-
-
-
 
 type WAError struct {
 	Code    string `json:"code"`
@@ -191,7 +170,6 @@ type WAError struct {
 func (e *WAError) Error() string {
 	return e.Message
 }
-
 
 var (
 	ErrSessionNotFound  = &WAError{Code: "SESSION_NOT_FOUND", Message: "session not found"}

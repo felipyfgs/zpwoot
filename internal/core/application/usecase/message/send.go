@@ -5,33 +5,27 @@ import (
 	"fmt"
 
 	"zpwoot/internal/core/application/dto"
-	"zpwoot/internal/core/application/interfaces"
 	"zpwoot/internal/core/domain/session"
 	"zpwoot/internal/core/domain/shared"
+	"zpwoot/internal/core/ports/output"
 
 	"github.com/google/uuid"
 )
 
-
 type SendUseCase struct {
-	sessionService  *session.Service
-	whatsappClient  interfaces.WhatsAppClient
-	notificationSvc interfaces.NotificationService
+	sessionService *session.Service
+	whatsappClient output.WhatsAppClient
 }
-
 
 func NewSendUseCase(
 	sessionService *session.Service,
-	whatsappClient interfaces.WhatsAppClient,
-	notificationSvc interfaces.NotificationService,
+	whatsappClient output.WhatsAppClient,
 ) *SendUseCase {
 	return &SendUseCase{
-		sessionService:  sessionService,
-		whatsappClient:  whatsappClient,
-		notificationSvc: notificationSvc,
+		sessionService: sessionService,
+		whatsappClient: whatsappClient,
 	}
 }
-
 
 func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.SendMessageRequest) (*dto.SendMessageResponse, error) {
 
@@ -42,7 +36,6 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
-
 
 	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
 	if err != nil {
@@ -56,11 +49,9 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 		return nil, fmt.Errorf("session is not connected")
 	}
 
-
 	messageID := uuid.New().String()
 
-
-	var messageResult *interfaces.MessageResult
+	var messageResult *output.MessageResult
 	switch req.Type {
 	case "text":
 		messageResult, err = uc.whatsappClient.SendTextMessage(ctx, sessionID, req.To, req.Text)
@@ -75,7 +66,7 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 	}
 
 	if err != nil {
-		if waErr, ok := err.(*interfaces.WhatsAppError); ok {
+		if waErr, ok := err.(*output.WhatsAppError); ok {
 			switch waErr.Code {
 			case "SESSION_NOT_FOUND":
 				return nil, dto.ErrSessionNotFound
@@ -90,18 +81,9 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 		return nil, fmt.Errorf("failed to send message: %w", err)
 	}
 
-
 	go func() {
 		_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusConnected)
 	}()
-
-
-	if uc.notificationSvc != nil {
-		go func() {
-			_ = uc.notificationSvc.NotifyMessageSent(ctx, sessionID, messageResult.MessageID)
-		}()
-	}
-
 
 	finalMessageID := messageID
 	if messageResult.MessageID != "" {
@@ -115,7 +97,6 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 	}, nil
 }
 
-
 func (uc *SendUseCase) SendText(ctx context.Context, sessionID, to, text string) (*dto.SendMessageResponse, error) {
 	req := &dto.SendMessageRequest{
 		To:   to,
@@ -124,7 +105,6 @@ func (uc *SendUseCase) SendText(ctx context.Context, sessionID, to, text string)
 	}
 	return uc.Execute(ctx, sessionID, req)
 }
-
 
 func (uc *SendUseCase) SendMedia(ctx context.Context, sessionID, to string, media *dto.MediaData) (*dto.SendMessageResponse, error) {
 	req := &dto.SendMessageRequest{
@@ -135,7 +115,6 @@ func (uc *SendUseCase) SendMedia(ctx context.Context, sessionID, to string, medi
 	return uc.Execute(ctx, sessionID, req)
 }
 
-
 func (uc *SendUseCase) SendLocation(ctx context.Context, sessionID, to string, location *dto.Location) (*dto.SendMessageResponse, error) {
 	req := &dto.SendMessageRequest{
 		To:       to,
@@ -144,7 +123,6 @@ func (uc *SendUseCase) SendLocation(ctx context.Context, sessionID, to string, l
 	}
 	return uc.Execute(ctx, sessionID, req)
 }
-
 
 func (uc *SendUseCase) SendContact(ctx context.Context, sessionID, to string, contact *dto.ContactInfo) (*dto.SendMessageResponse, error) {
 	req := &dto.SendMessageRequest{
