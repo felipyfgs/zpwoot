@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"zpwoot/internal/core/domain/session"
 	"zpwoot/internal/core/ports/output"
 )
 

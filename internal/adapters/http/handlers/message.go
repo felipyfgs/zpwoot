@@ -4,21 +4,21 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"zpwoot/internal/adapters/logger"
-	"zpwoot/internal/adapters/waclient"
+	"zpwoot/internal/core/ports/input"
+	"zpwoot/internal/core/ports/output"
 
 	"github.com/go-chi/chi/v5"
 )
 
 type MessageHandler struct {
-	messageSender *waclient.MessageSenderImpl
-	logger        *logger.Logger
+	messageService input.MessageService
+	logger         output.Logger
 }
 
-func NewMessageHandler(messageSender *waclient.MessageSenderImpl, logger *logger.Logger) *MessageHandler {
+func NewMessageHandler(messageService input.MessageService, logger output.Logger) *MessageHandler {
 	return &MessageHandler{
-		messageSender: messageSender,
-		logger:        logger,
+		messageService: messageService,
+		logger:         logger,
 	}
 }
 
@@ -29,7 +29,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req waclient.SendMessageRequest
+	var req SendMessageRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.writeError(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
 		return
@@ -56,21 +56,27 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 			h.writeError(w, http.StatusBadRequest, "validation_error", "text is required for text messages")
 			return
 		}
-		err = h.messageSender.SendTextMessage(r.Context(), sessionID, req.To, req.Text)
+		err = h.messageService.SendTextMessage(r.Context(), sessionID, req.To, req.Text)
 
 	case "media":
 		if req.Media == nil {
 			h.writeError(w, http.StatusBadRequest, "validation_error", "media is required for media messages")
 			return
 		}
-		err = h.messageSender.SendMediaMessage(r.Context(), sessionID, req.To, req.Media)
+		mediaData := &output.MediaData{
+			MimeType: req.Media.MimeType,
+			Data:     req.Media.Data,
+			FileName: req.Media.FileName,
+			Caption:  req.Media.Caption,
+		}
+		err = h.messageService.SendMediaMessage(r.Context(), sessionID, req.To, mediaData)
 
 	case "location":
 		if req.Location == nil {
 			h.writeError(w, http.StatusBadRequest, "validation_error", "location is required for location messages")
 			return
 		}
-		err = h.messageSender.SendLocationMessage(r.Context(), sessionID, req.To,
+		err = h.messageService.SendLocationMessage(r.Context(), sessionID, req.To,
 			req.Location.Latitude, req.Location.Longitude, req.Location.Name)
 
 	case "contact":
@@ -78,7 +84,11 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 			h.writeError(w, http.StatusBadRequest, "validation_error", "contact is required for contact messages")
 			return
 		}
-		err = h.messageSender.SendContactMessage(r.Context(), sessionID, req.To, req.Contact)
+		contactInfo := &input.ContactInfo{
+			Name:  req.Contact.Name,
+			Phone: req.Contact.PhoneNumber,
+		}
+		err = h.messageService.SendContactMessage(r.Context(), sessionID, req.To, contactInfo)
 
 	default:
 		h.writeError(w, http.StatusBadRequest, "validation_error", "unsupported message type")
@@ -90,7 +100,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("session_id", sessionID).
 			Msg("Failed to send message")
-		if waErr, ok := err.(*waclient.WAError); ok {
+		if waErr, ok := err.(*output.WhatsAppError); ok {
 			status := http.StatusInternalServerError
 			if waErr.Code == "SESSION_NOT_FOUND" {
 				status = http.StatusNotFound
@@ -106,7 +116,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := &waclient.MessageResponse{
+	response := &MessageResponse{
 		Success:   true,
 		MessageID: messageID,
 	}
@@ -135,7 +145,7 @@ func (h *MessageHandler) GetChatInfo(w http.ResponseWriter, r *http.Request) {
 			Str("session_id", sessionID).
 			Str("chat_jid", chatJID).
 			Msg("Failed to get chat info")
-		if waErr, ok := err.(*waclient.WAError); ok {
+		if waErr, ok := err.(*output.WhatsAppError); ok {
 			status := http.StatusInternalServerError
 			if waErr.Code == "SESSION_NOT_FOUND" {
 				status = http.StatusNotFound
@@ -167,7 +177,7 @@ func (h *MessageHandler) GetContacts(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("session_id", sessionID).
 			Msg("Failed to get contacts")
-		if waErr, ok := err.(*waclient.WAError); ok {
+		if waErr, ok := err.(*output.WhatsAppError); ok {
 			status := http.StatusInternalServerError
 			if waErr.Code == "SESSION_NOT_FOUND" {
 				status = http.StatusNotFound
@@ -202,7 +212,7 @@ func (h *MessageHandler) GetChats(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("session_id", sessionID).
 			Msg("Failed to get chats")
-		if waErr, ok := err.(*waclient.WAError); ok {
+		if waErr, ok := err.(*output.WhatsAppError); ok {
 			status := http.StatusInternalServerError
 			if waErr.Code == "SESSION_NOT_FOUND" {
 				status = http.StatusNotFound

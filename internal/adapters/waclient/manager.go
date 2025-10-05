@@ -20,7 +20,6 @@ import (
 	waLog "go.mau.fi/whatsmeow/util/log"
 )
 
-// Constants for QR code management and session handling
 const (
 	QRExpirationBuffer  = 2 * time.Minute
 	QRFirstTimeout      = 60 * time.Second
@@ -28,7 +27,6 @@ const (
 	AutoReconnectDelay  = 2 * time.Second
 )
 
-// WAClient manages WhatsApp client sessions and their lifecycle
 type WAClient struct {
 	sessions       map[string]*Client
 	sessionsMutex  sync.RWMutex
@@ -40,7 +38,6 @@ type WAClient struct {
 	sessionRepo    SessionRepository
 }
 
-// SessionRepository defines the interface for session persistence
 type SessionRepository interface {
 	GetByID(ctx context.Context, sessionID string) (*session.Session, error)
 	GetByName(ctx context.Context, name string) (*session.Session, error)
@@ -50,7 +47,6 @@ type SessionRepository interface {
 	List(ctx context.Context, limit, offset int) ([]*session.Session, error)
 }
 
-// NewWAClient creates a new WhatsApp client manager
 func NewWAClient(container *sqlstore.Container, logger *logger.Logger, sessionRepo SessionRepository) *WAClient {
 	wac := &WAClient{
 		sessions:    make(map[string]*Client),
@@ -90,14 +86,13 @@ func (wac *WAClient) loadSessionsFromDatabase() {
 	}
 }
 
-// autoReconnect attempts to reconnect a session after a delay
 func (wac *WAClient) autoReconnect(client *Client) {
 	timer := time.NewTimer(AutoReconnectDelay)
 	defer timer.Stop()
 
 	select {
 	case <-timer.C:
-		// Proceed with reconnection
+
 	case <-client.ctx.Done():
 		wac.logger.Debug().Str("session_id", client.SessionID).Msg("Auto-reconnect cancelled")
 		return
@@ -485,9 +480,9 @@ func (wac *WAClient) processAllQRCodesFromEvent(ctx context.Context, client *Cli
 
 		var timeout time.Duration
 		if i == 0 {
-			timeout = 60 * time.Second
+			timeout = QRFirstTimeout
 		} else {
-			timeout = 20 * time.Second
+			timeout = QRSubsequentTimeout
 		}
 
 		fmt.Printf("\n📱 Scan QR code | Session: %s | QR: %d/%d | Timeout: %d seconds\n\n",

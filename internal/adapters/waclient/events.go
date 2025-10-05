@@ -48,9 +48,7 @@ func (eh *DefaultEventHandler) HandleEvent(client *Client, event interface{}) er
 	case *events.OfflineSyncPreview:
 		return eh.handleOfflineSyncPreview(client, evt)
 	default:
-		eh.logger.Debug().
-			Str("event_type", fmt.Sprintf("%T", event)).
-			Msg("Unhandled event type")
+		eh.logUnhandledEvent(event)
 		return nil
 	}
 }
@@ -73,16 +71,12 @@ func (eh *DefaultEventHandler) handleMessage(client *Client, evt *events.Message
 		IsGroup:   evt.Info.IsGroup,
 	}
 
-	if eh.shouldSendWebhook(client, EventMessage) {
-		webhookData := map[string]interface{}{
-			"messageInfo": messageInfo,
-			"message":     evt.Message,
-		}
-
-		return eh.sendWebhook(client, EventMessage, webhookData)
+	webhookData := map[string]interface{}{
+		"messageInfo": messageInfo,
+		"message":     evt.Message,
 	}
 
-	return nil
+	return eh.sendWebhookIfEnabled(client, EventMessage, webhookData)
 }
 
 func (eh *DefaultEventHandler) handleReceipt(client *Client, evt *events.Receipt) error {
@@ -91,11 +85,7 @@ func (eh *DefaultEventHandler) handleReceipt(client *Client, evt *events.Receipt
 		Interface("message_ids", evt.MessageIDs).
 		Msg("Receipt event in session")
 
-	if eh.shouldSendWebhook(client, EventReadReceipt) {
-		return eh.sendWebhook(client, EventReadReceipt, evt)
-	}
-
-	return nil
+	return eh.sendWebhookIfEnabled(client, EventReadReceipt, evt)
 }
 
 func (eh *DefaultEventHandler) handlePresence(client *Client, evt *events.Presence) error {
@@ -104,11 +94,7 @@ func (eh *DefaultEventHandler) handlePresence(client *Client, evt *events.Presen
 		Str("from", evt.From.String()).
 		Msg("Presence event in session")
 
-	if eh.shouldSendWebhook(client, EventPresence) {
-		return eh.sendWebhook(client, EventPresence, evt)
-	}
-
-	return nil
+	return eh.sendWebhookIfEnabled(client, EventPresence, evt)
 }
 
 func (eh *DefaultEventHandler) handleChatPresence(client *Client, evt *events.ChatPresence) error {
@@ -117,11 +103,7 @@ func (eh *DefaultEventHandler) handleChatPresence(client *Client, evt *events.Ch
 		Str("chat", evt.Chat.String()).
 		Msg("Chat presence event in session")
 
-	if eh.shouldSendWebhook(client, EventChatPresence) {
-		return eh.sendWebhook(client, EventChatPresence, evt)
-	}
-
-	return nil
+	return eh.sendWebhookIfEnabled(client, EventChatPresence, evt)
 }
 
 func (eh *DefaultEventHandler) handleHistorySync(client *Client, evt *events.HistorySync) error {
@@ -130,17 +112,12 @@ func (eh *DefaultEventHandler) handleHistorySync(client *Client, evt *events.His
 		Int("conversations_count", len(evt.Data.Conversations)).
 		Msg("History sync event in session")
 
-	if eh.shouldSendWebhook(client, EventHistorySync) {
-
-		syncInfo := map[string]interface{}{
-			"type":              evt.Data.SyncType,
-			"conversationCount": len(evt.Data.Conversations),
-		}
-
-		return eh.sendWebhook(client, EventHistorySync, syncInfo)
+	syncInfo := map[string]interface{}{
+		"type":              evt.Data.SyncType,
+		"conversationCount": len(evt.Data.Conversations),
 	}
 
-	return nil
+	return eh.sendWebhookIfEnabled(client, EventHistorySync, syncInfo)
 }
 
 func (eh *DefaultEventHandler) handleAppStateSyncComplete(client *Client, evt *events.AppStateSyncComplete) error {
@@ -186,6 +163,19 @@ func (eh *DefaultEventHandler) handleOfflineSyncPreview(client *Client, _ *event
 		Str("session_name", client.Name).
 		Msg("Offline sync preview in session")
 	return nil
+}
+
+func (eh *DefaultEventHandler) logUnhandledEvent(event interface{}) {
+	eh.logger.Debug().
+		Str("event_type", fmt.Sprintf("%T", event)).
+		Msg("Unhandled event type")
+}
+
+func (eh *DefaultEventHandler) sendWebhookIfEnabled(client *Client, eventType EventType, eventData interface{}) error {
+	if !eh.shouldSendWebhook(client, eventType) {
+		return nil
+	}
+	return eh.sendWebhook(client, eventType, eventData)
 }
 
 func (eh *DefaultEventHandler) shouldSendWebhook(client *Client, eventType EventType) bool {

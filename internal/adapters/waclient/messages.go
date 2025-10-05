@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"zpwoot/internal/core/domain/session"
+	"zpwoot/internal/core/ports/output"
 
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
@@ -21,13 +21,9 @@ func NewMessageSender(waClient *WAClient) *MessageSenderImpl {
 }
 
 func (ms *MessageSenderImpl) SendTextMessage(ctx context.Context, sessionID string, to string, text string) error {
-	client, err := ms.waClient.GetSession(ctx, sessionID)
+	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return err
-	}
-
-	if client.Status != session.StatusConnected {
-		return ErrNotConnected
 	}
 
 	recipientJID, err := parseJID(to)
@@ -44,14 +40,10 @@ func (ms *MessageSenderImpl) SendTextMessage(ctx context.Context, sessionID stri
 	return nil
 }
 
-func (ms *MessageSenderImpl) SendMediaMessage(ctx context.Context, sessionID string, to string, media *MediaData) error {
-	client, err := ms.waClient.GetSession(ctx, sessionID)
+func (ms *MessageSenderImpl) SendMediaMessage(ctx context.Context, sessionID string, to string, media *output.MediaData) error {
+	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return err
-	}
-
-	if client.Status != session.StatusConnected {
-		return ErrNotConnected
 	}
 
 	recipientJID, err := parseJID(to)
@@ -72,13 +64,9 @@ func (ms *MessageSenderImpl) SendMediaMessage(ctx context.Context, sessionID str
 }
 
 func (ms *MessageSenderImpl) SendLocationMessage(ctx context.Context, sessionID string, to string, lat, lng float64, name string) error {
-	client, err := ms.waClient.GetSession(ctx, sessionID)
+	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return err
-	}
-
-	if client.Status != session.StatusConnected {
-		return ErrNotConnected
 	}
 
 	recipientJID, err := parseJID(to)
@@ -103,13 +91,9 @@ func (ms *MessageSenderImpl) SendLocationMessage(ctx context.Context, sessionID 
 }
 
 func (ms *MessageSenderImpl) SendContactMessage(ctx context.Context, sessionID string, to string, contact *ContactInfo) error {
-	client, err := ms.waClient.GetSession(ctx, sessionID)
+	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return err
-	}
-
-	if client.Status != session.StatusConnected {
-		return ErrNotConnected
 	}
 
 	recipientJID, err := parseJID(to)
@@ -119,7 +103,7 @@ func (ms *MessageSenderImpl) SendContactMessage(ctx context.Context, sessionID s
 
 	vcard := contact.VCard
 	if vcard == "" {
-		vcard = fmt.Sprintf("BEGIN:VCARD\nVERSION:3.0\nFN:%s\nTEL:%s\nEND:VCARD", contact.Name, contact.Phone)
+		vcard = ms.generateVCard(contact.Name, contact.Phone)
 	}
 
 	message := &waE2E.Message{
@@ -137,18 +121,30 @@ func (ms *MessageSenderImpl) SendContactMessage(ctx context.Context, sessionID s
 	return nil
 }
 
+func (ms *MessageSenderImpl) getConnectedClient(ctx context.Context, sessionID string) (*Client, error) {
+	client, err := ms.waClient.GetSession(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !client.IsConnected() {
+		return nil, ErrNotConnected
+	}
+
+	return client, nil
+}
+
+func (ms *MessageSenderImpl) generateVCard(name, phone string) string {
+	return fmt.Sprintf("BEGIN:VCARD\nVERSION:3.0\nFN:%s\nTEL:%s\nEND:VCARD", name, phone)
+}
+
 func parseJID(jidStr string) (types.JID, error) {
 	if jidStr == "" {
 		return types.JID{}, ErrInvalidJID
 	}
 
 	if !strings.Contains(jidStr, "@") {
-		phone := strings.ReplaceAll(jidStr, " ", "")
-		phone = strings.ReplaceAll(phone, "-", "")
-		phone = strings.ReplaceAll(phone, "(", "")
-		phone = strings.ReplaceAll(phone, ")", "")
-		phone = strings.TrimPrefix(phone, "+")
-
+		phone := normalizePhoneNumber(jidStr)
 		jidStr = phone + "@s.whatsapp.net"
 	}
 
@@ -160,14 +156,19 @@ func parseJID(jidStr string) (types.JID, error) {
 	return jid, nil
 }
 
+func normalizePhoneNumber(phone string) string {
+	phone = strings.ReplaceAll(phone, " ", "")
+	phone = strings.ReplaceAll(phone, "-", "")
+	phone = strings.ReplaceAll(phone, "(", "")
+	phone = strings.ReplaceAll(phone, ")", "")
+	phone = strings.TrimPrefix(phone, "+")
+	return phone
+}
+
 func (ms *MessageSenderImpl) GetChatInfo(ctx context.Context, sessionID string, chatJID string) (*ChatInfo, error) {
-	client, err := ms.waClient.GetSession(ctx, sessionID)
+	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return nil, err
-	}
-
-	if client.Status != session.StatusConnected {
-		return nil, ErrNotConnected
 	}
 
 	jid, err := parseJID(chatJID)
@@ -201,13 +202,9 @@ type ChatInfo struct {
 }
 
 func (ms *MessageSenderImpl) GetContacts(ctx context.Context, sessionID string) ([]*ContactInfo, error) {
-	client, err := ms.waClient.GetSession(ctx, sessionID)
+	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return nil, err
-	}
-
-	if client.Status != session.StatusConnected {
-		return nil, ErrNotConnected
 	}
 
 	contacts, err := client.WAClient.Store.Contacts.GetAllContacts(ctx)
@@ -230,16 +227,14 @@ func (ms *MessageSenderImpl) GetContacts(ctx context.Context, sessionID string) 
 	return contactList, nil
 }
 
+// GetChats retrieves all chats for a session
 func (ms *MessageSenderImpl) GetChats(ctx context.Context, sessionID string) ([]*ChatInfo, error) {
-	client, err := ms.waClient.GetSession(ctx, sessionID)
+	_, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return nil, err
 	}
 
-	if client.Status != session.StatusConnected {
-		return nil, ErrNotConnected
-	}
-
+	// TODO: Implement chat retrieval from WhatsApp store
 	var chatList []*ChatInfo
 
 	return chatList, nil
