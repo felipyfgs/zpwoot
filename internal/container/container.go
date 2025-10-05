@@ -3,14 +3,12 @@ package container
 import (
 	"context"
 	"fmt"
-	"net/http"
 
 	"zpwoot/internal/adapters/database"
 	"zpwoot/internal/adapters/database/repository"
 	"zpwoot/internal/adapters/logger"
 	"zpwoot/internal/adapters/waclient"
 	"zpwoot/internal/config"
-	"zpwoot/internal/core/application/dto"
 	"zpwoot/internal/core/application/usecase/message"
 	"zpwoot/internal/core/application/usecase/session"
 	domainSession "zpwoot/internal/core/domain/session"
@@ -18,33 +16,39 @@ import (
 	"zpwoot/internal/core/ports/output"
 )
 
+// Container is a simple dependency injection container
 type Container struct {
 	config   *config.Config
 	logger   *logger.Logger
 	database *database.Database
 	migrator *database.Migrator
 
+	// Domain services
 	sessionService *domainSession.Service
 
+	// External adapters
 	whatsappClient output.WhatsAppClient
 
+	// Use cases
 	sessionUseCases input.SessionUseCases
 	messageUseCases input.MessageUseCases
 }
 
+// NewContainer creates a new dependency injection container
 func NewContainer(cfg *config.Config) *Container {
 	return &Container{
 		config: cfg,
 	}
 }
 
+// Initialize sets up all dependencies
 func (c *Container) Initialize() error {
-
+	// Initialize logger
 	logger.Init(c.config.LogLevel)
 	c.logger = logger.NewFromAppConfig(c.config)
-
 	c.logger.Info().Msg("Initializing zpwoot container")
 
+	// Initialize database
 	c.logger.Info().Msg("Connecting to database")
 	db, err := database.New(c.config, c.logger)
 	if err != nil {
@@ -53,83 +57,34 @@ func (c *Container) Initialize() error {
 	c.database = db
 	c.logger.Info().Msg("Database connection established")
 
-	c.logger.Info().Msg("Initializing database migrator")
-	c.migrator = database.NewMigrator(db, c.logger)
-
+	// Initialize migrator and run migrations
 	c.logger.Info().Msg("Running database migrations")
+	c.migrator = database.NewMigrator(db, c.logger)
 	if err := c.migrator.RunMigrations(); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 	c.logger.Info().Msg("Database migrations completed")
 
+	// Initialize domain services
 	c.logger.Info().Msg("Initializing domain services")
 	sessionRepo := repository.NewSessionRepository(c.database.DB)
 	c.sessionService = domainSession.NewService(sessionRepo)
 
+	// Initialize WhatsApp client
 	c.logger.Info().Msg("Initializing WhatsApp client")
 	c.initializeWhatsAppClient()
 
+	// Initialize use cases
 	c.logger.Info().Msg("Initializing use cases")
-	c.initializeUseCases()
+	c.sessionUseCases = session.NewUseCases(c.sessionService, c.whatsappClient)
+	c.messageUseCases = message.NewMessageUseCases(c.sessionService, c.whatsappClient)
 
 	c.logger.Info().Msg("Container initialization completed successfully")
 	return nil
 }
 
-func (c *Container) GetDatabase() *database.Database {
-	return c.database
-}
-
-func (c *Container) GetLogger() *logger.Logger {
-	return c.logger
-}
-
-func (c *Container) GetMigrator() *database.Migrator {
-	return c.migrator
-}
-
-func (c *Container) GetConfig() *config.Config {
-	return c.config
-}
-
-func (c *Container) Start(ctx context.Context) error {
-	return c.Initialize()
-}
-
-func (c *Container) Stop(ctx context.Context) error {
-	if c.database != nil {
-		return c.database.Close()
-	}
-	return nil
-}
-
-func (c *Container) Handler() http.Handler {
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		if c.database != nil {
-			if err := c.database.Health(); err != nil {
-				http.Error(w, "Database unhealthy", http.StatusServiceUnavailable)
-				return
-			}
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status":"ok","service":"zpwoot"}`))
-	})
-
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"message":"zpwoot API is running","version":"1.0.0"}`))
-	})
-
-	return mux
-}
-
+// initializeWhatsAppClient sets up the WhatsApp client
 func (c *Container) initializeWhatsAppClient() {
-
 	sessionRepository := repository.NewSessionRepository(c.database.DB)
 	sessionRepo := repository.NewSessionRepo(sessionRepository)
 	waContainer := waclient.NewWAStoreContainer(
@@ -141,24 +96,42 @@ func (c *Container) initializeWhatsAppClient() {
 	c.whatsappClient = waclient.NewWAClientAdapter(waClient)
 }
 
-func (c *Container) initializeUseCases() {
-	c.sessionUseCases = c.createSessionUseCases()
-	c.messageUseCases = c.createMessageUseCases()
+// Start initializes the container
+func (c *Container) Start(ctx context.Context) error {
+	return c.Initialize()
 }
 
-func (c *Container) createSessionUseCases() input.SessionUseCases {
-	return session.NewUseCases(c.sessionService, c.whatsappClient)
-}
-
-func (c *Container) createMessageUseCases() input.MessageUseCases {
-	return &MessageUseCasesImpl{
-		Send:    message.NewSendUseCase(c.sessionService, c.whatsappClient),
-		Receive: message.NewReceiveUseCase(c.sessionService),
+// Stop shuts down the container
+func (c *Container) Stop(ctx context.Context) error {
+	if c.database != nil {
+		return c.database.Close()
 	}
+	return nil
+}
+
+// Getters
+func (c *Container) GetConfig() *config.Config {
+	return c.config
+}
+
+func (c *Container) GetLogger() *logger.Logger {
+	return c.logger
+}
+
+func (c *Container) GetDatabase() *database.Database {
+	return c.database
+}
+
+func (c *Container) GetMigrator() *database.Migrator {
+	return c.migrator
 }
 
 func (c *Container) GetSessionService() *domainSession.Service {
 	return c.sessionService
+}
+
+func (c *Container) GetWhatsAppClient() output.WhatsAppClient {
+	return c.whatsappClient
 }
 
 func (c *Container) GetSessionUseCases() input.SessionUseCases {
@@ -169,82 +142,4 @@ func (c *Container) GetMessageUseCases() input.MessageUseCases {
 	return c.messageUseCases
 }
 
-func (c *Container) SetSessionUseCases(useCases input.SessionUseCases) {
-	c.sessionUseCases = useCases
-}
 
-func (c *Container) SetMessageUseCases(useCases input.MessageUseCases) {
-	c.messageUseCases = useCases
-}
-
-func (c *Container) SetWhatsAppClient(client output.WhatsAppClient) {
-	c.whatsappClient = client
-}
-
-type MessageUseCasesImpl struct {
-	Send    *message.SendUseCase
-	Receive *message.ReceiveUseCase
-}
-
-func (m *MessageUseCasesImpl) SendTextMessage(ctx context.Context, sessionID, to, text string) error {
-	req := &dto.SendMessageRequest{
-		To:   to,
-		Type: "text",
-		Text: text,
-	}
-	_, err := m.Send.Execute(ctx, sessionID, req)
-	return err
-}
-
-func (m *MessageUseCasesImpl) SendMediaMessage(ctx context.Context, sessionID, to string, media *dto.MediaData) error {
-	req := &dto.SendMessageRequest{
-		To:    to,
-		Type:  "media",
-		Media: media,
-	}
-	_, err := m.Send.Execute(ctx, sessionID, req)
-	return err
-}
-
-func (m *MessageUseCasesImpl) SendLocationMessage(ctx context.Context, sessionID, to string, latitude, longitude float64, name string) error {
-	req := &dto.SendMessageRequest{
-		To:   to,
-		Type: "location",
-		Location: &dto.Location{
-			Latitude:  latitude,
-			Longitude: longitude,
-			Name:      name,
-		},
-	}
-	_, err := m.Send.Execute(ctx, sessionID, req)
-	return err
-}
-
-func (m *MessageUseCasesImpl) SendContactMessage(ctx context.Context, sessionID, to string, contact *dto.ContactInfo) error {
-	req := &dto.SendMessageRequest{
-		To:      to,
-		Type:    "contact",
-		Contact: contact,
-	}
-	_, err := m.Send.Execute(ctx, sessionID, req)
-	return err
-}
-
-func (m *MessageUseCasesImpl) Execute(ctx context.Context, req *dto.ReceiveMessageRequest) error {
-	return m.Receive.ProcessIncomingMessage(ctx, req)
-}
-
-func (m *MessageUseCasesImpl) GetChatInfo(ctx context.Context, sessionID, chatJID string) (interface{}, error) {
-
-	return nil, fmt.Errorf("not implemented")
-}
-
-func (m *MessageUseCasesImpl) GetContacts(ctx context.Context, sessionID string) (interface{}, error) {
-
-	return nil, fmt.Errorf("not implemented")
-}
-
-func (m *MessageUseCasesImpl) GetChats(ctx context.Context, sessionID string) (interface{}, error) {
-
-	return nil, fmt.Errorf("not implemented")
-}
