@@ -9,6 +9,7 @@ var (
 	ErrSessionAlreadyExists = errors.New("session already exists")
 	ErrSessionNotConnected  = errors.New("session not connected")
 	ErrInvalidSessionStatus = errors.New("invalid session status")
+	ErrInvalidStatus        = errors.New("invalid session status")
 	
 	// Message errors
 	ErrMessageNotFound     = errors.New("message not found")

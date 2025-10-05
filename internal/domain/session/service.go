@@ -6,11 +6,7 @@ import (
 	"fmt"
 )
 
-var (
-	ErrSessionNotFound     = errors.New("session not found")
-	ErrSessionAlreadyExists = errors.New("session already exists")
-	ErrInvalidStatus       = errors.New("invalid session status")
-)
+// Errors are now defined in errors.go
 
 // Service defines the business logic for session management
 type Service struct {
