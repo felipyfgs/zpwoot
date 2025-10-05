@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"zpwoot/internal/adapters/logger"
-	"zpwoot/internal/domain/session"
+	"zpwoot/internal/core/domain/session"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/mdp/qrterminal/v3"
@@ -80,7 +80,18 @@ func (wac *WAClient) loadSessionsFromDatabase() {
 }
 
 func (wac *WAClient) autoReconnect(client *Client) {
-	time.Sleep(2 * time.Second)
+
+	timer := time.NewTimer(2 * time.Second)
+	defer timer.Stop()
+
+	select {
+	case <-timer.C:
+
+	case <-client.ctx.Done():
+
+		wac.logger.Debug().Str("session_id", client.SessionID).Msg("Auto-reconnect cancelled")
+		return
+	}
 
 	if err := client.WAClient.Connect(); err != nil {
 		wac.logger.Error().Err(err).Str("session_id", client.SessionID).Msg("Failed to auto-reconnect session")

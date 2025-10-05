@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"zpwoot/internal/adapters/container"
+	"zpwoot/internal/container"
 	"zpwoot/internal/adapters/database/repository"
 	"zpwoot/internal/adapters/http/handlers"
 	httpMiddleware "zpwoot/internal/adapters/http/middleware"
 	"zpwoot/internal/adapters/waclient"
-	sessionUseCase "zpwoot/internal/application/usecase/session"
+	sessionUseCase "zpwoot/internal/core/application/usecase/session"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"

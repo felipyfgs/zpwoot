@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"zpwoot/internal/adapters/config"
+	"zpwoot/internal/config"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"

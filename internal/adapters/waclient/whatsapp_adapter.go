@@ -3,7 +3,7 @@ package waclient
 import (
 	"context"
 
-	"zpwoot/internal/application/interfaces"
+	"zpwoot/internal/core/application/interfaces"
 )
 
 

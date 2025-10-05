@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"zpwoot/internal/adapters/config"
+	"zpwoot/internal/config"
 	"zpwoot/internal/adapters/database"
 	"zpwoot/internal/adapters/database/repository"
 	"zpwoot/internal/adapters/logger"
-	"zpwoot/internal/application/interfaces"
-	"zpwoot/internal/application/usecase/message"
-	"zpwoot/internal/application/usecase/session"
-	domainSession "zpwoot/internal/domain/session"
+	"zpwoot/internal/core/application/interfaces"
+	"zpwoot/internal/core/application/usecase/message"
+	"zpwoot/internal/core/application/usecase/session"
+	domainSession "zpwoot/internal/core/domain/session"
 )
 
 

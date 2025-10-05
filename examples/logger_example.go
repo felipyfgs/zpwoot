@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"zpwoot/internal/adapters/config"
+	"zpwoot/internal/config"
 	"zpwoot/internal/adapters/logger"
 
 	"github.com/rs/zerolog"

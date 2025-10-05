@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"zpwoot/internal/application/dto"
-	"zpwoot/internal/application/interfaces"
-	"zpwoot/internal/domain/session"
+	"zpwoot/internal/core/application/dto"
+	"zpwoot/internal/core/application/interfaces"
+	"zpwoot/internal/core/domain/session"
 )
 
 

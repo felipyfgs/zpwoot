@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"zpwoot/internal/adapters/config"
+	"zpwoot/internal/config"
 )
 
 

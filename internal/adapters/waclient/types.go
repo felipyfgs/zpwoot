@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"go.mau.fi/whatsmeow"
-	"zpwoot/internal/domain/session"
+	"zpwoot/internal/core/domain/session"
 )
 
 

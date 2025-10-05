@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"zpwoot/internal/domain/session"
-	"zpwoot/internal/domain/shared"
+	"zpwoot/internal/core/domain/session"
+	"zpwoot/internal/core/domain/shared"
 
 	"github.com/jmoiron/sqlx"
 )

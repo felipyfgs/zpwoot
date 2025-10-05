@@ -3,7 +3,8 @@ package dto
 import (
 	"time"
 
-	"zpwoot/internal/application/interfaces"
+	"zpwoot/internal/core/application/interfaces"
+	"zpwoot/internal/core/application/validators"
 )
 
 
@@ -92,8 +93,8 @@ func (r *SendMessageRequest) Validate() error {
 
 	switch r.Type {
 	case "text":
-		if r.Text == "" {
-			return ErrTextRequired
+		if err := validators.ValidateMessageText(r.Text); err != nil {
+			return &ErrorInfo{Code: "TEXT_INVALID", Message: err.Error()}
 		}
 	case "media":
 		if r.Media == nil {
@@ -101,6 +102,12 @@ func (r *SendMessageRequest) Validate() error {
 		}
 		if r.Media.URL == "" && r.Media.Base64 == "" {
 			return ErrMediaContentRequired
+		}
+		if err := validators.ValidateCaption(r.Media.Caption); err != nil {
+			return &ErrorInfo{Code: "CAPTION_INVALID", Message: err.Error()}
+		}
+		if err := validators.ValidateFileName(r.Media.FileName); err != nil {
+			return &ErrorInfo{Code: "FILENAME_INVALID", Message: err.Error()}
 		}
 	case "location":
 		if r.Location == nil {
@@ -124,18 +131,27 @@ func (r *SendMessageRequest) Validate() error {
 }
 
 func (l *Location) Validate() error {
-	if l.Latitude < -90 || l.Latitude > 90 {
-		return ErrInvalidLatitude
+	if err := validators.ValidateLatitude(l.Latitude); err != nil {
+		return &ErrorInfo{Code: "LATITUDE_INVALID", Message: err.Error()}
 	}
-	if l.Longitude < -180 || l.Longitude > 180 {
-		return ErrInvalidLongitude
+	if err := validators.ValidateLongitude(l.Longitude); err != nil {
+		return &ErrorInfo{Code: "LONGITUDE_INVALID", Message: err.Error()}
+	}
+	if err := validators.ValidateLocationName(l.Name); err != nil {
+		return &ErrorInfo{Code: "LOCATION_NAME_INVALID", Message: err.Error()}
+	}
+	if err := validators.ValidateLocationAddress(l.Address); err != nil {
+		return &ErrorInfo{Code: "LOCATION_ADDRESS_INVALID", Message: err.Error()}
 	}
 	return nil
 }
 
 func (c *ContactInfo) Validate() error {
-	if c.Name == "" {
-		return ErrContactNameRequired
+	if err := validators.ValidateContactName(c.Name); err != nil {
+		return &ErrorInfo{Code: "CONTACT_NAME_INVALID", Message: err.Error()}
+	}
+	if err := validators.ValidatePhoneNumber(c.Phone); err != nil {
+		return &ErrorInfo{Code: "CONTACT_PHONE_INVALID", Message: err.Error()}
 	}
 	if c.Phone == "" {
 		return ErrContactPhoneRequired

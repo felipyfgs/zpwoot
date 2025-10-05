@@ -6,8 +6,8 @@ import (
 
 	"zpwoot/internal/adapters/logger"
 	"zpwoot/internal/adapters/waclient"
-	"zpwoot/internal/application/dto"
-	sessionUseCase "zpwoot/internal/application/usecase/session"
+	"zpwoot/internal/core/application/dto"
+	sessionUseCase "zpwoot/internal/core/application/usecase/session"
 
 	"github.com/go-chi/chi/v5"
 )

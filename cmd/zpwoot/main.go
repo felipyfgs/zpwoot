@@ -40,8 +40,8 @@ import (
 	"syscall"
 	"time"
 
-	"zpwoot/internal/adapters/config"
-	"zpwoot/internal/adapters/container"
+	"zpwoot/internal/config"
+	"zpwoot/internal/container"
 	"zpwoot/internal/adapters/http/router"
 	"zpwoot/internal/adapters/logger"
 )

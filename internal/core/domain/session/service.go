@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"zpwoot/internal/domain/shared"
+	"zpwoot/internal/core/domain/shared"
 )
 
 

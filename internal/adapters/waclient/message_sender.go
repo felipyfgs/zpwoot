@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"zpwoot/internal/domain/session"
+	"zpwoot/internal/core/domain/session"
 
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"

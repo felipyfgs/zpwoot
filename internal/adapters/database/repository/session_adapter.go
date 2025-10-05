@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 
-	"zpwoot/internal/domain/session"
+	"zpwoot/internal/core/domain/session"
 )
 
 

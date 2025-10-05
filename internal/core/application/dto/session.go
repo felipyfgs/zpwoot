@@ -6,7 +6,8 @@ import (
 
 	"github.com/skip2/go-qrcode"
 	"zpwoot/internal/adapters/waclient"
-	"zpwoot/internal/domain/session"
+	"zpwoot/internal/core/application/validators"
+	"zpwoot/internal/core/domain/session"
 )
 
 
@@ -138,17 +139,15 @@ type SessionStatusResponse struct {
 
 
 func (r *CreateSessionRequest) Validate() error {
-	if r.Name == "" {
-		return NewValidationError("name", "session name is required")
-	}
-	if len(r.Name) > 100 {
-		return NewValidationError("name", "session name must be less than 100 characters")
+	// Use validators package for consistent validation
+	if err := validators.ValidateSessionName(r.Name); err != nil {
+		return NewValidationError("name", err.Error())
 	}
 
 
 	if r.Settings != nil && r.Settings.Webhook != nil && r.Settings.Webhook.Enabled {
-		if r.Settings.Webhook.URL == "" {
-			return NewValidationError("settings.webhook.url", "webhook URL is required when webhook is enabled")
+		if err := validators.ValidateWebhookURL(r.Settings.Webhook.URL); err != nil {
+			return NewValidationError("settings.webhook.url", err.Error())
 		}
 	}
 

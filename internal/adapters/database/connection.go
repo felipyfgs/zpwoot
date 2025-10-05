@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"zpwoot/internal/adapters/config"
+	"zpwoot/internal/config"
 	"zpwoot/internal/adapters/logger"
 
 	"github.com/jmoiron/sqlx"

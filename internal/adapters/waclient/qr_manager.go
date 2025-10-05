@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"zpwoot/internal/domain/session"
+	"zpwoot/internal/core/domain/session"
 )
 
 func (wac *WAClient) GetQRCodeForSession(ctx context.Context, sessionID string) (*QREvent, error) {
@@ -30,7 +30,16 @@ func (wac *WAClient) GetQRCodeForSession(ctx context.Context, sessionID string) 
 			return nil, err
 		}
 
-		time.Sleep(1 * time.Second)
+
+		timer := time.NewTimer(1 * time.Second)
+		defer timer.Stop()
+
+		select {
+		case <-timer.C:
+
+		case <-ctx.Done():
+			return nil, &WAError{Code: "CONTEXT_CANCELLED", Message: "request cancelled"}
+		}
 
 		if client, err = wac.GetSession(ctx, sessionID); err != nil {
 			return nil, err
@@ -62,33 +71,53 @@ func (wac *WAClient) RefreshQRCode(ctx context.Context, sessionID string) (*QREv
 		if err = wac.DisconnectSession(ctx, sessionID); err != nil {
 			wac.logger.Warn().Err(err).Str("session_id", sessionID).Msg("Failed to disconnect session for QR refresh")
 		}
-		time.Sleep(500 * time.Millisecond)
+
+
+		timer := time.NewTimer(500 * time.Millisecond)
+		defer timer.Stop()
+
+		select {
+		case <-timer.C:
+
+		case <-ctx.Done():
+			return nil, &WAError{Code: "CONTEXT_CANCELLED", Message: "request cancelled"}
+		}
 	}
 
 	if err = wac.ConnectSession(ctx, sessionID); err != nil {
 		return nil, err
 	}
 
+
 	maxWait := 10 * time.Second
 	checkInterval := 500 * time.Millisecond
+	ticker := time.NewTicker(checkInterval)
+	defer ticker.Stop()
 
-	for elapsed := time.Duration(0); elapsed < maxWait; elapsed += checkInterval {
-		time.Sleep(checkInterval)
+	timeout := time.After(maxWait)
 
-		if client, err = wac.GetSession(ctx, sessionID); err != nil {
-			continue
-		}
+	for {
+		select {
+		case <-ticker.C:
+			if client, err = wac.GetSession(ctx, sessionID); err != nil {
+				continue
+			}
 
-		if client.QRCode != "" && client.Status == session.StatusQRCode {
-			return &QREvent{
-				Event:     "qr",
-				Code:      client.QRCode,
-				ExpiresAt: client.QRExpiresAt,
-			}, nil
+			if client.QRCode != "" && client.Status == session.StatusQRCode {
+				return &QREvent{
+					Event:     "qr",
+					Code:      client.QRCode,
+					ExpiresAt: client.QRExpiresAt,
+				}, nil
+			}
+
+		case <-timeout:
+			return nil, &WAError{Code: "QR_GENERATION_TIMEOUT", Message: "timeout waiting for QR code generation"}
+
+		case <-ctx.Done():
+			return nil, &WAError{Code: "CONTEXT_CANCELLED", Message: "request cancelled"}
 		}
 	}
-
-	return nil, &WAError{Code: "QR_GENERATION_TIMEOUT", Message: "timeout waiting for QR code generation"}
 }
 
 func (wac *WAClient) CleanupExpiredQRCodes(ctx context.Context) error {

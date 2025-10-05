@@ -1,8 +1,8 @@
 package session
 
 import (
-	"zpwoot/internal/application/interfaces"
-	"zpwoot/internal/domain/session"
+	"zpwoot/internal/core/application/interfaces"
+	"zpwoot/internal/core/domain/session"
 )
 
 
