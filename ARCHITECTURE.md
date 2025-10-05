@@ -84,6 +84,12 @@ zpwoot/
 │   │   ├── http/                        # REST API handlers
 │   │   ├── logger/                      # Structured logging
 │   │   └── waclient/                    # WhatsApp integration
+│   │       ├── adapter.go              # WhatsApp adapter (implements port)
+│   │       ├── manager.go              # Session management
+│   │       ├── events.go               # Event handling
+│   │       ├── messages.go             # Message sending
+│   │       ├── qr.go                   # QR code management
+│   │       └── types.go                # Type definitions
 │   ├── config/config.go                 # Configuration
 │   └── container/container.go           # Dependency injection
 └── [docs, docker files, etc.]
