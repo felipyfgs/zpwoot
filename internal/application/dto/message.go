@@ -2,9 +2,11 @@ package dto
 
 import (
 	"time"
+
+	"zpwoot/internal/application/interfaces"
 )
 
-// SendMessageRequest represents a message sending request
+
 type SendMessageRequest struct {
 	To       string       `json:"to" validate:"required"`
 	Type     string       `json:"type" validate:"required,oneof=text media location contact"`
@@ -14,7 +16,7 @@ type SendMessageRequest struct {
 	Contact  *ContactInfo `json:"contact,omitempty"`
 }
 
-// MediaData represents media information
+
 type MediaData struct {
 	URL      string `json:"url,omitempty"`
 	Base64   string `json:"base64,omitempty"`
@@ -23,7 +25,7 @@ type MediaData struct {
 	Caption  string `json:"caption,omitempty"`
 }
 
-// Location represents location data
+
 type Location struct {
 	Latitude  float64 `json:"latitude" validate:"required,min=-90,max=90"`
 	Longitude float64 `json:"longitude" validate:"required,min=-180,max=180"`
@@ -31,21 +33,21 @@ type Location struct {
 	Address   string  `json:"address,omitempty"`
 }
 
-// ContactInfo represents contact information
+
 type ContactInfo struct {
 	Name  string `json:"name" validate:"required"`
 	Phone string `json:"phone" validate:"required"`
 	VCard string `json:"vcard,omitempty"`
 }
 
-// SendMessageResponse represents a message sending response
+
 type SendMessageResponse struct {
 	MessageID string    `json:"messageId"`
 	Status    string    `json:"status"`
 	SentAt    time.Time `json:"sentAt"`
 }
 
-// MessageInfo represents message information
+
 type MessageInfo struct {
 	ID        string    `json:"id"`
 	Chat      string    `json:"chat"`
@@ -58,27 +60,27 @@ type MessageInfo struct {
 	Content   string    `json:"content,omitempty"`
 }
 
-// ReceiveMessageRequest represents a message reception request (for webhooks)
+
 type ReceiveMessageRequest struct {
 	SessionID string      `json:"sessionId"`
 	Message   MessageInfo `json:"message"`
 }
 
-// MessageHistoryRequest represents a message history request
+
 type MessageHistoryRequest struct {
 	ChatJID string `json:"chatJid" validate:"required"`
 	Limit   int    `json:"limit,omitempty"`
 	Offset  int    `json:"offset,omitempty"`
 }
 
-// MessageHistoryResponse represents message history response
+
 type MessageHistoryResponse struct {
 	Messages []MessageInfo `json:"messages"`
 	Total    int           `json:"total"`
 	HasMore  bool          `json:"hasMore"`
 }
 
-// Validation methods
+
 func (r *SendMessageRequest) Validate() error {
 	if r.To == "" {
 		return ErrRecipientRequired
@@ -141,7 +143,7 @@ func (c *ContactInfo) Validate() error {
 	return nil
 }
 
-// Error definitions
+
 var (
 	ErrRecipientRequired    = &ErrorInfo{Code: "RECIPIENT_REQUIRED", Message: "Recipient is required"}
 	ErrMessageTypeRequired  = &ErrorInfo{Code: "MESSAGE_TYPE_REQUIRED", Message: "Message type is required"}
@@ -156,3 +158,45 @@ var (
 	ErrContactNameRequired  = &ErrorInfo{Code: "CONTACT_NAME_REQUIRED", Message: "Contact name is required"}
 	ErrContactPhoneRequired = &ErrorInfo{Code: "CONTACT_PHONE_REQUIRED", Message: "Contact phone is required"}
 )
+
+
+func (m *MediaData) ToInterfacesMediaData() *interfaces.MediaData {
+	if m == nil {
+		return nil
+	}
+
+
+	var data []byte
+
+
+	return &interfaces.MediaData{
+		MimeType: m.MimeType,
+		Data:     data,
+		FileName: m.FileName,
+		Caption:  m.Caption,
+	}
+}
+
+
+func (l *Location) ToInterfacesLocation() *interfaces.Location {
+	if l == nil {
+		return nil
+	}
+	return &interfaces.Location{
+		Latitude:  l.Latitude,
+		Longitude: l.Longitude,
+		Name:      l.Name,
+		Address:   l.Address,
+	}
+}
+
+
+func (c *ContactInfo) ToInterfacesContactInfo() *interfaces.ContactInfo {
+	if c == nil {
+		return nil
+	}
+	return &interfaces.ContactInfo{
+		Name:        c.Name,
+		PhoneNumber: c.Phone,
+	}
+}

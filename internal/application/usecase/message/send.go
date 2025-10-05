@@ -12,14 +12,14 @@ import (
 	"github.com/google/uuid"
 )
 
-// SendUseCase handles message sending
+
 type SendUseCase struct {
 	sessionService  *session.Service
 	whatsappClient  interfaces.WhatsAppClient
 	notificationSvc interfaces.NotificationService
 }
 
-// NewSendUseCase creates a new send message use case
+
 func NewSendUseCase(
 	sessionService *session.Service,
 	whatsappClient interfaces.WhatsAppClient,
@@ -32,9 +32,9 @@ func NewSendUseCase(
 	}
 }
 
-// Execute sends a message via WhatsApp
+
 func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.SendMessageRequest) (*dto.SendMessageResponse, error) {
-	// Validate input
+
 	if sessionID == "" {
 		return nil, fmt.Errorf("session ID is required")
 	}
@@ -43,7 +43,7 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
 
-	// Check if session exists and is connected
+
 	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
 	if err != nil {
 		if err == shared.ErrSessionNotFound {
@@ -56,20 +56,20 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 		return nil, fmt.Errorf("session is not connected")
 	}
 
-	// Generate message ID
+
 	messageID := uuid.New().String()
 
-	// Send message based on type
+
 	var messageResult *interfaces.MessageResult
 	switch req.Type {
 	case "text":
 		messageResult, err = uc.whatsappClient.SendTextMessage(ctx, sessionID, req.To, req.Text)
 	case "media":
-		messageResult, err = uc.whatsappClient.SendMediaMessage(ctx, sessionID, req.To, req.Media)
+		messageResult, err = uc.whatsappClient.SendMediaMessage(ctx, sessionID, req.To, req.Media.ToInterfacesMediaData())
 	case "location":
-		messageResult, err = uc.whatsappClient.SendLocationMessage(ctx, sessionID, req.To, req.Location)
+		messageResult, err = uc.whatsappClient.SendLocationMessage(ctx, sessionID, req.To, req.Location.ToInterfacesLocation())
 	case "contact":
-		messageResult, err = uc.whatsappClient.SendContactMessage(ctx, sessionID, req.To, req.Contact)
+		messageResult, err = uc.whatsappClient.SendContactMessage(ctx, sessionID, req.To, req.Contact.ToInterfacesContactInfo())
 	default:
 		return nil, fmt.Errorf("unsupported message type: %s", req.Type)
 	}
@@ -90,19 +90,19 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 		return nil, fmt.Errorf("failed to send message: %w", err)
 	}
 
-	// Update session last seen (fire and forget)
+
 	go func() {
 		_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusConnected)
 	}()
 
-	// Send notification
+
 	if uc.notificationSvc != nil {
 		go func() {
 			_ = uc.notificationSvc.NotifyMessageSent(ctx, sessionID, messageResult.MessageID)
 		}()
 	}
 
-	// Use WhatsApp message ID if available, otherwise use generated ID
+
 	finalMessageID := messageID
 	if messageResult.MessageID != "" {
 		finalMessageID = messageResult.MessageID
@@ -115,7 +115,7 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 	}, nil
 }
 
-// SendText sends a text message (convenience method)
+
 func (uc *SendUseCase) SendText(ctx context.Context, sessionID, to, text string) (*dto.SendMessageResponse, error) {
 	req := &dto.SendMessageRequest{
 		To:   to,
@@ -125,7 +125,7 @@ func (uc *SendUseCase) SendText(ctx context.Context, sessionID, to, text string)
 	return uc.Execute(ctx, sessionID, req)
 }
 
-// SendMedia sends a media message (convenience method)
+
 func (uc *SendUseCase) SendMedia(ctx context.Context, sessionID, to string, media *dto.MediaData) (*dto.SendMessageResponse, error) {
 	req := &dto.SendMessageRequest{
 		To:    to,
@@ -135,7 +135,7 @@ func (uc *SendUseCase) SendMedia(ctx context.Context, sessionID, to string, medi
 	return uc.Execute(ctx, sessionID, req)
 }
 
-// SendLocation sends a location message (convenience method)
+
 func (uc *SendUseCase) SendLocation(ctx context.Context, sessionID, to string, location *dto.Location) (*dto.SendMessageResponse, error) {
 	req := &dto.SendMessageRequest{
 		To:       to,
@@ -145,7 +145,7 @@ func (uc *SendUseCase) SendLocation(ctx context.Context, sessionID, to string, l
 	return uc.Execute(ctx, sessionID, req)
 }
 
-// SendContact sends a contact message (convenience method)
+
 func (uc *SendUseCase) SendContact(ctx context.Context, sessionID, to string, contact *dto.ContactInfo) (*dto.SendMessageResponse, error) {
 	req := &dto.SendMessageRequest{
 		To:      to,

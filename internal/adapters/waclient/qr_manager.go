@@ -3,6 +3,8 @@ package waclient
 import (
 	"context"
 	"time"
+
+	"zpwoot/internal/domain/session"
 )
 
 func (wac *WAClient) GetQRCodeForSession(ctx context.Context, sessionID string) (*QREvent, error) {
@@ -11,7 +13,7 @@ func (wac *WAClient) GetQRCodeForSession(ctx context.Context, sessionID string) 
 		return nil, err
 	}
 
-	if client.Status == StatusConnected {
+	if client.Status == session.StatusConnected {
 		return nil, &WAError{Code: "ALREADY_CONNECTED", Message: "session is already connected"}
 	}
 
@@ -23,7 +25,7 @@ func (wac *WAClient) GetQRCodeForSession(ctx context.Context, sessionID string) 
 		}, nil
 	}
 
-	if client.Status != StatusQRCode && client.Status != StatusConnecting {
+	if client.Status != session.StatusQRCode && client.Status != session.StatusConnecting {
 		if err := wac.ConnectSession(ctx, sessionID); err != nil {
 			return nil, err
 		}
@@ -52,11 +54,11 @@ func (wac *WAClient) RefreshQRCode(ctx context.Context, sessionID string) (*QREv
 		return nil, err
 	}
 
-	if client.Status == StatusConnected {
+	if client.Status == session.StatusConnected {
 		return nil, &WAError{Code: "ALREADY_CONNECTED", Message: "session is already connected"}
 	}
 
-	if client.Status != StatusDisconnected {
+	if client.Status != session.StatusDisconnected {
 		if err = wac.DisconnectSession(ctx, sessionID); err != nil {
 			wac.logger.Warn().Err(err).Str("session_id", sessionID).Msg("Failed to disconnect session for QR refresh")
 		}
@@ -77,7 +79,7 @@ func (wac *WAClient) RefreshQRCode(ctx context.Context, sessionID string) (*QREv
 			continue
 		}
 
-		if client.QRCode != "" && client.Status == StatusQRCode {
+		if client.QRCode != "" && client.Status == session.StatusQRCode {
 			return &QREvent{
 				Event:     "qr",
 				Code:      client.QRCode,

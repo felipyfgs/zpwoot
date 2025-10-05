@@ -12,19 +12,19 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// SessionRepository implements the session.Repository interface
+
 type SessionRepository struct {
 	db *sqlx.DB
 }
 
-// NewSessionRepository creates a new session repository
+
 func NewSessionRepository(db *sqlx.DB) *SessionRepository {
 	return &SessionRepository{
 		db: db,
 	}
 }
 
-// Create creates a new session
+
 func (r *SessionRepository) Create(ctx context.Context, sess *session.Session) error {
 	query := `
 		INSERT INTO "zpSessions" (
@@ -58,7 +58,7 @@ func (r *SessionRepository) Create(ctx context.Context, sess *session.Session) e
 	return nil
 }
 
-// GetByID retrieves a session by ID
+
 func (r *SessionRepository) GetByID(ctx context.Context, id string) (*session.Session, error) {
 	query := `
 		SELECT "id", "name", "deviceJid", "isConnected", "connectionError", 
@@ -80,7 +80,7 @@ func (r *SessionRepository) GetByID(ctx context.Context, id string) (*session.Se
 	return &sess, nil
 }
 
-// GetByJID retrieves a session by JID
+
 func (r *SessionRepository) GetByJID(ctx context.Context, jid string) (*session.Session, error) {
 	query := `
 		SELECT "id", "name", "deviceJid", "isConnected", "connectionError",
@@ -102,7 +102,7 @@ func (r *SessionRepository) GetByJID(ctx context.Context, jid string) (*session.
 	return &sess, nil
 }
 
-// GetByName retrieves a session by name
+
 func (r *SessionRepository) GetByName(ctx context.Context, name string) (*session.Session, error) {
 	query := `
 		SELECT "id", "name", "deviceJid", "isConnected", "connectionError", 
@@ -124,7 +124,7 @@ func (r *SessionRepository) GetByName(ctx context.Context, name string) (*sessio
 	return &sess, nil
 }
 
-// List retrieves all sessions with pagination
+
 func (r *SessionRepository) List(ctx context.Context, limit, offset int) ([]*session.Session, error) {
 	query := `
 		SELECT "id", "name", "deviceJid", "isConnected", "connectionError",
@@ -144,7 +144,7 @@ func (r *SessionRepository) List(ctx context.Context, limit, offset int) ([]*ses
 	return sessions, nil
 }
 
-// Update updates a session
+
 func (r *SessionRepository) Update(ctx context.Context, sess *session.Session) error {
 	query := `
 		UPDATE "zpSessions" SET
@@ -191,7 +191,7 @@ func (r *SessionRepository) Update(ctx context.Context, sess *session.Session) e
 	return nil
 }
 
-// UpdateStatus updates only the session status
+
 func (r *SessionRepository) UpdateStatus(ctx context.Context, id string, status session.Status) error {
 	query := `
 		UPDATE "zpSessions" SET
@@ -217,7 +217,7 @@ func (r *SessionRepository) UpdateStatus(ctx context.Context, id string, status 
 	return nil
 }
 
-// Delete deletes a session
+
 func (r *SessionRepository) Delete(ctx context.Context, id string) error {
 	query := `DELETE FROM "zpSessions" WHERE "id" = $1`
 
@@ -238,7 +238,7 @@ func (r *SessionRepository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-// UpdateQRCode updates the session QR code
+
 func (r *SessionRepository) UpdateQRCode(ctx context.Context, id string, qrCode string) error {
 	query := `
 		UPDATE "zpSessions"

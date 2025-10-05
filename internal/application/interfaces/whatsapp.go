@@ -3,33 +3,33 @@ package interfaces
 import (
 	"context"
 	"time"
-	"zpwoot/internal/application/dto"
 )
 
-// WhatsAppClient defines the interface for WhatsApp operations
+
 type WhatsAppClient interface {
-	// Session operations
+
 	CreateSession(ctx context.Context, sessionID string) error
 	GetSessionStatus(ctx context.Context, sessionID string) (*SessionStatus, error)
 	DeleteSession(ctx context.Context, sessionID string) error
 
-	// Connection operations
+
 	ConnectSession(ctx context.Context, sessionID string) error
 	DisconnectSession(ctx context.Context, sessionID string) error
+	LogoutSession(ctx context.Context, sessionID string) error
 	IsConnected(ctx context.Context, sessionID string) bool
 	IsLoggedIn(ctx context.Context, sessionID string) bool
 
-	// QR Code operations
+
 	GetQRCode(ctx context.Context, sessionID string) (*QRCodeInfo, error)
 
-	// Message operations
+
 	SendTextMessage(ctx context.Context, sessionID, to, text string) (*MessageResult, error)
-	SendMediaMessage(ctx context.Context, sessionID, to string, media *dto.MediaData) (*MessageResult, error)
-	SendLocationMessage(ctx context.Context, sessionID, to string, location *dto.Location) (*MessageResult, error)
-	SendContactMessage(ctx context.Context, sessionID, to string, contact *dto.ContactInfo) (*MessageResult, error)
+	SendMediaMessage(ctx context.Context, sessionID, to string, media *MediaData) (*MessageResult, error)
+	SendLocationMessage(ctx context.Context, sessionID, to string, location *Location) (*MessageResult, error)
+	SendContactMessage(ctx context.Context, sessionID, to string, contact *ContactInfo) (*MessageResult, error)
 }
 
-// SessionStatus represents session status from WhatsApp client
+
 type SessionStatus struct {
 	SessionID   string    `json:"sessionId"`
 	Connected   bool      `json:"connected"`
@@ -40,21 +40,43 @@ type SessionStatus struct {
 	LastSeen    time.Time `json:"lastSeen,omitempty"`
 }
 
-// QRCodeInfo represents QR code information
+
 type QRCodeInfo struct {
 	Code      string    `json:"code"`
 	Base64    string    `json:"base64"`
 	ExpiresAt time.Time `json:"expiresAt"`
 }
 
-// MessageResult represents the result of sending a message
+
 type MessageResult struct {
 	MessageID string    `json:"messageId"`
 	Status    string    `json:"status"`
 	SentAt    time.Time `json:"sentAt"`
 }
 
-// WhatsAppError represents WhatsApp specific errors
+
+type MediaData struct {
+	MimeType string `json:"mimeType"`
+	Data     []byte `json:"data"`
+	FileName string `json:"fileName,omitempty"`
+	Caption  string `json:"caption,omitempty"`
+}
+
+
+type Location struct {
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	Name      string  `json:"name,omitempty"`
+	Address   string  `json:"address,omitempty"`
+}
+
+
+type ContactInfo struct {
+	Name        string `json:"name"`
+	PhoneNumber string `json:"phoneNumber"`
+}
+
+
 type WhatsAppError struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
@@ -64,7 +86,7 @@ func (e *WhatsAppError) Error() string {
 	return e.Message
 }
 
-// Common WhatsApp error codes
+
 var (
 	ErrSessionNotFound     = &WhatsAppError{Code: "SESSION_NOT_FOUND", Message: "Session not found"}
 	ErrSessionNotConnected = &WhatsAppError{Code: "SESSION_NOT_CONNECTED", Message: "Session not connected"}

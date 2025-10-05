@@ -10,13 +10,13 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// MessageHandler handles WhatsApp message operations
+
 type MessageHandler struct {
 	messageSender *waclient.MessageSenderImpl
 	logger        *logger.Logger
 }
 
-// NewMessageHandler creates a new message handler
+
 func NewMessageHandler(messageSender *waclient.MessageSenderImpl, logger *logger.Logger) *MessageHandler {
 	return &MessageHandler{
 		messageSender: messageSender,
@@ -24,7 +24,7 @@ func NewMessageHandler(messageSender *waclient.MessageSenderImpl, logger *logger
 	}
 }
 
-// SendMessage sends a message
+
 func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -38,10 +38,10 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set session ID from URL
+
 	req.SessionID = sessionID
 
-	// Validate required fields
+
 	if req.To == "" {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "to is required")
 		return
@@ -53,9 +53,9 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var err error
-	messageID := "msg_" + generateID() // Simple ID generation
+	messageID := "msg_" + generateID()
 
-	// Handle different message types
+
 	switch req.Type {
 	case "text":
 		if req.Text == "" {
@@ -120,7 +120,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusOK, response)
 }
 
-// GetChatInfo gets information about a chat
+
 func (h *MessageHandler) GetChatInfo(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	chatJID := r.URL.Query().Get("chatJid")
@@ -161,7 +161,7 @@ func (h *MessageHandler) GetChatInfo(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusOK, chatInfo)
 }
 
-// GetContacts gets the contact list
+
 func (h *MessageHandler) GetContacts(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -197,7 +197,7 @@ func (h *MessageHandler) GetContacts(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusOK, response)
 }
 
-// GetChats gets the chat list
+
 func (h *MessageHandler) GetChats(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -233,7 +233,7 @@ func (h *MessageHandler) GetChats(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusOK, response)
 }
 
-// Helper methods
+
 func (h *MessageHandler) writeJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(data)
@@ -247,7 +247,7 @@ func (h *MessageHandler) writeError(w http.ResponseWriter, status int, code, mes
 	})
 }
 
-// generateID generates a simple ID (in production, use proper UUID or timestamp-based ID)
+
 func generateID() string {
-	return "123456789" // Placeholder - would use proper ID generation
+	return "123456789"
 }
