@@ -40,15 +40,16 @@ func setupMiddleware(r *chi.Mux) {
 	r.Use(middleware.RealIP)
 
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-		AllowedHeaders:   []string{"*"},
+		AllowedOrigins:   []string{"http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization", "X-API-Key", "X-Requested-With"},
 		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
+		AllowCredentials: false, // More secure for API
 		MaxAge:           300,
 	}))
 
 	r.Use(httpMiddleware.CORSMiddleware())
+	r.Use(httpMiddleware.SecurityHeadersMiddleware())
 	r.Use(httpMiddleware.JSONMiddleware())
 }
 

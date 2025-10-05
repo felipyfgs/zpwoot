@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"os"
 	"strconv"
 
@@ -41,23 +42,23 @@ func Load() *Config {
 
 	godotenv.Load()
 
-	return &Config{
+	cfg := &Config{
 
 		Port:       getEnv("PORT", "8080"),
 		ServerHost: getEnv("SERVER_HOST", "0.0.0.0"),
 		LogLevel:   getEnv("LOG_LEVEL", "info"),
 		LogFormat:  getEnv("LOG_FORMAT", "console"),
 		LogOutput:  getEnv("LOG_OUTPUT", "stdout"),
-		APIKey:     getEnv("ZP_API_KEY", "a0b1125a0eb3364d98e2c49ec6f7d6ba"),
+		APIKey:     getEnv("ZP_API_KEY", ""),
 
 		Database: DatabaseConfig{
-			URL: getEnv("DATABASE_URL", "postgres://zpwoot:zpwoot123@localhost:5432/zpwoot?sslmode=disable"),
+			URL: getEnv("DATABASE_URL", ""),
 		},
 
 		Postgres: PostgresConfig{
-			DB:       getEnv("POSTGRES_DB", "zpwoot"),
-			User:     getEnv("POSTGRES_USER", "zpwoot"),
-			Password: getEnv("POSTGRES_PASSWORD", "zpwoot123"),
+			DB:       getEnv("POSTGRES_DB", ""),
+			User:     getEnv("POSTGRES_USER", ""),
+			Password: getEnv("POSTGRES_PASSWORD", ""),
 			Port:     getEnvAsInt("POSTGRES_PORT", 5432),
 		},
 
@@ -67,6 +68,26 @@ func Load() *Config {
 
 		Environment: getEnv("NODE_ENV", "development"),
 	}
+
+	// Validate required configuration
+	if err := cfg.Validate(); err != nil {
+		panic("Configuration validation failed: " + err.Error())
+	}
+
+	return cfg
+}
+
+// Validate checks if all required configuration values are set
+func (c *Config) Validate() error {
+	if c.APIKey == "" {
+		return errors.New("ZP_API_KEY is required")
+	}
+
+	if c.Database.URL == "" {
+		return errors.New("DATABASE_URL is required")
+	}
+
+	return nil
 }
 
 func getEnv(key, fallback string) string {
