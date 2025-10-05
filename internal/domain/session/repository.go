@@ -2,48 +2,31 @@ package session
 
 import (
 	"context"
-	"time"
-
-	"github.com/google/uuid"
 )
 
-// Repository defines session persistence interface
+// Repository defines the interface for session data access
 type Repository interface {
-	// Basic operations
-	Save(ctx context.Context, session *Session) error
-	FindByID(ctx context.Context, id uuid.UUID) (*Session, error)
-	FindByName(ctx context.Context, name string) (*Session, error)
+	// Create creates a new session
+	Create(ctx context.Context, session *Session) error
+
+	// GetByID retrieves a session by ID
+	GetByID(ctx context.Context, id string) (*Session, error)
+
+	// GetByJID retrieves a session by JID
+	GetByJID(ctx context.Context, jid string) (*Session, error)
+
+	// Update updates an existing session
 	Update(ctx context.Context, session *Session) error
-	Delete(ctx context.Context, id uuid.UUID) error
 
-	// Query operations
-	FindAll(ctx context.Context) ([]*Session, error)
-	FindConnected(ctx context.Context) ([]*Session, error)
-	FindDisconnected(ctx context.Context) ([]*Session, error)
+	// Delete deletes a session by ID
+	Delete(ctx context.Context, id string) error
 
-	// Existence checks
-	ExistsByName(ctx context.Context, name string) (bool, error)
+	// List retrieves all sessions with pagination
+	List(ctx context.Context, limit, offset int) ([]*Session, error)
 
-	// Statistics
-	Count(ctx context.Context) (int64, error)
-	CountConnected(ctx context.Context) (int64, error)
-}
+	// UpdateStatus updates the session status
+	UpdateStatus(ctx context.Context, id string, status Status) error
 
-// WhatsAppClient defines WhatsApp operations interface
-type WhatsAppClient interface {
-	// Connection management
-	Connect(ctx context.Context, sessionID uuid.UUID, proxyConfig *ProxyConfig) error
-	Disconnect(ctx context.Context, sessionID uuid.UUID) error
-	IsConnected(ctx context.Context, sessionID uuid.UUID) (bool, error)
-
-	// QR Code operations
-	GenerateQRCode(ctx context.Context, sessionID uuid.UUID) (qrCode string, expiresAt time.Time, err error)
-	GetQRCode(ctx context.Context, sessionID uuid.UUID) (qrCode string, expiresAt time.Time, err error)
-
-	// Device operations
-	GetDeviceJID(ctx context.Context, sessionID uuid.UUID) (string, error)
-	Logout(ctx context.Context, sessionID uuid.UUID) error
-
-	// Status operations
-	Ping(ctx context.Context, sessionID uuid.UUID) error
+	// UpdateQRCode updates the session QR code
+	UpdateQRCode(ctx context.Context, id string, qrCode string) error
 }
