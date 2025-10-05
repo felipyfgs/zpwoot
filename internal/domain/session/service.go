@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
+	"zpwoot/internal/domain/shared"
 )
 
 // Errors are now defined in errors.go
@@ -47,7 +49,7 @@ func (s *Service) GetSession(ctx context.Context, id string) (*Session, error) {
 // UpdateSessionStatus updates the session status
 func (s *Service) UpdateSessionStatus(ctx context.Context, id string, status Status) error {
 	if !status.IsValid() {
-		return ErrInvalidStatus
+		return shared.ErrInvalidStatus
 	}
 
 	if err := s.repo.UpdateStatus(ctx, id, status); err != nil {

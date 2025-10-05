@@ -8,10 +8,10 @@ import (
 	"syscall"
 	"time"
 
-	"zpwoot/internal/infra/http/router"
-	"zpwoot/platform/config"
-	"zpwoot/platform/container"
-	"zpwoot/platform/logger"
+	"zpwoot/internal/adapters/config"
+	"zpwoot/internal/adapters/container"
+	"zpwoot/internal/adapters/http/router"
+	"zpwoot/internal/adapters/logger"
 )
 
 func main() {
