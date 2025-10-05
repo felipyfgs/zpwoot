@@ -33,7 +33,6 @@ func (r *SessionRepository) Create(ctx context.Context, sess *session.Session) e
 		)
 	`
 
-	// Handle JSON fields - use the pointer directly
 	var proxyConfig interface{} = sess.ProxyConfig
 
 	_, err := r.db.ExecContext(ctx, query,
@@ -156,7 +155,6 @@ func (r *SessionRepository) Update(ctx context.Context, sess *session.Session) e
 		WHERE "id" = $1
 	`
 
-	// Handle JSON fields - use the pointer directly
 	var proxyConfig interface{} = sess.ProxyConfig
 
 	result, err := r.db.ExecContext(ctx, query,

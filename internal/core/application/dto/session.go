@@ -230,7 +230,6 @@ func SessionToCreateResponse(s *session.Session) *CreateSessionResponse {
 		CreatedAt: s.CreatedAt,
 	}
 
-	// Include QR code information if available
 	if s.QRCode != "" {
 		response.QRCode = s.QRCode
 		response.QRCodeBase64 = GenerateQRCodeBase64(s.QRCode)

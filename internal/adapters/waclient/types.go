@@ -6,16 +6,7 @@ import (
 
 	"go.mau.fi/whatsmeow"
 	"zpwoot/internal/core/domain/session"
-)
-
-type MediaType string
-
-const (
-	MediaTypeImage    MediaType = "image"
-	MediaTypeAudio    MediaType = "audio"
-	MediaTypeVideo    MediaType = "video"
-	MediaTypeDocument MediaType = "document"
-	MediaTypeSticker  MediaType = "sticker"
+	"zpwoot/internal/core/ports/output"
 )
 
 type EventType string
@@ -49,13 +40,6 @@ type QREvent struct {
 	Code      string    `json:"code,omitempty"`
 	Base64    string    `json:"qrCodeBase64,omitempty"`
 	ExpiresAt time.Time `json:"expiresAt,omitempty"`
-}
-
-type MediaData struct {
-	Base64   string `json:"base64,omitempty"`
-	MimeType string `json:"mimeType,omitempty"`
-	FileName string `json:"fileName,omitempty"`
-	Size     int64  `json:"size,omitempty"`
 }
 
 type MessageInfo struct {
@@ -103,12 +87,27 @@ type Client struct {
 	cancel       context.CancelFunc
 }
 
+func (c *Client) IsConnected() bool {
+	return c.Status == session.StatusConnected
+}
+
+func (c *Client) IsLoggedIn() bool {
+	return c.WAClient != nil && c.WAClient.Store.ID != nil
+}
+
+func (c *Client) GetDeviceJID() string {
+	if c.IsLoggedIn() {
+		return c.WAClient.Store.ID.String()
+	}
+	return ""
+}
+
 type EventHandler interface {
 	HandleEvent(client *Client, event interface{}) error
 }
 
 type MediaProcessor interface {
-	ProcessMedia(ctx context.Context, client *Client, media interface{}) (*MediaData, error)
+	ProcessMedia(ctx context.Context, client *Client, media interface{}) (*output.MediaData, error)
 }
 
 type WebhookSender interface {
@@ -128,32 +127,19 @@ type SessionManager interface {
 
 type MessageSender interface {
 	SendTextMessage(ctx context.Context, sessionID string, to string, text string) error
-	SendMediaMessage(ctx context.Context, sessionID string, to string, media *MediaData) error
+	SendMediaMessage(ctx context.Context, sessionID string, to string, media *output.MediaData) error
 	SendLocationMessage(ctx context.Context, sessionID string, to string, lat, lng float64, name string) error
-	SendContactMessage(ctx context.Context, sessionID string, to string, contact *ContactInfo) error
-}
-
-type ContactInfo struct {
-	Name  string `json:"name"`
-	Phone string `json:"phone"`
-	VCard string `json:"vcard,omitempty"`
+	SendContactMessage(ctx context.Context, sessionID string, to string, contact *output.ContactInfo) error
 }
 
 type SendMessageRequest struct {
-	SessionID string       `json:"sessionId"`
-	To        string       `json:"to"`
-	Type      string       `json:"type"`
-	Text      string       `json:"text,omitempty"`
-	Media     *MediaData   `json:"media,omitempty"`
-	Location  *Location    `json:"location,omitempty"`
-	Contact   *ContactInfo `json:"contact,omitempty"`
-}
-
-type Location struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-	Name      string  `json:"name,omitempty"`
-	Address   string  `json:"address,omitempty"`
+	SessionID string              `json:"sessionId"`
+	To        string              `json:"to"`
+	Type      string              `json:"type"`
+	Text      string              `json:"text,omitempty"`
+	Media     *output.MediaData   `json:"media,omitempty"`
+	Location  *output.Location    `json:"location,omitempty"`
+	Contact   *output.ContactInfo `json:"contact,omitempty"`
 }
 
 type MessageResponse struct {
@@ -162,22 +148,13 @@ type MessageResponse struct {
 	Error     string `json:"error,omitempty"`
 }
 
-type WAError struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-}
-
-func (e *WAError) Error() string {
-	return e.Message
-}
-
 var (
-	ErrSessionNotFound  = &WAError{Code: "SESSION_NOT_FOUND", Message: "session not found"}
-	ErrSessionExists    = &WAError{Code: "SESSION_EXISTS", Message: "session already exists"}
-	ErrNotConnected     = &WAError{Code: "NOT_CONNECTED", Message: "session not connected"}
-	ErrInvalidJID       = &WAError{Code: "INVALID_JID", Message: "invalid JID format"}
-	ErrQRExpired        = &WAError{Code: "QR_EXPIRED", Message: "QR code expired"}
-	ErrConnectionFailed = &WAError{Code: "CONNECTION_FAILED", Message: "failed to connect to WhatsApp"}
-	ErrInvalidMedia     = &WAError{Code: "INVALID_MEDIA", Message: "invalid media data"}
-	ErrWebhookFailed    = &WAError{Code: "WEBHOOK_FAILED", Message: "failed to send webhook"}
+	ErrSessionNotFound  = output.ErrSessionNotFound
+	ErrSessionExists    = &output.WhatsAppError{Code: "SESSION_EXISTS", Message: "session already exists"}
+	ErrNotConnected     = output.ErrSessionNotConnected
+	ErrInvalidJID       = output.ErrInvalidJID
+	ErrQRExpired        = output.ErrQRCodeExpired
+	ErrConnectionFailed = output.ErrConnectionFailed
+	ErrInvalidMedia     = &output.WhatsAppError{Code: "INVALID_MEDIA", Message: "invalid media data"}
+	ErrWebhookFailed    = &output.WhatsAppError{Code: "WEBHOOK_FAILED", Message: "failed to send webhook"}
 )

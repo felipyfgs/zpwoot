@@ -2,7 +2,9 @@ package waclient
 
 import (
 	"context"
+	"time"
 
+	"zpwoot/internal/core/domain/session"
 	"zpwoot/internal/core/ports/output"
 )
 
@@ -27,38 +29,33 @@ func (w *WAClientAdapter) CreateSession(ctx context.Context, sessionID string) e
 func (w *WAClientAdapter) GetSessionStatus(ctx context.Context, sessionID string) (*output.SessionStatus, error) {
 	client, err := w.client.GetSession(ctx, sessionID)
 	if err != nil {
-		return nil, err
-	}
-
-	deviceJID := ""
-	if client.WAClient != nil && client.WAClient.Store.ID != nil {
-		deviceJID = client.WAClient.Store.ID.String()
+		return nil, w.convertError(err)
 	}
 
 	return &output.SessionStatus{
 		SessionID:   client.SessionID,
-		Connected:   client.Status == "connected",
-		LoggedIn:    deviceJID != "",
-		DeviceJID:   deviceJID,
+		Connected:   client.IsConnected(),
+		LoggedIn:    client.IsLoggedIn(),
+		DeviceJID:   client.GetDeviceJID(),
 		ConnectedAt: client.ConnectedAt,
 		LastSeen:    client.LastSeen,
 	}, nil
 }
 
 func (w *WAClientAdapter) DeleteSession(ctx context.Context, sessionID string) error {
-	return w.client.DeleteSession(ctx, sessionID)
+	return w.convertError(w.client.DeleteSession(ctx, sessionID))
 }
 
 func (w *WAClientAdapter) ConnectSession(ctx context.Context, sessionID string) error {
-	return w.client.ConnectSession(ctx, sessionID)
+	return w.convertError(w.client.ConnectSession(ctx, sessionID))
 }
 
 func (w *WAClientAdapter) DisconnectSession(ctx context.Context, sessionID string) error {
-	return w.client.DisconnectSession(ctx, sessionID)
+	return w.convertError(w.client.DisconnectSession(ctx, sessionID))
 }
 
 func (w *WAClientAdapter) LogoutSession(ctx context.Context, sessionID string) error {
-	return w.client.LogoutSession(ctx, sessionID)
+	return w.convertError(w.client.LogoutSession(ctx, sessionID))
 }
 
 func (w *WAClientAdapter) IsConnected(ctx context.Context, sessionID string) bool {
@@ -66,7 +63,7 @@ func (w *WAClientAdapter) IsConnected(ctx context.Context, sessionID string) boo
 	if err != nil {
 		return false
 	}
-	return client.Status == "connected"
+	return client.IsConnected()
 }
 
 func (w *WAClientAdapter) IsLoggedIn(ctx context.Context, sessionID string) bool {
@@ -74,13 +71,13 @@ func (w *WAClientAdapter) IsLoggedIn(ctx context.Context, sessionID string) bool
 	if err != nil {
 		return false
 	}
-	return client.WAClient != nil && client.WAClient.Store.ID != nil
+	return client.IsLoggedIn()
 }
 
 func (w *WAClientAdapter) GetQRCode(ctx context.Context, sessionID string) (*output.QRCodeInfo, error) {
 	qrEvent, err := w.client.GetQRCodeForSession(ctx, sessionID)
 	if err != nil {
-		return nil, err
+		return nil, w.convertError(err)
 	}
 
 	return &output.QRCodeInfo{
@@ -91,33 +88,107 @@ func (w *WAClientAdapter) GetQRCode(ctx context.Context, sessionID string) (*out
 }
 
 func (w *WAClientAdapter) SendTextMessage(ctx context.Context, sessionID, to, text string) (*output.MessageResult, error) {
-
-	return nil, &output.WhatsAppError{
-		Code:    "NOT_IMPLEMENTED",
-		Message: "SendTextMessage not implemented yet",
+	messageSender := NewMessageSender(w.client)
+	err := messageSender.SendTextMessage(ctx, sessionID, to, text)
+	if err != nil {
+		return nil, w.convertError(err)
 	}
+
+	return &output.MessageResult{
+		MessageID: generateMessageID(),
+		Status:    "sent",
+		SentAt:    time.Now(),
+	}, nil
 }
 
 func (w *WAClientAdapter) SendMediaMessage(ctx context.Context, sessionID, to string, media *output.MediaData) (*output.MessageResult, error) {
-
-	return nil, &output.WhatsAppError{
-		Code:    "NOT_IMPLEMENTED",
-		Message: "SendMediaMessage not implemented yet",
+	messageSender := NewMessageSender(w.client)
+	err := messageSender.SendMediaMessage(ctx, sessionID, to, media)
+	if err != nil {
+		return nil, w.convertError(err)
 	}
+
+	return &output.MessageResult{
+		MessageID: generateMessageID(),
+		Status:    "sent",
+		SentAt:    time.Now(),
+	}, nil
 }
 
 func (w *WAClientAdapter) SendLocationMessage(ctx context.Context, sessionID, to string, location *output.Location) (*output.MessageResult, error) {
-
-	return nil, &output.WhatsAppError{
-		Code:    "NOT_IMPLEMENTED",
-		Message: "SendLocationMessage not implemented yet",
+	messageSender := NewMessageSender(w.client)
+	err := messageSender.SendLocationMessage(ctx, sessionID, to, location.Latitude, location.Longitude, location.Name)
+	if err != nil {
+		return nil, w.convertError(err)
 	}
+
+	return &output.MessageResult{
+		MessageID: generateMessageID(),
+		Status:    "sent",
+		SentAt:    time.Now(),
+	}, nil
 }
 
 func (w *WAClientAdapter) SendContactMessage(ctx context.Context, sessionID, to string, contact *output.ContactInfo) (*output.MessageResult, error) {
-
-	return nil, &output.WhatsAppError{
-		Code:    "NOT_IMPLEMENTED",
-		Message: "SendContactMessage not implemented yet",
+	messageSender := NewMessageSender(w.client)
+	contactInfo := &ContactInfo{
+		Name:  contact.Name,
+		Phone: contact.PhoneNumber,
 	}
+	err := messageSender.SendContactMessage(ctx, sessionID, to, contactInfo)
+	if err != nil {
+		return nil, w.convertError(err)
+	}
+
+	return &output.MessageResult{
+		MessageID: generateMessageID(),
+		Status:    "sent",
+		SentAt:    time.Now(),
+	}, nil
+}
+
+func (w *WAClientAdapter) convertError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	if _, ok := err.(*output.WhatsAppError); ok {
+		return err
+	}
+
+	switch err {
+	case ErrSessionNotFound:
+		return output.ErrSessionNotFound
+	case ErrNotConnected:
+		return output.ErrSessionNotConnected
+	case ErrInvalidJID:
+		return output.ErrInvalidJID
+	case ErrConnectionFailed:
+		return output.ErrConnectionFailed
+	default:
+
+		return &output.WhatsAppError{
+			Code:    "INTERNAL_ERROR",
+			Message: err.Error(),
+		}
+	}
+}
+
+func generateMessageID() string {
+	return time.Now().Format("20060102150405") + "-" + randomString(8)
+}
+
+func randomString(length int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[time.Now().UnixNano()%int64(len(charset))]
+	}
+	return string(b)
+}
+
+type ContactInfo struct {
+	Name  string `json:"name"`
+	Phone string `json:"phone"`
+	VCard string `json:"vcard,omitempty"`
 }
