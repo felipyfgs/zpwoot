@@ -3,6 +3,7 @@ package waclient
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"zpwoot/internal/adapters/logger"
@@ -50,15 +51,20 @@ func (eh *DefaultEventHandler) HandleEvent(client *Client, event interface{}) er
 	case *events.OfflineSyncPreview:
 		return eh.handleOfflineSyncPreview(client, evt)
 	default:
-		eh.logger.Debugf("Unhandled event type: %T", event)
+		eh.logger.Debug().
+			Str("event_type", fmt.Sprintf("%T", event)).
+			Msg("Unhandled event type")
 		return nil
 	}
 }
 
 // handleMessage processes incoming messages
 func (eh *DefaultEventHandler) handleMessage(client *Client, evt *events.Message) error {
-	eh.logger.Debugf("Message event in session %s: %s from %s", 
-		client.Name, evt.Info.ID, evt.Info.Sender.String())
+	eh.logger.Debug().
+		Str("session_name", client.Name).
+		Str("message_id", evt.Info.ID).
+		Str("sender", evt.Info.Sender.String()).
+		Msg("Message event in session")
 
 	// Create message info
 	messageInfo := &MessageInfo{
@@ -87,7 +93,10 @@ func (eh *DefaultEventHandler) handleMessage(client *Client, evt *events.Message
 
 // handleReceipt processes message receipts (read receipts, delivery receipts)
 func (eh *DefaultEventHandler) handleReceipt(client *Client, evt *events.Receipt) error {
-	eh.logger.Debugf("Receipt event in session %s: %s", client.Name, evt.MessageIDs)
+	eh.logger.Debug().
+		Str("session_name", client.Name).
+		Interface("message_ids", evt.MessageIDs).
+		Msg("Receipt event in session")
 
 	if eh.shouldSendWebhook(client, EventReadReceipt) {
 		return eh.sendWebhook(client, EventReadReceipt, evt)
@@ -98,8 +107,10 @@ func (eh *DefaultEventHandler) handleReceipt(client *Client, evt *events.Receipt
 
 // handlePresence processes user presence updates
 func (eh *DefaultEventHandler) handlePresence(client *Client, evt *events.Presence) error {
-	eh.logger.Debugf("Presence event in session %s: %s",
-		client.Name, evt.From.String())
+	eh.logger.Debug().
+		Str("session_name", client.Name).
+		Str("from", evt.From.String()).
+		Msg("Presence event in session")
 
 	if eh.shouldSendWebhook(client, EventPresence) {
 		return eh.sendWebhook(client, EventPresence, evt)
@@ -110,8 +121,10 @@ func (eh *DefaultEventHandler) handlePresence(client *Client, evt *events.Presen
 
 // handleChatPresence processes chat-specific presence (typing, recording, etc.)
 func (eh *DefaultEventHandler) handleChatPresence(client *Client, evt *events.ChatPresence) error {
-	eh.logger.Debugf("Chat presence event in session %s in %s",
-		client.Name, evt.Chat.String())
+	eh.logger.Debug().
+		Str("session_name", client.Name).
+		Str("chat", evt.Chat.String()).
+		Msg("Chat presence event in session")
 
 	if eh.shouldSendWebhook(client, EventChatPresence) {
 		return eh.sendWebhook(client, EventChatPresence, evt)
@@ -122,8 +135,10 @@ func (eh *DefaultEventHandler) handleChatPresence(client *Client, evt *events.Ch
 
 // handleHistorySync processes history sync events
 func (eh *DefaultEventHandler) handleHistorySync(client *Client, evt *events.HistorySync) error {
-	eh.logger.Infof("History sync event in session %s: %d conversations",
-		client.Name, len(evt.Data.Conversations))
+	eh.logger.Info().
+		Str("session_name", client.Name).
+		Int("conversations_count", len(evt.Data.Conversations)).
+		Msg("History sync event in session")
 
 	if eh.shouldSendWebhook(client, EventHistorySync) {
 		// Create a simplified version for webhook (full data might be too large)
@@ -140,37 +155,52 @@ func (eh *DefaultEventHandler) handleHistorySync(client *Client, evt *events.His
 
 // handleAppStateSyncComplete processes app state sync completion
 func (eh *DefaultEventHandler) handleAppStateSyncComplete(client *Client, evt *events.AppStateSyncComplete) error {
-	eh.logger.Infof("App state sync complete in session %s: %s", client.Name, evt.Name)
+	eh.logger.Info().
+		Str("session_name", client.Name).
+		Str("sync_name", string(evt.Name)).
+		Msg("App state sync complete in session")
 	return nil
 }
 
 // handlePushNameSetting processes push name setting events
 func (eh *DefaultEventHandler) handlePushNameSetting(client *Client, evt *events.PushNameSetting) error {
-	eh.logger.Debugf("Push name setting in session %s", client.Name)
+	eh.logger.Debug().
+		Str("session_name", client.Name).
+		Msg("Push name setting in session")
 	return nil
 }
 
 // handleBlocklistChange processes blocklist changes
 func (eh *DefaultEventHandler) handleBlocklistChange(client *Client, evt *events.BlocklistChange) error {
-	eh.logger.Debugf("Blocklist change in session %s", client.Name)
+	eh.logger.Debug().
+		Str("session_name", client.Name).
+		Msg("Blocklist change in session")
 	return nil
 }
 
 // handleGroupInfo processes group info events
 func (eh *DefaultEventHandler) handleGroupInfo(client *Client, evt *events.GroupInfo) error {
-	eh.logger.Debugf("Group info event in session %s: %s", client.Name, evt.JID.String())
+	eh.logger.Debug().
+		Str("session_name", client.Name).
+		Str("group_jid", evt.JID.String()).
+		Msg("Group info event in session")
 	return nil
 }
 
 // handleJoinedGroup processes joined group events
 func (eh *DefaultEventHandler) handleJoinedGroup(client *Client, evt *events.JoinedGroup) error {
-	eh.logger.Infof("Joined group in session %s: %s", client.Name, evt.GroupInfo.JID.String())
+	eh.logger.Info().
+		Str("session_name", client.Name).
+		Str("group_jid", evt.GroupInfo.JID.String()).
+		Msg("Joined group in session")
 	return nil
 }
 
 // handleOfflineSyncPreview processes offline sync preview events
 func (eh *DefaultEventHandler) handleOfflineSyncPreview(client *Client, evt *events.OfflineSyncPreview) error {
-	eh.logger.Debugf("Offline sync preview in session %s", client.Name)
+	eh.logger.Debug().
+		Str("session_name", client.Name).
+		Msg("Offline sync preview in session")
 	return nil
 }
 
@@ -275,8 +305,8 @@ func getMessageType(msg interface{}) string {
 
 // EventFilter allows filtering events before processing
 type EventFilter struct {
-	AllowedEvents []EventType
-	BlockedChats  []string
+	AllowedEvents  []EventType
+	BlockedChats   []string
 	BlockedSenders []string
 }
 

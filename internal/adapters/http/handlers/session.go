@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"zpwoot/internal/application/dto"
 	"zpwoot/internal/adapters/logger"
 	"zpwoot/internal/adapters/waclient"
 
@@ -26,66 +27,78 @@ func NewSessionHandler(waClient *waclient.WAClient, logger *logger.Logger) *Sess
 	}
 }
 
-// CreateSessionRequest represents a session creation request
-type CreateSessionRequest struct {
-	Name          string                    `json:"name"`
-	WebhookURL    string                    `json:"webhookUrl,omitempty"`
-	Events        []waclient.EventType      `json:"events,omitempty"`
-	ProxyConfig   map[string]string         `json:"proxyConfig,omitempty"`
-	AutoReconnect bool                      `json:"autoReconnect"`
-}
+
 
 // CreateSession creates a new WhatsApp session
+//
+//	@Summary		Create WhatsApp Session
+//	@Description	Creates a new WhatsApp session with the specified configuration
+//	@Tags			Sessions
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		dto.CreateSessionRequest	true	"Session configuration"
+//	@Success		201		{object}	dto.SessionResponse			"Session created successfully"
+//	@Failure		400		{object}	dto.ErrorResponse			"Invalid request body or validation error"
+//	@Failure		409		{object}	dto.ErrorResponse			"Session already exists"
+//	@Failure		500		{object}	dto.ErrorResponse			"Internal server error"
+//	@Security		ApiKeyAuth
+//	@Router			/sessions/create [post]
 func (h *SessionHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
-	var req CreateSessionRequest
+	var req dto.CreateSessionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.writeError(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
+		h.writeErrorResponse(w, http.StatusBadRequest, dto.ErrorCodeBadRequest, "invalid JSON body")
 		return
 	}
 
 	// Validate required fields
 	if req.Name == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "name is required")
+		h.writeErrorResponse(w, http.StatusBadRequest, dto.ErrorCodeValidation, "name is required")
 		return
 	}
 
 	// Generate session ID
 	sessionID := uuid.New().String()
 
-	// Create session config
-	config := &waclient.SessionConfig{
-		SessionID:     sessionID,
-		Name:          req.Name,
-		WebhookURL:    req.WebhookURL,
-		Events:        req.Events,
-		ProxyConfig:   req.ProxyConfig,
-		AutoReconnect: req.AutoReconnect,
-	}
+	// Create session config using DTO conversion
+	config := req.ToSessionConfig()
+	config.SessionID = sessionID
 
 	// Create session
 	client, err := h.waClient.CreateSession(r.Context(), config)
 	if err != nil {
-		h.logger.Errorf("Failed to create session: %v", err)
+		h.logger.Error().
+			Err(err).
+			Str("session_id", config.SessionID).
+			Str("name", config.Name).
+			Msg("Failed to create session")
 		if waErr, ok := err.(*waclient.WAError); ok {
-			h.writeError(w, http.StatusConflict, waErr.Code, waErr.Message)
+			h.writeErrorResponse(w, http.StatusConflict, waErr.Code, waErr.Message)
 		} else {
-			h.writeError(w, http.StatusInternalServerError, "internal_error", "failed to create session")
+			h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "failed to create session")
 		}
 		return
 	}
 
-	// Convert to response format
-	sessionInfo := h.clientToSessionInfo(client)
+	// Convert to response format using DTO
+	response := dto.FromWAClient(client)
 
-	response := &waclient.SessionResponse{
-		Success: true,
-		Session: sessionInfo,
-	}
-
-	h.writeJSON(w, http.StatusCreated, response)
+	h.writeSuccessResponse(w, http.StatusCreated, response)
 }
 
 // GetSession retrieves a session by ID
+//
+//	@Summary		Get WhatsApp Session
+//	@Description	Retrieves detailed information about a specific WhatsApp session
+//	@Tags			Sessions
+//	@Accept			json
+//	@Produce		json
+//	@Param			sessionId	path		string					true	"Session ID"	Format(uuid)
+//	@Success		200			{object}	dto.SessionResponse		"Session information"
+//	@Failure		400			{object}	dto.ErrorResponse		"Invalid session ID"
+//	@Failure		404			{object}	dto.ErrorResponse		"Session not found"
+//	@Failure		500			{object}	dto.ErrorResponse		"Internal server error"
+//	@Security		ApiKeyAuth
+//	@Router			/sessions/{sessionId}/info [get]
 func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -114,10 +127,22 @@ func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListSessions retrieves all sessions
+//
+//	@Summary		List WhatsApp Sessions
+//	@Description	Retrieves a list of all WhatsApp sessions with their current status
+//	@Tags			Sessions
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{array}		dto.SessionResponse	"List of sessions"
+//	@Failure		500	{object}	dto.ErrorResponse	"Internal server error"
+//	@Security		ApiKeyAuth
+//	@Router			/sessions/list [get]
 func (h *SessionHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
 	clients, err := h.waClient.ListSessions(r.Context())
 	if err != nil {
-		h.logger.Errorf("Failed to list sessions: %v", err)
+		h.logger.Error().
+			Err(err).
+			Msg("Failed to list sessions")
 		h.writeError(w, http.StatusInternalServerError, "internal_error", "failed to list sessions")
 		return
 	}
@@ -136,6 +161,19 @@ func (h *SessionHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
 }
 
 // ConnectSession connects a session to WhatsApp
+//
+//	@Summary		Connect WhatsApp Session
+//	@Description	Initiates connection for a WhatsApp session. Use QR code endpoint to get QR for scanning.
+//	@Tags			Sessions
+//	@Accept			json
+//	@Produce		json
+//	@Param			sessionId	path		string					true	"Session ID"	Format(uuid)
+//	@Success		200			{object}	dto.SessionResponse		"Session connection initiated"
+//	@Failure		400			{object}	dto.ErrorResponse		"Invalid session ID"
+//	@Failure		404			{object}	dto.ErrorResponse		"Session not found"
+//	@Failure		500			{object}	dto.ErrorResponse		"Connection error"
+//	@Security		ApiKeyAuth
+//	@Router			/sessions/{sessionId}/connect [post]
 func (h *SessionHandler) ConnectSession(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -145,7 +183,10 @@ func (h *SessionHandler) ConnectSession(w http.ResponseWriter, r *http.Request) 
 
 	err := h.waClient.ConnectSession(r.Context(), sessionID)
 	if err != nil {
-		h.logger.Errorf("Failed to connect session: %v", err)
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Msg("Failed to connect session")
 		if err == waclient.ErrSessionNotFound {
 			h.writeError(w, http.StatusNotFound, "session_not_found", "session not found")
 		} else {
@@ -162,6 +203,19 @@ func (h *SessionHandler) ConnectSession(w http.ResponseWriter, r *http.Request) 
 }
 
 // DisconnectSession disconnects a session
+//
+//	@Summary		Disconnect WhatsApp Session
+//	@Description	Disconnects an active WhatsApp session
+//	@Tags			Sessions
+//	@Accept			json
+//	@Produce		json
+//	@Param			sessionId	path		string					true	"Session ID"	Format(uuid)
+//	@Success		200			{object}	dto.SessionResponse		"Session disconnected successfully"
+//	@Failure		400			{object}	dto.ErrorResponse		"Invalid session ID"
+//	@Failure		404			{object}	dto.ErrorResponse		"Session not found"
+//	@Failure		500			{object}	dto.ErrorResponse		"Disconnection error"
+//	@Security		ApiKeyAuth
+//	@Router			/sessions/{sessionId}/disconnect [post]
 func (h *SessionHandler) DisconnectSession(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -171,7 +225,10 @@ func (h *SessionHandler) DisconnectSession(w http.ResponseWriter, r *http.Reques
 
 	err := h.waClient.DisconnectSession(r.Context(), sessionID)
 	if err != nil {
-		h.logger.Errorf("Failed to disconnect session: %v", err)
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Msg("Failed to disconnect session")
 		if err == waclient.ErrSessionNotFound {
 			h.writeError(w, http.StatusNotFound, "session_not_found", "session not found")
 		} else {
@@ -188,6 +245,19 @@ func (h *SessionHandler) DisconnectSession(w http.ResponseWriter, r *http.Reques
 }
 
 // DeleteSession deletes a session
+//
+//	@Summary		Delete WhatsApp Session
+//	@Description	Permanently deletes a WhatsApp session and all associated data
+//	@Tags			Sessions
+//	@Accept			json
+//	@Produce		json
+//	@Param			sessionId	path		string					true	"Session ID"	Format(uuid)
+//	@Success		200			{object}	dto.SessionResponse		"Session deleted successfully"
+//	@Failure		400			{object}	dto.ErrorResponse		"Invalid session ID"
+//	@Failure		404			{object}	dto.ErrorResponse		"Session not found"
+//	@Failure		500			{object}	dto.ErrorResponse		"Deletion error"
+//	@Security		ApiKeyAuth
+//	@Router			/sessions/{sessionId}/delete [delete]
 func (h *SessionHandler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -197,7 +267,10 @@ func (h *SessionHandler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 
 	err := h.waClient.DeleteSession(r.Context(), sessionID)
 	if err != nil {
-		h.logger.Errorf("Failed to delete session: %v", err)
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Msg("Failed to delete session")
 		if err == waclient.ErrSessionNotFound {
 			h.writeError(w, http.StatusNotFound, "session_not_found", "session not found")
 		} else {
@@ -214,6 +287,20 @@ func (h *SessionHandler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetQRCode retrieves the QR code for a session
+//
+//	@Summary		Get QR Code
+//	@Description	Retrieves the QR code for WhatsApp session authentication. Scan with WhatsApp mobile app.
+//	@Tags			Sessions
+//	@Accept			json
+//	@Produce		json
+//	@Param			sessionId	path		string					true	"Session ID"	Format(uuid)
+//	@Success		200			{object}	dto.QRCodeResponse		"QR code data"
+//	@Failure		400			{object}	dto.ErrorResponse		"Invalid session ID"
+//	@Failure		404			{object}	dto.ErrorResponse		"Session not found"
+//	@Failure		409			{object}	dto.ErrorResponse		"Session already connected"
+//	@Failure		500			{object}	dto.ErrorResponse		"QR code generation error"
+//	@Security		ApiKeyAuth
+//	@Router			/sessions/{sessionId}/qr [get]
 func (h *SessionHandler) GetQRCode(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -223,7 +310,10 @@ func (h *SessionHandler) GetQRCode(w http.ResponseWriter, r *http.Request) {
 
 	qrEvent, err := h.waClient.GetQRCodeForSession(r.Context(), sessionID)
 	if err != nil {
-		h.logger.Errorf("Failed to get QR code: %v", err)
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Msg("Failed to get QR code")
 		if waErr, ok := err.(*waclient.WAError); ok {
 			status := http.StatusInternalServerError
 			if waErr.Code == "SESSION_NOT_FOUND" {
@@ -256,7 +346,10 @@ func (h *SessionHandler) RefreshQRCode(w http.ResponseWriter, r *http.Request) {
 
 	qrEvent, err := h.waClient.RefreshQRCode(r.Context(), sessionID)
 	if err != nil {
-		h.logger.Errorf("Failed to refresh QR code: %v", err)
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Msg("Failed to refresh QR code")
 		if waErr, ok := err.(*waclient.WAError); ok {
 			status := http.StatusInternalServerError
 			if waErr.Code == "SESSION_NOT_FOUND" {
@@ -301,15 +394,34 @@ func (h *SessionHandler) clientToSessionInfo(client *waclient.Client) *waclient.
 	}
 }
 
-func (h *SessionHandler) writeJSON(w http.ResponseWriter, status int, data interface{}) {
+// Helper methods for HTTP responses
+
+func (h *SessionHandler) writeSuccessResponse(w http.ResponseWriter, status int, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	response := dto.NewSuccessResponse(data)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *SessionHandler) writeErrorResponse(w http.ResponseWriter, status int, code, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	response := dto.NewErrorResponse(code, message)
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *SessionHandler) writeValidationErrorResponse(w http.ResponseWriter, field, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusBadRequest)
+	response := dto.NewValidationErrorResponse(field, message)
+	json.NewEncoder(w).Encode(response)
+}
+
+// Legacy methods for backward compatibility (deprecated)
+func (h *SessionHandler) writeJSON(w http.ResponseWriter, status int, data interface{}) {
+	h.writeSuccessResponse(w, status, data)
 }
 
 func (h *SessionHandler) writeError(w http.ResponseWriter, status int, code, message string) {
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{
-		"error":   code,
-		"message": message,
-	})
+	h.writeErrorResponse(w, status, code, message)
 }

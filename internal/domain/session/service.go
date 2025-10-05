@@ -29,7 +29,7 @@ func (s *Service) CreateSession(ctx context.Context, name string) (*Session, err
 	}
 
 	session := NewSession(name)
-	
+
 	if err := s.repo.Create(ctx, session); err != nil {
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}

@@ -1,0 +1,76 @@
+package interfaces
+
+import (
+	"context"
+	"time"
+	"zpwoot/internal/application/dto"
+)
+
+// WhatsAppClient defines the interface for WhatsApp operations
+type WhatsAppClient interface {
+	// Session operations
+	CreateSession(ctx context.Context, sessionID string) error
+	GetSessionStatus(ctx context.Context, sessionID string) (*SessionStatus, error)
+	DeleteSession(ctx context.Context, sessionID string) error
+
+	// Connection operations
+	ConnectSession(ctx context.Context, sessionID string) error
+	DisconnectSession(ctx context.Context, sessionID string) error
+	IsConnected(ctx context.Context, sessionID string) bool
+	IsLoggedIn(ctx context.Context, sessionID string) bool
+
+	// QR Code operations
+	GetQRCode(ctx context.Context, sessionID string) (*QRCodeInfo, error)
+
+	// Message operations
+	SendTextMessage(ctx context.Context, sessionID, to, text string) (*MessageResult, error)
+	SendMediaMessage(ctx context.Context, sessionID, to string, media *dto.MediaData) (*MessageResult, error)
+	SendLocationMessage(ctx context.Context, sessionID, to string, location *dto.Location) (*MessageResult, error)
+	SendContactMessage(ctx context.Context, sessionID, to string, contact *dto.ContactInfo) (*MessageResult, error)
+}
+
+// SessionStatus represents session status from WhatsApp client
+type SessionStatus struct {
+	SessionID   string    `json:"sessionId"`
+	Connected   bool      `json:"connected"`
+	LoggedIn    bool      `json:"loggedIn"`
+	DeviceJID   string    `json:"deviceJid,omitempty"`
+	PushName    string    `json:"pushName,omitempty"`
+	ConnectedAt time.Time `json:"connectedAt,omitempty"`
+	LastSeen    time.Time `json:"lastSeen,omitempty"`
+}
+
+// QRCodeInfo represents QR code information
+type QRCodeInfo struct {
+	Code      string    `json:"code"`
+	Base64    string    `json:"base64"`
+	ExpiresAt time.Time `json:"expiresAt"`
+}
+
+// MessageResult represents the result of sending a message
+type MessageResult struct {
+	MessageID string    `json:"messageId"`
+	Status    string    `json:"status"`
+	SentAt    time.Time `json:"sentAt"`
+}
+
+// WhatsAppError represents WhatsApp specific errors
+type WhatsAppError struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
+func (e *WhatsAppError) Error() string {
+	return e.Message
+}
+
+// Common WhatsApp error codes
+var (
+	ErrSessionNotFound     = &WhatsAppError{Code: "SESSION_NOT_FOUND", Message: "Session not found"}
+	ErrSessionNotConnected = &WhatsAppError{Code: "SESSION_NOT_CONNECTED", Message: "Session not connected"}
+	ErrAlreadyConnected    = &WhatsAppError{Code: "ALREADY_CONNECTED", Message: "Session already connected"}
+	ErrInvalidJID          = &WhatsAppError{Code: "INVALID_JID", Message: "Invalid JID format"}
+	ErrQRCodeExpired       = &WhatsAppError{Code: "QR_CODE_EXPIRED", Message: "QR code expired"}
+	ErrConnectionFailed    = &WhatsAppError{Code: "CONNECTION_FAILED", Message: "Failed to connect to WhatsApp"}
+	ErrSendMessageFailed   = &WhatsAppError{Code: "SEND_MESSAGE_FAILED", Message: "Failed to send message"}
+)

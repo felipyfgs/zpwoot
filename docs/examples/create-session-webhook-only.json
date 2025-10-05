@@ -1,0 +1,15 @@
+{
+  "name": "webhook-session",
+  "settings": {
+    "webhook": {
+      "enabled": true,
+      "url": "https://api.example.com/webhook",
+      "events": [
+        "Message",
+        "Receipt"
+      ],
+      "secret": "my-webhook-secret"
+    }
+  }
+}
+

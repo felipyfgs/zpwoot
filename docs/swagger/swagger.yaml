@@ -1,0 +1,379 @@
+definitions:
+  dto.CreateSessionRequest:
+    properties:
+      name:
+        example: my-session
+        maxLength: 100
+        minLength: 1
+        type: string
+      settings:
+        $ref: '#/definitions/dto.SessionSettings'
+    required:
+    - name
+    type: object
+  dto.ErrorResponse:
+    properties:
+      error:
+        example: validation_error
+        type: string
+      message:
+        example: name is required
+        type: string
+    type: object
+  dto.ProxySettings:
+    properties:
+      enabled:
+        example: true
+        type: boolean
+      host:
+        example: proxy.example.com
+        type: string
+      pass:
+        example: proxyPass123
+        type: string
+      port:
+        example: "8080"
+        type: string
+      type:
+        enum:
+        - http
+        - https
+        - socks5
+        example: http
+        type: string
+      user:
+        example: proxyUser123
+        type: string
+    type: object
+  dto.QRCodeResponse:
+    properties:
+      expiresAt:
+        example: "2025-01-15T10:35:00Z"
+        type: string
+      qrCode:
+        example: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...
+        type: string
+      status:
+        example: generated
+        type: string
+    type: object
+  dto.SessionResponse:
+    properties:
+      connected:
+        example: true
+        type: boolean
+      connectedAt:
+        example: "2025-01-15T10:32:00Z"
+        type: string
+      createdAt:
+        example: "2025-01-15T10:30:00Z"
+        type: string
+      deviceJid:
+        example: 5511999999999@s.whatsapp.net
+        type: string
+      lastSeen:
+        example: "2025-01-15T10:35:00Z"
+        type: string
+      name:
+        example: my-session
+        type: string
+      qrCode:
+        type: string
+      qrCodeExpiresAt:
+        example: "2025-01-15T10:35:00Z"
+        type: string
+      sessionId:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      settings:
+        $ref: '#/definitions/dto.SessionSettings'
+      status:
+        example: connected
+        type: string
+      updatedAt:
+        example: "2025-01-15T10:35:00Z"
+        type: string
+    type: object
+  dto.SessionSettings:
+    properties:
+      proxy:
+        $ref: '#/definitions/dto.ProxySettings'
+      webhook:
+        $ref: '#/definitions/dto.WebhookSettings'
+    type: object
+  dto.WebhookSettings:
+    properties:
+      enabled:
+        example: true
+        type: boolean
+      events:
+        example:
+        - Message
+        - Receipt
+        - Connected
+        items:
+          type: string
+        type: array
+      secret:
+        example: supersecrettoken123
+        type: string
+      url:
+        example: https://api.example.com/webhook
+        type: string
+    type: object
+info:
+  contact: {}
+  description: 'API key for authentication. Use the value from .env file (API_KEY
+    variable). Send as ''Authorization: your-api-key'' (without Bearer prefix)'
+paths:
+  /sessions/{sessionId}/connect:
+    post:
+      consumes:
+      - application/json
+      description: Initiates connection for a WhatsApp session. Use QR code endpoint
+        to get QR for scanning.
+      parameters:
+      - description: Session ID
+        format: uuid
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Session connection initiated
+          schema:
+            $ref: '#/definitions/dto.SessionResponse'
+        "400":
+          description: Invalid session ID
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Connection error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Connect WhatsApp Session
+      tags:
+      - Sessions
+  /sessions/{sessionId}/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Permanently deletes a WhatsApp session and all associated data
+      parameters:
+      - description: Session ID
+        format: uuid
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Session deleted successfully
+          schema:
+            $ref: '#/definitions/dto.SessionResponse'
+        "400":
+          description: Invalid session ID
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Deletion error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete WhatsApp Session
+      tags:
+      - Sessions
+  /sessions/{sessionId}/disconnect:
+    post:
+      consumes:
+      - application/json
+      description: Disconnects an active WhatsApp session
+      parameters:
+      - description: Session ID
+        format: uuid
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Session disconnected successfully
+          schema:
+            $ref: '#/definitions/dto.SessionResponse'
+        "400":
+          description: Invalid session ID
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Disconnection error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Disconnect WhatsApp Session
+      tags:
+      - Sessions
+  /sessions/{sessionId}/info:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves detailed information about a specific WhatsApp session
+      parameters:
+      - description: Session ID
+        format: uuid
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Session information
+          schema:
+            $ref: '#/definitions/dto.SessionResponse'
+        "400":
+          description: Invalid session ID
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get WhatsApp Session
+      tags:
+      - Sessions
+  /sessions/{sessionId}/qr:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the QR code for WhatsApp session authentication. Scan
+        with WhatsApp mobile app.
+      parameters:
+      - description: Session ID
+        format: uuid
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: QR code data
+          schema:
+            $ref: '#/definitions/dto.QRCodeResponse'
+        "400":
+          description: Invalid session ID
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "409":
+          description: Session already connected
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: QR code generation error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get QR Code
+      tags:
+      - Sessions
+  /sessions/create:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new WhatsApp session with the specified configuration
+      parameters:
+      - description: Session configuration
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Session created successfully
+          schema:
+            $ref: '#/definitions/dto.SessionResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "409":
+          description: Session already exists
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create WhatsApp Session
+      tags:
+      - Sessions
+  /sessions/list:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all WhatsApp sessions with their current status
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of sessions
+          schema:
+            items:
+              $ref: '#/definitions/dto.SessionResponse'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List WhatsApp Sessions
+      tags:
+      - Sessions
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -62,7 +62,9 @@ func (m *Migrator) RunMigrations() error {
 		}
 	}
 
-	m.logger.Infof("Applied %d migrations successfully", pendingCount)
+	m.logger.Info().
+		Int("count", pendingCount).
+		Msg("Applied migrations successfully")
 	return nil
 }
 
@@ -127,7 +129,10 @@ func (m *Migrator) processMigrationFiles(entries []fs.DirEntry) (map[int]map[str
 
 		version, err := m.extractVersionFromFilename(entry.Name())
 		if err != nil {
-			m.logger.Warnf("Skipping invalid migration file %s: %v", entry.Name(), err)
+			m.logger.Warn().
+				Str("file", entry.Name()).
+				Err(err).
+				Msg("Skipping invalid migration file")
 			continue
 		}
 
@@ -194,7 +199,9 @@ func (m *Migrator) buildMigrationObjects(migrationFiles map[int]map[string]strin
 		}
 
 		if migration.UpSQL == "" {
-			m.logger.Warnf("Migration %d missing up.sql file", version)
+			m.logger.Warn().
+				Int("version", version).
+				Msg("Migration missing up.sql file")
 			continue
 		}
 
@@ -213,7 +220,9 @@ func (m *Migrator) getAppliedMigrations() (map[int]bool, error) {
 	}
 	defer func() {
 		if err := rows.Close(); err != nil {
-			m.logger.Error("Failed to close rows: " + err.Error())
+			m.logger.Error().
+				Err(err).
+				Msg("Failed to close rows")
 		}
 	}()
 
@@ -234,7 +243,10 @@ func (m *Migrator) isMigrationApplied(version int, appliedMigrations map[int]boo
 }
 
 func (m *Migrator) executeMigration(migration *Migration) error {
-	m.logger.Infof("Applying migration %d: %s", migration.Version, migration.Name)
+	m.logger.Info().
+		Int("version", migration.Version).
+		Str("name", migration.Name).
+		Msg("Applying migration")
 
 	tx, err := m.db.Begin()
 	if err != nil {
@@ -245,7 +257,9 @@ func (m *Migrator) executeMigration(migration *Migration) error {
 	defer func() {
 		if !committed {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				m.logger.Error("Failed to rollback transaction: " + rollbackErr.Error())
+				m.logger.Error().
+					Err(rollbackErr).
+					Msg("Failed to rollback transaction")
 			}
 		}
 	}()
@@ -267,12 +281,14 @@ func (m *Migrator) executeMigration(migration *Migration) error {
 	}
 	committed = true
 
-	m.logger.Infof("Migration %d applied successfully", migration.Version)
+	m.logger.Info().
+		Int("version", migration.Version).
+		Msg("Migration applied successfully")
 	return nil
 }
 
 func (m *Migrator) Rollback() error {
-	m.logger.Info("Rolling back last migration...")
+	m.logger.Info().Msg("Rolling back last migration")
 
 	version, name, err := m.getLastMigration()
 	if err != nil {
@@ -280,7 +296,7 @@ func (m *Migrator) Rollback() error {
 	}
 
 	if version == 0 {
-		m.logger.Info("No migrations to rollback")
+		m.logger.Info().Msg("No migrations to rollback")
 		return nil
 	}
 
@@ -327,7 +343,10 @@ func (m *Migrator) findTargetMigration(version int) (*Migration, error) {
 }
 
 func (m *Migrator) executeRollback(targetMigration *Migration, version int, name string) error {
-	m.logger.Infof("Rolling back migration %d: %s", version, name)
+	m.logger.Info().
+		Int("version", version).
+		Str("name", name).
+		Msg("Rolling back migration")
 
 	tx, err := m.db.Begin()
 	if err != nil {
@@ -338,7 +357,9 @@ func (m *Migrator) executeRollback(targetMigration *Migration, version int, name
 	defer func() {
 		if !committed {
 			if rollbackErr := tx.Rollback(); rollbackErr != nil {
-				m.logger.Error("Failed to rollback transaction: " + rollbackErr.Error())
+				m.logger.Error().
+					Err(rollbackErr).
+					Msg("Failed to rollback transaction")
 			}
 		}
 	}()
@@ -357,7 +378,9 @@ func (m *Migrator) executeRollback(targetMigration *Migration, version int, name
 	}
 	committed = true
 
-	m.logger.Infof("Migration %d rolled back successfully", version)
+	m.logger.Info().
+		Int("version", version).
+		Msg("Migration rolled back successfully")
 	return nil
 }
 

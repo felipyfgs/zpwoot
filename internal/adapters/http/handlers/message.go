@@ -76,7 +76,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 			h.writeError(w, http.StatusBadRequest, "validation_error", "location is required for location messages")
 			return
 		}
-		err = h.messageSender.SendLocationMessage(r.Context(), sessionID, req.To, 
+		err = h.messageSender.SendLocationMessage(r.Context(), sessionID, req.To,
 			req.Location.Latitude, req.Location.Longitude, req.Location.Name)
 
 	case "contact":
@@ -92,7 +92,10 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		h.logger.Errorf("Failed to send message: %v", err)
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Msg("Failed to send message")
 		if waErr, ok := err.(*waclient.WAError); ok {
 			status := http.StatusInternalServerError
 			if waErr.Code == "SESSION_NOT_FOUND" {
@@ -134,7 +137,11 @@ func (h *MessageHandler) GetChatInfo(w http.ResponseWriter, r *http.Request) {
 
 	chatInfo, err := h.messageSender.GetChatInfo(r.Context(), sessionID, chatJID)
 	if err != nil {
-		h.logger.Errorf("Failed to get chat info: %v", err)
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Str("chat_jid", chatJID).
+			Msg("Failed to get chat info")
 		if waErr, ok := err.(*waclient.WAError); ok {
 			status := http.StatusInternalServerError
 			if waErr.Code == "SESSION_NOT_FOUND" {
@@ -164,7 +171,10 @@ func (h *MessageHandler) GetContacts(w http.ResponseWriter, r *http.Request) {
 
 	contacts, err := h.messageSender.GetContacts(r.Context(), sessionID)
 	if err != nil {
-		h.logger.Errorf("Failed to get contacts: %v", err)
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Msg("Failed to get contacts")
 		if waErr, ok := err.(*waclient.WAError); ok {
 			status := http.StatusInternalServerError
 			if waErr.Code == "SESSION_NOT_FOUND" {
@@ -197,7 +207,10 @@ func (h *MessageHandler) GetChats(w http.ResponseWriter, r *http.Request) {
 
 	chats, err := h.messageSender.GetChats(r.Context(), sessionID)
 	if err != nil {
-		h.logger.Errorf("Failed to get chats: %v", err)
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Msg("Failed to get chats")
 		if waErr, ok := err.(*waclient.WAError); ok {
 			status := http.StatusInternalServerError
 			if waErr.Code == "SESSION_NOT_FOUND" {

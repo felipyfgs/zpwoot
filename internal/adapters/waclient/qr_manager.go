@@ -78,7 +78,10 @@ func (wac *WAClient) GetQRCodeForSession(ctx context.Context, sessionID string) 
 			// Generate base64 for existing QR code
 			base64QR, err := qrManager.GenerateQRCodeBase64(client.QRCode)
 			if err != nil {
-				wac.logger.Errorf("Failed to generate base64 for existing QR: %v", err)
+				wac.logger.Error().
+					Err(err).
+					Str("session_id", sessionID).
+					Msg("Failed to generate base64 for existing QR")
 			}
 
 			return &QREvent{
@@ -111,7 +114,10 @@ func (wac *WAClient) GetQRCodeForSession(ctx context.Context, sessionID string) 
 			qrManager := NewQRManager(wac.logger)
 			base64QR, err := qrManager.GenerateQRCodeBase64(client.QRCode)
 			if err != nil {
-				wac.logger.Errorf("Failed to generate base64 for new QR: %v", err)
+				wac.logger.Error().
+					Err(err).
+					Str("session_id", sessionID).
+					Msg("Failed to generate base64 for new QR")
 			}
 
 			return &QREvent{
@@ -148,7 +154,10 @@ func (wac *WAClient) RefreshQRCode(ctx context.Context, sessionID string) (*QREv
 	if client.Status != StatusDisconnected {
 		err = wac.DisconnectSession(ctx, sessionID)
 		if err != nil {
-			wac.logger.Warnf("Failed to disconnect session for QR refresh: %v", err)
+			wac.logger.Warn().
+				Err(err).
+				Str("session_id", sessionID).
+				Msg("Failed to disconnect session for QR refresh")
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
@@ -178,7 +187,10 @@ func (wac *WAClient) RefreshQRCode(ctx context.Context, sessionID string) (*QREv
 			qrManager := NewQRManager(wac.logger)
 			base64QR, err := qrManager.GenerateQRCodeBase64(client.QRCode)
 			if err != nil {
-				wac.logger.Errorf("Failed to generate base64 for refreshed QR: %v", err)
+				wac.logger.Error().
+					Err(err).
+					Str("session_id", sessionID).
+					Msg("Failed to generate base64 for refreshed QR")
 			}
 
 			return &QREvent{
@@ -217,13 +229,17 @@ func (wac *WAClient) CleanupExpiredQRCodes(ctx context.Context) error {
 				wac.updateSessionStatus(ctx, client)
 				cleanedCount++
 
-				wac.logger.Debugf("Cleaned expired QR code for session: %s", client.Name)
+				wac.logger.Debug().
+					Str("session_name", client.Name).
+					Msg("Cleaned expired QR code for session")
 			}
 		}
 	}
 
 	if cleanedCount > 0 {
-		wac.logger.Infof("Cleaned %d expired QR codes", cleanedCount)
+		wac.logger.Info().
+			Int("count", cleanedCount).
+			Msg("Cleaned expired QR codes")
 	}
 
 	return nil
@@ -234,16 +250,18 @@ func (wac *WAClient) StartQRCleanupRoutine(ctx context.Context) {
 	ticker := time.NewTicker(1 * time.Minute) // Check every minute
 	defer ticker.Stop()
 
-	wac.logger.Info("Started QR code cleanup routine")
+	wac.logger.Info().Msg("Started QR code cleanup routine")
 
 	for {
 		select {
 		case <-ctx.Done():
-			wac.logger.Info("Stopping QR code cleanup routine")
+			wac.logger.Info().Msg("Stopping QR code cleanup routine")
 			return
 		case <-ticker.C:
 			if err := wac.CleanupExpiredQRCodes(ctx); err != nil {
-				wac.logger.Errorf("QR cleanup error: %v", err)
+				wac.logger.Error().
+					Err(err).
+					Msg("QR cleanup error")
 			}
 		}
 	}

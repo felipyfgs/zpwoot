@@ -6,18 +6,18 @@ import (
 
 // Session represents a WhatsApp session
 type Session struct {
-	ID                string     `json:"id" db:"id"`
-	Name              string     `json:"name" db:"name"`
-	DeviceJID         string     `json:"device_jid,omitempty" db:"deviceJid"`
-	IsConnected       bool       `json:"is_connected" db:"isConnected"`
-	ConnectionError   string     `json:"connection_error,omitempty" db:"connectionError"`
-	QRCode            string     `json:"qr_code,omitempty" db:"qrCode"`
-	QRCodeExpiresAt   *time.Time `json:"qr_code_expires_at,omitempty" db:"qrCodeExpiresAt"`
-	ProxyConfig       string     `json:"proxy_config,omitempty" db:"proxyConfig"` // JSON string
-	CreatedAt         time.Time  `json:"created_at" db:"createdAt"`
-	UpdatedAt         time.Time  `json:"updated_at" db:"updatedAt"`
-	ConnectedAt       *time.Time `json:"connected_at,omitempty" db:"connectedAt"`
-	LastSeen          *time.Time `json:"last_seen,omitempty" db:"lastSeen"`
+	ID              string     `json:"id" db:"id"`
+	Name            string     `json:"name" db:"name"`
+	DeviceJID       string     `json:"device_jid,omitempty" db:"deviceJid"`
+	IsConnected     bool       `json:"is_connected" db:"isConnected"`
+	ConnectionError string     `json:"connection_error,omitempty" db:"connectionError"`
+	QRCode          string     `json:"qr_code,omitempty" db:"qrCode"`
+	QRCodeExpiresAt *time.Time `json:"qr_code_expires_at,omitempty" db:"qrCodeExpiresAt"`
+	ProxyConfig     string     `json:"proxy_config,omitempty" db:"proxyConfig"` // JSON string
+	CreatedAt       time.Time  `json:"created_at" db:"createdAt"`
+	UpdatedAt       time.Time  `json:"updated_at" db:"updatedAt"`
+	ConnectedAt     *time.Time `json:"connected_at,omitempty" db:"connectedAt"`
+	LastSeen        *time.Time `json:"last_seen,omitempty" db:"lastSeen"`
 }
 
 // Status represents the session status

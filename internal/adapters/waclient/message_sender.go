@@ -170,7 +170,7 @@ func parseJID(jidStr string) (types.JID, error) {
 		phone = strings.ReplaceAll(phone, "-", "")
 		phone = strings.ReplaceAll(phone, "(", "")
 		phone = strings.ReplaceAll(phone, ")", "")
-		
+
 		// Remove + if present
 		if strings.HasPrefix(phone, "+") {
 			phone = phone[1:]

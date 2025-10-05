@@ -36,7 +36,7 @@ func New(cfg *config.Config, log *logger.Logger) (*Database, error) {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	log.Info("Database connection established successfully")
+	log.Info().Msg("Database connection established successfully")
 
 	return &Database{
 		DB:     db,

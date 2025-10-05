@@ -106,20 +106,20 @@ type SessionConfig struct {
 
 // Client represents a WhatsApp client instance
 type Client struct {
-	SessionID     string
-	Name          string
-	WAClient      *whatsmeow.Client
-	EventHandler  uint32
-	Status        SessionStatus
-	QRCode        string
-	QRExpiresAt   time.Time
-	ConnectedAt   time.Time
-	LastSeen      time.Time
-	Config        *SessionConfig
-	Events        []EventType
-	WebhookURL    string
-	ctx           context.Context
-	cancel        context.CancelFunc
+	SessionID    string
+	Name         string
+	WAClient     *whatsmeow.Client
+	EventHandler uint32
+	Status       SessionStatus
+	QRCode       string
+	QRExpiresAt  time.Time
+	ConnectedAt  time.Time
+	LastSeen     time.Time
+	Config       *SessionConfig
+	Events       []EventType
+	WebhookURL   string
+	ctx          context.Context
+	cancel       context.CancelFunc
 }
 
 // EventHandler defines the interface for handling WhatsApp events
@@ -159,19 +159,19 @@ type MessageSender interface {
 
 // ContactInfo represents contact information
 type ContactInfo struct {
-	Name   string `json:"name"`
-	Phone  string `json:"phone"`
-	VCard  string `json:"vcard,omitempty"`
+	Name  string `json:"name"`
+	Phone string `json:"phone"`
+	VCard string `json:"vcard,omitempty"`
 }
 
 // SendMessageRequest represents a message sending request
 type SendMessageRequest struct {
-	SessionID string      `json:"sessionId"`
-	To        string      `json:"to"`
-	Type      string      `json:"type"`
-	Text      string      `json:"text,omitempty"`
-	Media     *MediaData  `json:"media,omitempty"`
-	Location  *Location   `json:"location,omitempty"`
+	SessionID string       `json:"sessionId"`
+	To        string       `json:"to"`
+	Type      string       `json:"type"`
+	Text      string       `json:"text,omitempty"`
+	Media     *MediaData   `json:"media,omitempty"`
+	Location  *Location    `json:"location,omitempty"`
 	Contact   *ContactInfo `json:"contact,omitempty"`
 }
 
@@ -192,11 +192,11 @@ type MessageResponse struct {
 
 // SessionResponse represents a session operation response
 type SessionResponse struct {
-	Success   bool           `json:"success"`
-	Session   *SessionInfo   `json:"session,omitempty"`
-	Sessions  []*SessionInfo `json:"sessions,omitempty"`
-	QRCode    string         `json:"qrCode,omitempty"`
-	Error     string         `json:"error,omitempty"`
+	Success  bool           `json:"success"`
+	Session  *SessionInfo   `json:"session,omitempty"`
+	Sessions []*SessionInfo `json:"sessions,omitempty"`
+	QRCode   string         `json:"qrCode,omitempty"`
+	Error    string         `json:"error,omitempty"`
 }
 
 // SessionInfo represents session information for API responses
@@ -226,12 +226,12 @@ func (e *WAError) Error() string {
 
 // Common errors
 var (
-	ErrSessionNotFound    = &WAError{Code: "SESSION_NOT_FOUND", Message: "session not found"}
-	ErrSessionExists      = &WAError{Code: "SESSION_EXISTS", Message: "session already exists"}
-	ErrNotConnected       = &WAError{Code: "NOT_CONNECTED", Message: "session not connected"}
-	ErrInvalidJID         = &WAError{Code: "INVALID_JID", Message: "invalid JID format"}
-	ErrQRExpired          = &WAError{Code: "QR_EXPIRED", Message: "QR code expired"}
-	ErrConnectionFailed   = &WAError{Code: "CONNECTION_FAILED", Message: "failed to connect to WhatsApp"}
-	ErrInvalidMedia       = &WAError{Code: "INVALID_MEDIA", Message: "invalid media data"}
-	ErrWebhookFailed      = &WAError{Code: "WEBHOOK_FAILED", Message: "failed to send webhook"}
+	ErrSessionNotFound  = &WAError{Code: "SESSION_NOT_FOUND", Message: "session not found"}
+	ErrSessionExists    = &WAError{Code: "SESSION_EXISTS", Message: "session already exists"}
+	ErrNotConnected     = &WAError{Code: "NOT_CONNECTED", Message: "session not connected"}
+	ErrInvalidJID       = &WAError{Code: "INVALID_JID", Message: "invalid JID format"}
+	ErrQRExpired        = &WAError{Code: "QR_EXPIRED", Message: "QR code expired"}
+	ErrConnectionFailed = &WAError{Code: "CONNECTION_FAILED", Message: "failed to connect to WhatsApp"}
+	ErrInvalidMedia     = &WAError{Code: "INVALID_MEDIA", Message: "invalid media data"}
+	ErrWebhookFailed    = &WAError{Code: "WEBHOOK_FAILED", Message: "failed to send webhook"}
 )

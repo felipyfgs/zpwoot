@@ -18,12 +18,18 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 			}
 
 			// Get API key from header
-			apiKey := r.Header.Get("X-API-Key")
-			if apiKey == "" {
-				// Try Authorization header with Bearer
-				auth := r.Header.Get("Authorization")
-				if strings.HasPrefix(auth, "Bearer ") {
-					apiKey = strings.TrimPrefix(auth, "Bearer ")
+			// Priority: Authorization header (direct value) > X-API-Key header
+			apiKey := r.Header.Get("Authorization")
+
+			// If Authorization header is empty or has Bearer prefix, try X-API-Key
+			if apiKey == "" || strings.HasPrefix(apiKey, "Bearer ") {
+				// Try X-API-Key header
+				xApiKey := r.Header.Get("X-API-Key")
+				if xApiKey != "" {
+					apiKey = xApiKey
+				} else if strings.HasPrefix(apiKey, "Bearer ") {
+					// Support Bearer token format as fallback
+					apiKey = strings.TrimPrefix(apiKey, "Bearer ")
 				}
 			}
 
@@ -31,7 +37,7 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 			if apiKey == "" || apiKey != cfg.APIKey {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusUnauthorized)
-				w.Write([]byte(`{"error":"unauthorized","message":"invalid or missing API key"}`))
+				w.Write([]byte(`{"error":"unauthorized","message":"invalid or missing API key. Use 'Authorization: YOUR_API_KEY' or 'X-API-Key: YOUR_API_KEY' header"}`))
 				return
 			}
 
