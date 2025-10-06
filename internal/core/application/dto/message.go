@@ -399,4 +399,3 @@ type SendTemplateMessageRequest struct {
 	Phone    string           `json:"phone" validate:"required" example:"5511999999999"`
 	Template *TemplateMessage `json:"template" validate:"required"`
 } //@name SendTemplateMessageRequest
-

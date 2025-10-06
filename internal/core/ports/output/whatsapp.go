@@ -17,6 +17,7 @@ type WhatsAppClient interface {
 	IsLoggedIn(ctx context.Context, sessionID string) bool
 
 	GetQRCode(ctx context.Context, sessionID string) (*QRCodeInfo, error)
+	PairPhone(ctx context.Context, sessionID string, phone string) (string, error)
 
 	SendTextMessage(ctx context.Context, sessionID, to, text string) (*MessageResult, error)
 	SendMediaMessage(ctx context.Context, sessionID, to string, media *MediaData) (*MessageResult, error)

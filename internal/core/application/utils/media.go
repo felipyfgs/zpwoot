@@ -103,7 +103,7 @@ func (mp *MediaProcessor) isBase64(input string) bool {
 			input = parts[1]
 		}
 	}
-	
+
 	// Try to decode as base64
 	_, err := base64.StdEncoding.DecodeString(input)
 	return err == nil && len(input) > 10 // Minimum reasonable base64 length
@@ -154,7 +154,7 @@ func (mp *MediaProcessor) readFromFile(filePath string) ([]byte, string, string,
 
 	// Detect MIME type from file extension
 	mimeType := mime.TypeByExtension(filepath.Ext(filePath))
-	
+
 	// Get filename
 	fileName := filepath.Base(filePath)
 
@@ -171,7 +171,7 @@ func (mp *MediaProcessor) decodeBase64(input string) ([]byte, error) {
 			base64Data = parts[1]
 		}
 	}
-	
+
 	return base64.StdEncoding.DecodeString(base64Data)
 }
 

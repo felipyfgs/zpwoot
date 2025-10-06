@@ -281,6 +281,16 @@ func QRBase64(qrString string) string {
 	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(qrImage)
 }
 
+// PairPhoneRequest representa a requisição de pareamento por telefone
+type PairPhoneRequest struct {
+	Phone string `json:"phone" validate:"required" example:"5511999999999" description:"Phone number with country code"`
+} //@name PairPhoneRequest
+
+// PairPhoneResponse representa a resposta do pareamento por telefone
+type PairPhoneResponse struct {
+	LinkingCode string `json:"linkingCode" example:"ABCD-EFGH" description:"8-character linking code to enter on phone"`
+} //@name PairPhoneResponse
+
 var (
 	ErrInvalidSessionName   = NewValidationError("name", "Session name is required")
 	ErrSessionNameTooLong   = NewValidationError("name", "Session name must be less than 100 characters")

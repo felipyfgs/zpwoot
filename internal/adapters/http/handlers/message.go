@@ -869,5 +869,3 @@ func (h *MessageHandler) SendButtons(w http.ResponseWriter, r *http.Request) {
 func (h *MessageHandler) SendList(w http.ResponseWriter, r *http.Request) {
 	h.writeError(w, http.StatusNotImplemented, "not_implemented", "List messages not yet implemented")
 }
-
-

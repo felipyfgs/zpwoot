@@ -53,6 +53,7 @@ type SessionUseCases interface {
 
 	GetQRCode(ctx context.Context, sessionID string) (*dto.QRCodeResponse, error)
 	RefreshQRCode(ctx context.Context, sessionID string) (*dto.QRCodeResponse, error)
+	PairPhone(ctx context.Context, sessionID string, phone string) (*dto.PairPhoneResponse, error)
 }
 
 type SessionManager interface {

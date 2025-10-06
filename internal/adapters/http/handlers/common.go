@@ -12,6 +12,7 @@ import (
 type Handlers struct {
 	Session *SessionHandler
 	Message *MessageHandler
+	Group   *GroupHandler
 	Health  *HealthHandler
 }
 
@@ -26,6 +27,7 @@ func NewHandlers(
 	return &Handlers{
 		Session: createSessionHandler(logger, sessionUseCases, waClient),
 		Message: createMessageHandler(logger, waClient),
+		Group:   createGroupHandler(logger, waClient),
 		Health:  NewHealthHandler(db),
 	}
 }
@@ -64,6 +66,24 @@ func createMessageHandler(
 
 	return NewMessageHandler(
 		messageService,
+		logger,
+	)
+}
+
+func createGroupHandler(
+	logger *logger.Logger,
+	waClient output.WhatsAppClient,
+) *GroupHandler {
+
+	waClientAdapter, ok := waClient.(*waclient.WAClientAdapter)
+	if !ok {
+		panic("waClient is not a WAClientAdapter")
+	}
+
+	groupService := waclient.NewGroupService(waClientAdapter.GetWAClient())
+
+	return NewGroupHandler(
+		groupService,
 		logger,
 	)
 }

@@ -633,7 +633,6 @@ func (w *MessageService) SendTemplateMessage(ctx context.Context, sessionID, to 
 	}, nil
 }
 
-
 func (w *MessageService) GetChatInfo(ctx context.Context, sessionID, chatJID string) (*input.ChatInfo, error) {
 	return w.GetChatInfoAsInput(ctx, sessionID, chatJID)
 }
@@ -826,7 +825,6 @@ func (ms *Sender) SendTemplateMessage(ctx context.Context, sessionID string, to 
 
 	return nil
 }
-
 
 type ButtonInfo struct {
 	ID   string
