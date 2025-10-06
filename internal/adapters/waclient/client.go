@@ -5,8 +5,9 @@ import (
 	"crypto/rand"
 	"time"
 
-	"go.mau.fi/whatsmeow"
 	"zpwoot/internal/core/ports/output"
+
+	"go.mau.fi/whatsmeow"
 )
 
 type WAClientAdapter struct {
@@ -118,7 +119,7 @@ func (w *WAClientAdapter) SendTextMessage(ctx context.Context, sessionID, to, te
 	}
 
 	return &output.MessageResult{
-		MessageID: string(resp.ID),
+		MessageID: resp.ID,
 		Status:    "sent",
 		SentAt:    resp.Timestamp,
 	}, nil
@@ -132,7 +133,7 @@ func (w *WAClientAdapter) SendMediaMessage(ctx context.Context, sessionID, to st
 	}
 
 	return &output.MessageResult{
-		MessageID: string(resp.ID),
+		MessageID: resp.ID,
 		Status:    "sent",
 		SentAt:    resp.Timestamp,
 	}, nil

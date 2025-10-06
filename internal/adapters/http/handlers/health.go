@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"zpwoot/internal/adapters/database"
@@ -47,7 +48,7 @@ func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
 				Error:   "database_unhealthy",
 				Message: "Database connection is unhealthy",
 			}); err != nil {
-				h.logger.Error().Err(err).Msg("Failed to encode error response")
+				log.Printf("Failed to encode error response: %v", err)
 			}
 			return
 		}
@@ -59,7 +60,7 @@ func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
 		Service: "zpwoot",
 		Version: "1.0.0",
 	}); err != nil {
-		h.logger.Error().Err(err).Msg("Failed to encode health response")
+		log.Printf("Failed to encode health response: %v", err)
 	}
 }
 
@@ -78,6 +79,6 @@ func (h *HealthHandler) Info(w http.ResponseWriter, r *http.Request) {
 		Version: "1.0.0",
 		Service: "zpwoot",
 	}); err != nil {
-		h.logger.Error().Err(err).Msg("Failed to encode system info response")
+		log.Printf("Failed to encode system info response: %v", err)
 	}
 }

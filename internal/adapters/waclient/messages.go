@@ -353,7 +353,7 @@ func (ms *Sender) GetContacts(ctx context.Context, sessionID string) ([]*Contact
 		return nil, fmt.Errorf("failed to get contacts: %w", err)
 	}
 
-	var contactList []*ContactInfo
+	contactList := make([]*ContactInfo, 0, len(contacts))
 	for jid, contact := range contacts {
 		contactInfo := &ContactInfo{
 			Phone: jid.User,
@@ -440,7 +440,7 @@ func (ms *Sender) GetContactsAsInput(ctx context.Context, sessionID string) ([]*
 		return nil, err
 	}
 
-	var inputContacts []*input.ContactInfo
+	inputContacts := make([]*input.ContactInfo, 0, len(contacts))
 	for _, contact := range contacts {
 		inputContacts = append(inputContacts, &input.ContactInfo{
 			Name:  contact.Name,
@@ -458,7 +458,7 @@ func (ms *Sender) GetChatsAsInput(ctx context.Context, sessionID string) ([]*inp
 		return nil, err
 	}
 
-	var inputChats []*input.ChatInfo
+	inputChats := make([]*input.ChatInfo, 0, len(chats))
 	for _, chat := range chats {
 		inputChats = append(inputChats, &input.ChatInfo{
 			JID:              chat.JID,
@@ -488,7 +488,7 @@ func (w *MessageService) SendTextMessage(ctx context.Context, sessionID string, 
 		return nil, err
 	}
 	return &output.MessageResult{
-		MessageID: string(resp.ID),
+		MessageID: resp.ID,
 		Status:    "sent",
 		SentAt:    resp.Timestamp,
 	}, nil
@@ -501,7 +501,7 @@ func (w *MessageService) SendMediaMessage(ctx context.Context, sessionID string,
 		return nil, err
 	}
 	return &output.MessageResult{
-		MessageID: string(resp.ID),
+		MessageID: resp.ID,
 		Status:    "sent",
 		SentAt:    resp.Timestamp,
 	}, nil
@@ -571,7 +571,7 @@ func (w *MessageService) SendPollMessage(ctx context.Context, sessionID, to, nam
 
 func (w *MessageService) SendButtonsMessage(ctx context.Context, sessionID, to, text string, buttons []input.ButtonInfo) (*output.MessageResult, error) {
 
-	var waButtons []ButtonInfo
+	waButtons := make([]ButtonInfo, 0, len(buttons))
 	for _, btn := range buttons {
 		waButtons = append(waButtons, ButtonInfo{
 			ID:   btn.ID,
@@ -591,9 +591,9 @@ func (w *MessageService) SendButtonsMessage(ctx context.Context, sessionID, to, 
 
 func (w *MessageService) SendListMessage(ctx context.Context, sessionID, to, text, title string, sections []input.ListSectionInfo) (*output.MessageResult, error) {
 
-	var waSections []ListSection
+	waSections := make([]ListSection, 0, len(sections))
 	for _, section := range sections {
-		var rows []ListRow
+		rows := make([]ListRow, 0, len(section.Rows))
 		for _, row := range section.Rows {
 			rows = append(rows, ListRow{
 				ID:          row.ID,
@@ -865,7 +865,10 @@ type TemplateInfo struct {
 
 func fallbackID() string {
 	bytes := make([]byte, 16)
-	rand.Read(bytes)
+	if _, err := rand.Read(bytes); err != nil {
+		// Fallback to timestamp-based ID if random fails
+		return strings.ToUpper(hex.EncodeToString([]byte(fmt.Sprintf("%d", time.Now().UnixNano()))))
+	}
 	return strings.ToUpper(hex.EncodeToString(bytes))
 }
 

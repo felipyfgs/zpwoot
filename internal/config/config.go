@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"log"
 	"os"
 	"strconv"
 
@@ -40,7 +41,10 @@ type PostgresConfig struct {
 
 func Load() *Config {
 
-	godotenv.Load()
+	if err := godotenv.Load(); err != nil {
+		// .env file is optional, so we just log the error
+		log.Printf("Warning: .env file not found or could not be loaded: %v", err)
+	}
 
 	cfg := &Config{
 

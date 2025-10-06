@@ -237,7 +237,7 @@ func (ns *NewsletterService) GetMessages(ctx context.Context, sessionID string, 
 	if req.Before != "" {
 		// Converter string para MessageServerID
 		if beforeID, err := strconv.Atoi(req.Before); err == nil {
-			params.Before = types.MessageServerID(beforeID)
+			params.Before = beforeID
 		}
 	}
 
@@ -254,8 +254,8 @@ func (ns *NewsletterService) GetMessages(ctx context.Context, sessionID string, 
 
 	for _, msg := range messages {
 		message := dto.NewsletterMessage{
-			ID:        string(msg.MessageID),
-			ServerID:  string(msg.MessageServerID),
+			ID:        msg.MessageID,
+			ServerID:  msg.MessageServerID,
 			Content:   "", // TODO: Extrair conteúdo baseado no tipo
 			Type:      msg.Type,
 			Timestamp: msg.Timestamp.Unix(),
@@ -289,7 +289,7 @@ func (ns *NewsletterService) MarkViewed(ctx context.Context, sessionID string, n
 	for i, serverIDStr := range req.ServerIDs {
 		// Converter string para int
 		if serverID, err := strconv.Atoi(serverIDStr); err == nil {
-			serverIDs[i] = types.MessageServerID(serverID)
+			serverIDs[i] = serverID
 		}
 	}
 
@@ -322,8 +322,8 @@ func (ns *NewsletterService) SendReaction(ctx context.Context, sessionID string,
 	if err != nil {
 		return fmt.Errorf("invalid server ID: %w", err)
 	}
-	serverID := types.MessageServerID(serverIDInt)
-	messageID := types.MessageID(req.MessageID)
+	serverID := serverIDInt
+	messageID := req.MessageID
 
 	err = client.WAClient.NewsletterSendReaction(jid, serverID, req.Reaction, messageID)
 	if err != nil {

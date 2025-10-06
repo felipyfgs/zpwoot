@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"log"
 	"net/http"
 	"strings"
 
@@ -20,9 +21,9 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 
 			if apiKey == "" || strings.HasPrefix(apiKey, "Bearer ") {
 
-				xApiKey := r.Header.Get("X-API-Key")
-				if xApiKey != "" {
-					apiKey = xApiKey
+				xAPIKey := r.Header.Get("X-API-Key")
+				if xAPIKey != "" {
+					apiKey = xAPIKey
 				} else if strings.HasPrefix(apiKey, "Bearer ") {
 
 					apiKey = strings.TrimPrefix(apiKey, "Bearer ")
@@ -32,7 +33,8 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 			if apiKey == "" || apiKey != cfg.APIKey {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusUnauthorized)
-				if _, err := w.Write([]byte(`{"error":"unauthorized","message":"invalid or missing API key. Use 'Authorization: YOUR_API_KEY' or 'X-API-Key: YOUR_API_KEY' header"}`)); err != nil {
+				errorMsg := `{"error":"unauthorized","message":"invalid or missing API key. Use 'Authorization: YOUR_API_KEY' or 'X-API-Key: YOUR_API_KEY' header"}`
+				if _, err := w.Write([]byte(errorMsg)); err != nil {
 					// Log error but don't return error since response is already being written
 					log.Printf("Failed to write unauthorized response: %v", err)
 				}

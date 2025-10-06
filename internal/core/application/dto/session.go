@@ -4,9 +4,10 @@ import (
 	"encoding/base64"
 	"time"
 
-	"github.com/skip2/go-qrcode"
 	"zpwoot/internal/core/application/validators"
 	"zpwoot/internal/core/domain/session"
+
+	"github.com/skip2/go-qrcode"
 )
 
 type ProxySettings struct {

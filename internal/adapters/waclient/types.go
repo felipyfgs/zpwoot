@@ -4,9 +4,10 @@ import (
 	"context"
 	"time"
 
-	"go.mau.fi/whatsmeow"
 	"zpwoot/internal/core/domain/session"
 	"zpwoot/internal/core/ports/output"
+
+	"go.mau.fi/whatsmeow"
 )
 
 type EventType string

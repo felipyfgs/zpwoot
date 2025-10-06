@@ -127,7 +127,7 @@ func (cs *ContactService) GetAvatar(ctx context.Context, sessionID string, phone
 	avatarInfo := &input.AvatarInfo{
 		URL:       pic.URL,
 		ID:        pic.ID,
-		Type:      string(pic.Type),
+		Type:      pic.Type,
 		DirectURL: pic.DirectPath,
 	}
 

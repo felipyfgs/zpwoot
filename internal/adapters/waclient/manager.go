@@ -105,7 +105,7 @@ func (wac *WAClient) autoReconnect(client *Client) {
 	case <-timer.C:
 
 	case <-client.ctx.Done():
-		wac.logger.Debug().Str("session_id", client.SessionID).Msg("Auto-reconnect cancelled")
+		wac.logger.Debug().Str("session_id", client.SessionID).Msg("Auto-reconnect canceled")
 		return
 	}
 
@@ -524,7 +524,7 @@ func (wac *WAClient) processAllQRCodesFromEvent(ctx context.Context, client *Cli
 		case <-ctx.Done():
 			wac.logger.Info().
 				Str("session_id", client.SessionID).
-				Msg("QR processing cancelled")
+				Msg("QR processing canceled")
 			return
 		}
 	}
@@ -549,7 +549,7 @@ func (wac *WAClient) handleMessage(client *Client, evt *events.Message) {
 		Str("chat", evt.Info.Chat.String()).
 		Bool("from_me", evt.Info.IsFromMe).
 		Bool("is_group", evt.Info.IsGroup).
-		Str("type", string(evt.Info.Type)).
+		Str("type", evt.Info.Type).
 		Msg("Message received")
 
 	wac.sendWebhook(client, EventMessage, evt)
@@ -615,7 +615,11 @@ func (wac *WAClient) sendWebhook(client *Client, eventType EventType, event inte
 			Timestamp: time.Now(),
 		}
 
-		go wac.webhookSender.SendWebhook(client.ctx, webhookEvent)
+		go func() {
+			if err := wac.webhookSender.SendWebhook(client.ctx, webhookEvent); err != nil {
+				wac.logger.Error().Err(err).Msg("Failed to send webhook")
+			}
+		}()
 	}
 }
 

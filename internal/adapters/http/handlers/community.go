@@ -1,13 +1,15 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
 	"zpwoot/internal/adapters/logger"
 	"zpwoot/internal/core/application/dto"
 	"zpwoot/internal/core/ports/input"
+
+	"github.com/go-chi/chi/v5"
 )
 
 // CommunityHandler gerencia requisições HTTP relacionadas a comunidades
@@ -31,6 +33,83 @@ func (h *CommunityHandler) writeJSON(w http.ResponseWriter, data interface{}) {
 		h.logger.Error().Err(err).Msg("Failed to encode JSON response")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
+}
+
+// validateCommunityRequest valida parâmetros básicos de requisição de comunidade
+func (h *CommunityHandler) validateCommunityRequest(w http.ResponseWriter, sessionID, communityJID string) bool {
+	if sessionID == "" {
+		h.logger.Error().Msg("Session ID is required")
+		http.Error(w, "Session ID is required", http.StatusBadRequest)
+		return false
+	}
+
+	if communityJID == "" {
+		h.logger.Error().Msg("Community JID is required")
+		http.Error(w, "Community JID is required", http.StatusBadRequest)
+		return false
+	}
+
+	return true
+}
+
+// handleGroupLinkOperation executa operação de link/unlink de grupo
+func (h *CommunityHandler) handleGroupLinkOperation(
+	w http.ResponseWriter,
+	r *http.Request,
+	operation string,
+	operationFunc func(context.Context, string, string, interface{}) error,
+) {
+	sessionID := chi.URLParam(r, "sessionId")
+	communityJID := chi.URLParam(r, "communityJid")
+
+	if !h.validateCommunityRequest(w, sessionID, communityJID) {
+		return
+	}
+
+	var req interface{}
+	if operation == "link" {
+		req = &dto.LinkGroupRequest{}
+	} else {
+		req = &dto.UnlinkGroupRequest{}
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to decode request body")
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	err := operationFunc(r.Context(), sessionID, communityJID, req)
+	if err != nil {
+		var groupJID string
+		if linkReq, ok := req.(*dto.LinkGroupRequest); ok {
+			groupJID = linkReq.GroupJID
+		} else if unlinkReq, ok := req.(*dto.UnlinkGroupRequest); ok {
+			groupJID = unlinkReq.GroupJID
+		}
+
+		h.logger.Error().Err(err).
+			Str("session_id", sessionID).
+			Str("community_jid", communityJID).
+			Str("group_jid", groupJID).
+			Msgf("Failed to %s group", operation)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var message string
+	if operation == "link" {
+		message = "Group linked to community successfully"
+	} else {
+		message = "Group unlinked from community successfully"
+	}
+
+	response := map[string]interface{}{
+		"success": true,
+		"message": message,
+	}
+
+	h.writeJSON(w, response)
 }
 
 // ListCommunities lista todas as comunidades que a sessão participa
@@ -154,45 +233,9 @@ func (h *CommunityHandler) CreateCommunity(w http.ResponseWriter, r *http.Reques
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /sessions/{sessionId}/communities/{communityJid}/link [post]
 func (h *CommunityHandler) LinkGroup(w http.ResponseWriter, r *http.Request) {
-	sessionID := chi.URLParam(r, "sessionId")
-	communityJID := chi.URLParam(r, "communityJid")
-
-	if sessionID == "" {
-		h.logger.Error().Msg("Session ID is required")
-		http.Error(w, "Session ID is required", http.StatusBadRequest)
-		return
-	}
-
-	if communityJID == "" {
-		h.logger.Error().Msg("Community JID is required")
-		http.Error(w, "Community JID is required", http.StatusBadRequest)
-		return
-	}
-
-	var req dto.LinkGroupRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.Error().Err(err).Msg("Failed to decode request body")
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	err := h.communityService.LinkGroup(r.Context(), sessionID, communityJID, &req)
-	if err != nil {
-		h.logger.Error().Err(err).Str("session_id", sessionID).Str("community_jid", communityJID).Str("group_jid", req.GroupJID).Msg("Failed to link group")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	response := map[string]interface{}{
-		"success": true,
-		"message": "Group linked to community successfully",
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		h.logger.Error().Err(err).Msg("Failed to encode response")
-		return
-	}
+	h.handleGroupLinkOperation(w, r, "link", func(ctx context.Context, sessionID, communityJID string, req interface{}) error {
+		return h.communityService.LinkGroup(ctx, sessionID, communityJID, req.(*dto.LinkGroupRequest))
+	})
 }
 
 // UnlinkGroup desvincula um grupo de uma comunidade
@@ -209,45 +252,9 @@ func (h *CommunityHandler) LinkGroup(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /sessions/{sessionId}/communities/{communityJid}/unlink [post]
 func (h *CommunityHandler) UnlinkGroup(w http.ResponseWriter, r *http.Request) {
-	sessionID := chi.URLParam(r, "sessionId")
-	communityJID := chi.URLParam(r, "communityJid")
-
-	if sessionID == "" {
-		h.logger.Error().Msg("Session ID is required")
-		http.Error(w, "Session ID is required", http.StatusBadRequest)
-		return
-	}
-
-	if communityJID == "" {
-		h.logger.Error().Msg("Community JID is required")
-		http.Error(w, "Community JID is required", http.StatusBadRequest)
-		return
-	}
-
-	var req dto.UnlinkGroupRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.Error().Err(err).Msg("Failed to decode request body")
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	err := h.communityService.UnlinkGroup(r.Context(), sessionID, communityJID, &req)
-	if err != nil {
-		h.logger.Error().Err(err).Str("session_id", sessionID).Str("community_jid", communityJID).Str("group_jid", req.GroupJID).Msg("Failed to unlink group")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	response := map[string]interface{}{
-		"success": true,
-		"message": "Group unlinked from community successfully",
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		h.logger.Error().Err(err).Msg("Failed to encode response")
-		return
-	}
+	h.handleGroupLinkOperation(w, r, "unlink", func(ctx context.Context, sessionID, communityJID string, req interface{}) error {
+		return h.communityService.UnlinkGroup(ctx, sessionID, communityJID, req.(*dto.UnlinkGroupRequest))
+	})
 }
 
 // GetSubGroups obtém todos os subgrupos de uma comunidade
@@ -285,11 +292,7 @@ func (h *CommunityHandler) GetSubGroups(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(subGroups); err != nil {
-		h.logger.Error().Err(err).Msg("Failed to encode response")
-		return
-	}
+	h.writeJSON(w, subGroups)
 }
 
 // GetParticipants obtém todos os participantes de uma comunidade
@@ -327,9 +330,5 @@ func (h *CommunityHandler) GetParticipants(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(participants); err != nil {
-		h.logger.Error().Err(err).Msg("Failed to encode response")
-		return
-	}
+	h.writeJSON(w, participants)
 }

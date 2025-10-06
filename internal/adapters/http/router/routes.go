@@ -14,7 +14,15 @@ import (
 func NewRouter(c *container.Container) http.Handler {
 	r := chi.NewRouter()
 	middleware.SetupMiddleware(r)
-	h := handlers.NewHandlers(c.GetDatabase(), c.GetLogger(), c.GetConfig(), c.GetSessionUseCases(), c.GetMessageUseCases(), c.GetWebhookUseCases(), c.GetWhatsAppClient())
+	h := handlers.NewHandlers(
+		c.GetDatabase(),
+		c.GetLogger(),
+		c.GetConfig(),
+		c.GetSessionUseCases(),
+		c.GetMessageUseCases(),
+		c.GetWebhookUseCases(),
+		c.GetWhatsAppClient(),
+	)
 
 	// === PÚBLICAS ===
 	r.Get("/", h.Health.Info)

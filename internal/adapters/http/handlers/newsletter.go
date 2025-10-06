@@ -1,14 +1,16 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
 
-	"github.com/go-chi/chi/v5"
 	"zpwoot/internal/adapters/logger"
 	"zpwoot/internal/core/application/dto"
 	"zpwoot/internal/core/ports/input"
+
+	"github.com/go-chi/chi/v5"
 )
 
 // NewsletterHandler gerencia requisições HTTP relacionadas a newsletters
@@ -32,6 +34,71 @@ func (h *NewsletterHandler) writeJSON(w http.ResponseWriter, data interface{}) {
 		h.logger.Error().Err(err).Msg("Failed to encode JSON response")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 	}
+}
+
+// validateNewsletterRequest valida parâmetros básicos de requisição de newsletter
+func (h *NewsletterHandler) validateNewsletterRequest(w http.ResponseWriter, sessionID, newsletterJID string) bool {
+	if sessionID == "" {
+		h.logger.Error().Msg("Session ID is required")
+		http.Error(w, "Session ID is required", http.StatusBadRequest)
+		return false
+	}
+
+	if newsletterJID == "" {
+		h.logger.Error().Msg("Newsletter JID is required")
+		http.Error(w, "Newsletter JID is required", http.StatusBadRequest)
+		return false
+	}
+
+	return true
+}
+
+// handleNewsletterOperation executa operação genérica de newsletter
+func (h *NewsletterHandler) handleNewsletterOperation(
+	w http.ResponseWriter,
+	r *http.Request,
+	operation string,
+	operationFunc func(context.Context, string, string, interface{}) error,
+	requestType interface{},
+) {
+	sessionID := chi.URLParam(r, "sessionId")
+	newsletterJID := chi.URLParam(r, "newsletterJid")
+
+	if !h.validateNewsletterRequest(w, sessionID, newsletterJID) {
+		return
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(requestType); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to decode request body")
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	err := operationFunc(r.Context(), sessionID, newsletterJID, requestType)
+	if err != nil {
+		h.logger.Error().Err(err).Str("session_id", sessionID).Str("newsletter_jid", newsletterJID).Msgf("Failed to %s", operation)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var message string
+	switch operation {
+	case "mark_viewed":
+		message = "Messages marked as viewed successfully"
+	case "send_reaction":
+		message = "Reaction sent successfully"
+	case "toggle_mute":
+		message = "Newsletter mute setting updated successfully"
+	default:
+		message = "Operation completed successfully"
+	}
+
+	response := map[string]interface{}{
+		"success": true,
+		"message": message,
+	}
+
+	h.writeJSON(w, response)
 }
 
 // ListNewsletters lista todos os newsletters que a sessão segue
@@ -328,41 +395,10 @@ func (h *NewsletterHandler) GetMessages(w http.ResponseWriter, r *http.Request) 
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /sessions/{sessionId}/newsletters/{newsletterJid}/mark-viewed [post]
 func (h *NewsletterHandler) MarkViewed(w http.ResponseWriter, r *http.Request) {
-	sessionID := chi.URLParam(r, "sessionId")
-	newsletterJID := chi.URLParam(r, "newsletterJid")
-
-	if sessionID == "" {
-		h.logger.Error().Msg("Session ID is required")
-		http.Error(w, "Session ID is required", http.StatusBadRequest)
-		return
-	}
-
-	if newsletterJID == "" {
-		h.logger.Error().Msg("Newsletter JID is required")
-		http.Error(w, "Newsletter JID is required", http.StatusBadRequest)
-		return
-	}
-
 	var req dto.NewsletterMarkViewedRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.Error().Err(err).Msg("Failed to decode request body")
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	err := h.newsletterService.MarkViewed(r.Context(), sessionID, newsletterJID, &req)
-	if err != nil {
-		h.logger.Error().Err(err).Str("session_id", sessionID).Str("newsletter_jid", newsletterJID).Msg("Failed to mark messages as viewed")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	response := map[string]interface{}{
-		"success": true,
-		"message": "Messages marked as viewed successfully",
-	}
-
-	h.writeJSON(w, response)
+	h.handleNewsletterOperation(w, r, "mark_viewed", func(ctx context.Context, sessionID, newsletterJID string, reqData interface{}) error {
+		return h.newsletterService.MarkViewed(ctx, sessionID, newsletterJID, reqData.(*dto.NewsletterMarkViewedRequest))
+	}, &req)
 }
 
 // SendReaction envia reação a uma mensagem do newsletter
@@ -379,41 +415,10 @@ func (h *NewsletterHandler) MarkViewed(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /sessions/{sessionId}/newsletters/{newsletterJid}/react [post]
 func (h *NewsletterHandler) SendReaction(w http.ResponseWriter, r *http.Request) {
-	sessionID := chi.URLParam(r, "sessionId")
-	newsletterJID := chi.URLParam(r, "newsletterJid")
-
-	if sessionID == "" {
-		h.logger.Error().Msg("Session ID is required")
-		http.Error(w, "Session ID is required", http.StatusBadRequest)
-		return
-	}
-
-	if newsletterJID == "" {
-		h.logger.Error().Msg("Newsletter JID is required")
-		http.Error(w, "Newsletter JID is required", http.StatusBadRequest)
-		return
-	}
-
 	var req dto.NewsletterReactionRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.Error().Err(err).Msg("Failed to decode request body")
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	err := h.newsletterService.SendReaction(r.Context(), sessionID, newsletterJID, &req)
-	if err != nil {
-		h.logger.Error().Err(err).Str("session_id", sessionID).Str("newsletter_jid", newsletterJID).Msg("Failed to send reaction")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	response := map[string]interface{}{
-		"success": true,
-		"message": "Reaction sent successfully",
-	}
-
-	h.writeJSON(w, response)
+	h.handleNewsletterOperation(w, r, "send_reaction", func(ctx context.Context, sessionID, newsletterJID string, reqData interface{}) error {
+		return h.newsletterService.SendReaction(ctx, sessionID, newsletterJID, reqData.(*dto.NewsletterReactionRequest))
+	}, &req)
 }
 
 // ToggleMute silencia ou dessilencia um newsletter
@@ -430,46 +435,10 @@ func (h *NewsletterHandler) SendReaction(w http.ResponseWriter, r *http.Request)
 // @Failure 500 {object} dto.ErrorResponse
 // @Router /sessions/{sessionId}/newsletters/{newsletterJid}/mute [post]
 func (h *NewsletterHandler) ToggleMute(w http.ResponseWriter, r *http.Request) {
-	sessionID := chi.URLParam(r, "sessionId")
-	newsletterJID := chi.URLParam(r, "newsletterJid")
-
-	if sessionID == "" {
-		h.logger.Error().Msg("Session ID is required")
-		http.Error(w, "Session ID is required", http.StatusBadRequest)
-		return
-	}
-
-	if newsletterJID == "" {
-		h.logger.Error().Msg("Newsletter JID is required")
-		http.Error(w, "Newsletter JID is required", http.StatusBadRequest)
-		return
-	}
-
 	var req dto.NewsletterMuteRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.logger.Error().Err(err).Msg("Failed to decode request body")
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	err := h.newsletterService.ToggleMute(r.Context(), sessionID, newsletterJID, &req)
-	if err != nil {
-		h.logger.Error().Err(err).Str("session_id", sessionID).Str("newsletter_jid", newsletterJID).Msg("Failed to toggle mute")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	action := "muted"
-	if !req.Mute {
-		action = "unmuted"
-	}
-
-	response := map[string]interface{}{
-		"success": true,
-		"message": "Newsletter " + action + " successfully",
-	}
-
-	h.writeJSON(w, response)
+	h.handleNewsletterOperation(w, r, "toggle_mute", func(ctx context.Context, sessionID, newsletterJID string, reqData interface{}) error {
+		return h.newsletterService.ToggleMute(ctx, sessionID, newsletterJID, reqData.(*dto.NewsletterMuteRequest))
+	}, &req)
 }
 
 // SendMessage envia uma mensagem para um newsletter

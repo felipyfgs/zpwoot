@@ -8,10 +8,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
 	"zpwoot/internal/adapters/logger"
 	"zpwoot/internal/core/application/dto"
 	"zpwoot/internal/core/ports/input"
+
+	"github.com/go-chi/chi/v5"
 )
 
 // GroupHandler gerencia requisições HTTP relacionadas a grupos
