@@ -55,80 +55,59 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var err error
-	messageID := "msg_" + generateID()
-
-	switch req.Type {
-	case "text":
-		if req.Text == "" {
-			h.writeError(w, http.StatusBadRequest, "validation_error", "text is required for text messages")
-			return
-		}
-		err = h.messageService.SendTextMessage(r.Context(), sessionID, req.To, req.Text)
-
-	case "media":
-		if req.Media == nil {
-			h.writeError(w, http.StatusBadRequest, "validation_error", "media is required for media messages")
-			return
-		}
-		err = h.messageService.SendMediaMessage(r.Context(), sessionID, req.To, req.Media.ToInterfacesMediaData())
-
-	case "location":
-		if req.Location == nil {
-			h.writeError(w, http.StatusBadRequest, "validation_error", "location is required for location messages")
-			return
-		}
-		err = h.messageService.SendLocationMessage(r.Context(), sessionID, req.To,
-			req.Location.Latitude, req.Location.Longitude, req.Location.Name)
-
-	case "contact":
-		if req.Contact == nil {
-			h.writeError(w, http.StatusBadRequest, "validation_error", "contact is required for contact messages")
-			return
-		}
-		contactInfo := &input.ContactInfo{
-			Name:  req.Contact.Name,
-			Phone: req.Contact.Phone,
-		}
-		err = h.messageService.SendContactMessage(r.Context(), sessionID, req.To, contactInfo)
-
-	default:
-		h.writeError(w, http.StatusBadRequest, "validation_error", "unsupported message type")
-		return
-	}
-
+	err := h.sendMessageByType(r, sessionID, &req)
 	if err != nil {
 		h.logger.Error().
 			Err(err).
 			Str("session_id", sessionID).
 			Msg("Failed to send message")
-		var waErr *output.WhatsAppError
-		if errors.As(err, &waErr) {
-			var status int
-			switch waErr.Code {
-			case errCodeSessionNotFound:
-				status = http.StatusNotFound
-			case errCodeNotConnected:
-				status = http.StatusPreconditionFailed
-			case errCodeInvalidJID:
-				status = http.StatusBadRequest
-			default:
-				status = http.StatusInternalServerError
-			}
-			h.writeError(w, status, waErr.Code, waErr.Message)
-		} else {
-			h.writeError(w, http.StatusInternalServerError, "send_error", "failed to send message")
-		}
+		h.handleMessageError(w, err)
 		return
 	}
 
 	response := &dto.SendMessageResponse{
-		MessageID: messageID,
+		MessageID: "msg_" + generateID(),
 		Status:    "sent",
 		SentAt:    time.Now(),
 	}
 
 	h.writeJSON(w, response)
+}
+
+func (h *MessageHandler) sendMessageByType(r *http.Request, sessionID string, req *dto.SendMessageRequest) error {
+	switch req.Type {
+	case "text":
+		if req.Text == "" {
+			return &output.WhatsAppError{Code: "VALIDATION_ERROR", Message: "text is required for text messages"}
+		}
+		return h.messageService.SendTextMessage(r.Context(), sessionID, req.To, req.Text)
+
+	case "media":
+		if req.Media == nil {
+			return &output.WhatsAppError{Code: "VALIDATION_ERROR", Message: "media is required for media messages"}
+		}
+		return h.messageService.SendMediaMessage(r.Context(), sessionID, req.To, req.Media.ToInterfacesMediaData())
+
+	case "location":
+		if req.Location == nil {
+			return &output.WhatsAppError{Code: "VALIDATION_ERROR", Message: "location is required for location messages"}
+		}
+		return h.messageService.SendLocationMessage(r.Context(), sessionID, req.To,
+			req.Location.Latitude, req.Location.Longitude, req.Location.Name)
+
+	case "contact":
+		if req.Contact == nil {
+			return &output.WhatsAppError{Code: "VALIDATION_ERROR", Message: "contact is required for contact messages"}
+		}
+		contactInfo := &input.ContactInfo{
+			Name:  req.Contact.Name,
+			Phone: req.Contact.Phone,
+		}
+		return h.messageService.SendContactMessage(r.Context(), sessionID, req.To, contactInfo)
+
+	default:
+		return &output.WhatsAppError{Code: "VALIDATION_ERROR", Message: "unsupported message type"}
+	}
 }
 
 func (h *MessageHandler) GetChatInfo(w http.ResponseWriter, r *http.Request) {
@@ -285,13 +264,13 @@ func (h *MessageHandler) sendMediaMessageGeneric(w http.ResponseWriter, r *http.
 	}
 
 	var req struct {
-		To    string         `json:"to"`
-		Media *dto.MediaData `json:"media,omitempty"`
-		Audio *dto.MediaData `json:"audio,omitempty"`
-		Image *dto.MediaData `json:"image,omitempty"`
-		Video *dto.MediaData `json:"video,omitempty"`
+		Media    *dto.MediaData `json:"media,omitempty"`
+		Audio    *dto.MediaData `json:"audio,omitempty"`
+		Image    *dto.MediaData `json:"image,omitempty"`
+		Video    *dto.MediaData `json:"video,omitempty"`
 		Document *dto.MediaData `json:"document,omitempty"`
-		Sticker *dto.MediaData `json:"sticker,omitempty"`
+		Sticker  *dto.MediaData `json:"sticker,omitempty"`
+		To       string         `json:"to"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -437,46 +416,7 @@ func (h *MessageHandler) SendAudioMessage(w http.ResponseWriter, r *http.Request
 // @Security		ApiKeyAuth
 // @Router			/sessions/{sessionId}/send/message/image [post]
 func (h *MessageHandler) SendImageMessage(w http.ResponseWriter, r *http.Request) {
-	sessionID := chi.URLParam(r, "sessionId")
-	if sessionID == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "sessionId is required")
-		return
-	}
-
-	var req dto.SendImageMessageRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.writeError(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
-		return
-	}
-
-	if req.To == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "to is required")
-		return
-	}
-
-	if req.Image == nil {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "image is required")
-		return
-	}
-
-	err := h.messageService.SendMediaMessage(r.Context(), sessionID, req.To, req.Image.ToMediaData())
-	if err != nil {
-		h.logger.Error().
-			Err(err).
-			Str("session_id", sessionID).
-			Str("to", req.To).
-			Msg("Failed to send image message")
-		h.handleMessageError(w, err)
-		return
-	}
-
-	response := &dto.SendMessageResponse{
-		MessageID: "msg_" + generateID(),
-		Status:    "sent",
-		SentAt:    time.Now(),
-	}
-
-	h.writeJSON(w, response)
+	h.sendMediaMessageGeneric(w, r, "image", "image")
 }
 
 func (h *MessageHandler) handleMessageError(w http.ResponseWriter, err error) {
@@ -504,120 +444,15 @@ func generateID() string {
 }
 
 func (h *MessageHandler) SendVideo(w http.ResponseWriter, r *http.Request) {
-	sessionID := chi.URLParam(r, "sessionId")
-	if sessionID == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "sessionId is required")
-		return
-	}
-
-	var req dto.SendVideoMessageRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.writeError(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
-		return
-	}
-
-	if req.To == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "to is required")
-		return
-	}
-
-	if req.Video == nil {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "video is required")
-		return
-	}
-
-	messageID := "msg_" + generateID()
-	err := h.messageService.SendMediaMessage(r.Context(), sessionID, req.To, req.Video.ToOutputMediaData())
-	if err != nil {
-		h.handleMessageError(w, err)
-		return
-	}
-
-	response := &dto.SendMessageResponse{
-		MessageID: messageID,
-		Status:    "sent",
-		SentAt:    time.Now(),
-	}
-
-	h.writeJSON(w, response)
+	h.sendMediaMessageGeneric(w, r, "video", "video")
 }
 
 func (h *MessageHandler) SendDocument(w http.ResponseWriter, r *http.Request) {
-	sessionID := chi.URLParam(r, "sessionId")
-	if sessionID == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "sessionId is required")
-		return
-	}
-
-	var req dto.SendDocumentMessageRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.writeError(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
-		return
-	}
-
-	if req.To == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "to is required")
-		return
-	}
-
-	if req.Document == nil {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "document is required")
-		return
-	}
-
-	messageID := "msg_" + generateID()
-	err := h.messageService.SendMediaMessage(r.Context(), sessionID, req.To, req.Document.ToOutputMediaData())
-	if err != nil {
-		h.handleMessageError(w, err)
-		return
-	}
-
-	response := &dto.SendMessageResponse{
-		MessageID: messageID,
-		Status:    "sent",
-		SentAt:    time.Now(),
-	}
-
-	h.writeJSON(w, response)
+	h.sendMediaMessageGeneric(w, r, "document", "document")
 }
 
 func (h *MessageHandler) SendSticker(w http.ResponseWriter, r *http.Request) {
-	sessionID := chi.URLParam(r, "sessionId")
-	if sessionID == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "sessionId is required")
-		return
-	}
-
-	var req dto.SendStickerMessageRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.writeError(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
-		return
-	}
-
-	if req.To == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "to is required")
-		return
-	}
-
-	if req.Sticker == nil {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "sticker is required")
-		return
-	}
-
-	messageID := "msg_" + generateID()
-	err := h.messageService.SendMediaMessage(r.Context(), sessionID, req.To, req.Sticker.ToOutputMediaData())
-	if err != nil {
-		h.handleMessageError(w, err)
-		return
-	}
-
-	response := &dto.SendMessageResponse{
-		MessageID: messageID,
-		Status:    "sent",
-		SentAt:    time.Now(),
-	}
-
-	h.writeJSON(w, response)
+	h.sendMediaMessageGeneric(w, r, "sticker", "sticker")
 }
 
 func (h *MessageHandler) SendAudio(w http.ResponseWriter, r *http.Request) {
@@ -898,7 +733,7 @@ func (h *MessageHandler) SendButtons(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var buttons []input.ButtonInfo
+	buttons := make([]input.ButtonInfo, 0, len(req.Buttons))
 	for _, btn := range req.Buttons {
 		buttons = append(buttons, input.ButtonInfo{
 			ID:   btn.ID,
@@ -960,9 +795,9 @@ func (h *MessageHandler) SendList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Convert DTO sections to input.ListSectionInfo
-	var sections []input.ListSectionInfo
+	sections := make([]input.ListSectionInfo, 0, len(req.Sections))
 	for _, section := range req.Sections {
-		var rows []input.ListRowInfo
+		rows := make([]input.ListRowInfo, 0, len(section.Rows))
 		for _, row := range section.Rows {
 			rows = append(rows, input.ListRowInfo{
 				ID:          row.ID,

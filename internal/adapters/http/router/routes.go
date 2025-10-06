@@ -13,29 +13,27 @@ import (
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
-func NewRouter(container *container.Container) http.Handler {
+func NewRouter(c *container.Container) http.Handler {
 	r := chi.NewRouter()
 
 	middleware.SetupMiddleware(r)
 
 	h := handlers.NewHandlers(
-		container.GetDatabase(),
-		container.GetLogger(),
-		container.GetConfig(),
-		container.GetSessionUseCases(),
-		container.GetMessageUseCases(),
+		c.GetDatabase(),
+		c.GetLogger(),
+		c.GetConfig(),
+		c.GetSessionUseCases(),
+		c.GetMessageUseCases(),
 	)
 
 	setupPublicRoutes(r, h)
-	setupAPIRoutes(r, container, h)
+	setupAPIRoutes(r, c, h)
 
 	return r
 }
 
 func setupPublicRoutes(r *chi.Mux, h *handlers.Handlers) {
-
 	r.Get("/", h.Health.Info)
-
 	r.Get("/health", h.Health.Health)
 
 	r.Get("/swagger/*", httpSwagger.Handler(
@@ -43,10 +41,9 @@ func setupPublicRoutes(r *chi.Mux, h *handlers.Handlers) {
 	))
 }
 
-func setupAPIRoutes(r *chi.Mux, container *container.Container, h *handlers.Handlers) {
+func setupAPIRoutes(r *chi.Mux, c *container.Container, h *handlers.Handlers) {
 	r.Group(func(r chi.Router) {
-
-		middleware.SetupAuthMiddleware(r, container.GetConfig())
+		middleware.SetupAuthMiddleware(r, c.GetConfig())
 
 		setupSessionRoutes(r, h)
 	})
@@ -54,7 +51,6 @@ func setupAPIRoutes(r *chi.Mux, container *container.Container, h *handlers.Hand
 
 func setupSessionRoutes(r chi.Router, h *handlers.Handlers) {
 	r.Route("/sessions", func(r chi.Router) {
-
 		r.Post("/create", h.Session.CreateSession)
 		r.Get("/list", h.Session.ListSessions)
 		r.Get("/{sessionId}/info", h.Session.GetSession)

@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"errors"
 	"time"
 
 	"zpwoot/internal/core/application/validators"
@@ -140,67 +141,73 @@ func (r *SendMessageRequest) Validate() error {
 		return ErrMessageTypeRequired
 	}
 
+	return r.validateByType()
+}
+
+func (r *SendMessageRequest) validateByType() error {
 	switch r.Type {
 	case "text":
-		if err := validators.ValidateMessageText(r.Text); err != nil {
-			return &ErrorInfo{Code: "TEXT_INVALID", Message: err.Error()}
-		}
+		return validators.ValidateMessageText(r.Text)
 	case "media":
-		if r.Media == nil {
-			return ErrMediaRequired
-		}
-		if r.Media.URL == "" && r.Media.Base64 == "" {
-			return ErrMediaContentRequired
-		}
-		if err := validators.ValidateCaption(r.Media.Caption); err != nil {
-			return &ErrorInfo{Code: "CAPTION_INVALID", Message: err.Error()}
-		}
-		if err := validators.ValidateFileName(r.Media.FileName); err != nil {
-			return &ErrorInfo{Code: "FILENAME_INVALID", Message: err.Error()}
-		}
+		return r.validateMedia()
 	case "location":
-		if r.Location == nil {
-			return ErrLocationRequired
-		}
-		if err := r.Location.Validate(); err != nil {
-			return err
-		}
+		return r.validateLocation()
 	case "contact":
-		if r.Contact == nil {
-			return ErrContactRequired
-		}
-		if err := r.Contact.Validate(); err != nil {
-			return err
-		}
+		return r.validateContact()
 	default:
 		return ErrInvalidMessageType
 	}
+}
 
-	return nil
+func (r *SendMessageRequest) validateMedia() error {
+	if r.Media == nil {
+		return ErrMediaRequired
+	}
+	if r.Media.URL == "" && r.Media.Base64 == "" {
+		return ErrMediaContentRequired
+	}
+	if err := validators.ValidateCaption(r.Media.Caption); err != nil {
+		return err
+	}
+	return validators.ValidateFileName(r.Media.FileName)
+}
+
+func (r *SendMessageRequest) validateLocation() error {
+	if r.Location == nil {
+		return ErrLocationRequired
+	}
+	return r.Location.Validate()
+}
+
+func (r *SendMessageRequest) validateContact() error {
+	if r.Contact == nil {
+		return ErrContactRequired
+	}
+	return r.Contact.Validate()
 }
 
 func (l *Location) Validate() error {
 	if err := validators.ValidateLatitude(l.Latitude); err != nil {
-		return &ErrorInfo{Code: "LATITUDE_INVALID", Message: err.Error()}
+		return err
 	}
 	if err := validators.ValidateLongitude(l.Longitude); err != nil {
-		return &ErrorInfo{Code: "LONGITUDE_INVALID", Message: err.Error()}
+		return err
 	}
 	if err := validators.ValidateLocationName(l.Name); err != nil {
-		return &ErrorInfo{Code: "LOCATION_NAME_INVALID", Message: err.Error()}
+		return err
 	}
 	if err := validators.ValidateLocationAddress(l.Address); err != nil {
-		return &ErrorInfo{Code: "LOCATION_ADDRESS_INVALID", Message: err.Error()}
+		return err
 	}
 	return nil
 }
 
 func (c *ContactInfo) Validate() error {
 	if err := validators.ValidateContactName(c.Name); err != nil {
-		return &ErrorInfo{Code: "CONTACT_NAME_INVALID", Message: err.Error()}
+		return err
 	}
 	if err := validators.ValidatePhoneNumber(c.Phone); err != nil {
-		return &ErrorInfo{Code: "CONTACT_PHONE_INVALID", Message: err.Error()}
+		return err
 	}
 	if c.Phone == "" {
 		return ErrContactPhoneRequired
@@ -209,18 +216,21 @@ func (c *ContactInfo) Validate() error {
 }
 
 var (
-	ErrRecipientRequired    = &ErrorInfo{Code: "RECIPIENT_REQUIRED", Message: "Recipient is required"}
-	ErrMessageTypeRequired  = &ErrorInfo{Code: "MESSAGE_TYPE_REQUIRED", Message: "Message type is required"}
-	ErrInvalidMessageType   = &ErrorInfo{Code: "INVALID_MESSAGE_TYPE", Message: "Invalid message type"}
-	ErrTextRequired         = &ErrorInfo{Code: "TEXT_REQUIRED", Message: "Text is required for text messages"}
-	ErrMediaRequired        = &ErrorInfo{Code: "MEDIA_REQUIRED", Message: "Media is required for media messages"}
-	ErrMediaContentRequired = &ErrorInfo{Code: "MEDIA_CONTENT_REQUIRED", Message: "Media URL or base64 content is required"}
-	ErrLocationRequired     = &ErrorInfo{Code: "LOCATION_REQUIRED", Message: "Location is required for location messages"}
-	ErrContactRequired      = &ErrorInfo{Code: "CONTACT_REQUIRED", Message: "Contact is required for contact messages"}
-	ErrInvalidLatitude      = &ErrorInfo{Code: "INVALID_LATITUDE", Message: "Latitude must be between -90 and 90"}
-	ErrInvalidLongitude     = &ErrorInfo{Code: "INVALID_LONGITUDE", Message: "Longitude must be between -180 and 180"}
-	ErrContactNameRequired  = &ErrorInfo{Code: "CONTACT_NAME_REQUIRED", Message: "Contact name is required"}
-	ErrContactPhoneRequired = &ErrorInfo{Code: "CONTACT_PHONE_REQUIRED", Message: "Contact phone is required"}
+	ErrRecipientRequired      = errors.New("recipient is required")
+	ErrSessionIDRequired      = errors.New("sessionId is required")
+	ErrInvalidJSON            = errors.New("invalid JSON body")
+	ErrMessageTypeRequired    = errors.New("message type is required")
+	ErrInvalidMessageType     = errors.New("invalid message type")
+	ErrTextRequired           = errors.New("text is required for text messages")
+	ErrMediaRequired          = errors.New("media is required for media messages")
+	ErrMediaContentRequired   = errors.New("media URL or base64 content is required")
+	ErrLocationRequired       = errors.New("location is required for location messages")
+	ErrContactRequired        = errors.New("contact is required for contact messages")
+	ErrInvalidLatitude        = errors.New("latitude must be between -90 and 90")
+	ErrInvalidLongitude       = errors.New("longitude must be between -180 and 180")
+	ErrContactNameRequired    = errors.New("contact name is required")
+	ErrContactPhoneRequired   = errors.New("contact phone is required")
+	ErrUnsupportedMessageType = errors.New("unsupported message type")
 )
 
 func (m *MediaData) ToInterfacesMediaData() *output.MediaData {
