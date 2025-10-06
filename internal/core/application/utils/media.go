@@ -28,8 +28,11 @@ func NewMediaProcessor() *MediaProcessor {
 
 func (mp *MediaProcessor) ProcessMedia(file, mimeType, fileName string) (*output.MediaData, error) {
 	var data []byte
+
 	var err error
+
 	var detectedMimeType string
+
 	var detectedFileName string
 	if mp.isURL(file) {
 		data, detectedMimeType, detectedFileName, err = mp.downloadFromURL(file)
@@ -49,13 +52,16 @@ func (mp *MediaProcessor) ProcessMedia(file, mimeType, fileName string) (*output
 	} else {
 		return nil, fmt.Errorf("invalid file input: must be URL, file path, or base64")
 	}
+
 	finalMimeType := mimeType
 	if finalMimeType == "" {
 		finalMimeType = detectedMimeType
 	}
+
 	if finalMimeType == "" {
 		finalMimeType = "application/octet-stream"
 	}
+
 	finalFileName := fileName
 	if finalFileName == "" {
 		finalFileName = detectedFileName
@@ -71,23 +77,24 @@ func (mp *MediaProcessor) isURL(input string) bool {
 	return strings.HasPrefix(input, "http://") || strings.HasPrefix(input, "https://")
 }
 func (mp *MediaProcessor) isFilePath(input string) bool {
-
 	if strings.Contains(input, "/") || strings.Contains(input, "\\") {
 		if _, err := os.Stat(input); err == nil {
 			return true
 		}
 	}
+
 	return false
 }
 func (mp *MediaProcessor) isBase64(input string) bool {
-
 	if strings.Contains(input, ",") {
 		parts := strings.Split(input, ",")
 		if len(parts) > 1 {
 			input = parts[1]
 		}
 	}
+
 	_, err := base64.StdEncoding.DecodeString(input)
+
 	return err == nil && len(input) > 10
 }
 func (mp *MediaProcessor) downloadFromURL(url string) ([]byte, string, string, error) {
@@ -105,14 +112,16 @@ func (mp *MediaProcessor) downloadFromURL(url string) ([]byte, string, string, e
 	if err != nil {
 		return nil, "", "", err
 	}
+
 	mimeType := resp.Header.Get("Content-Type")
 	if mimeType != "" {
-
 		if idx := strings.Index(mimeType, ";"); idx != -1 {
 			mimeType = mimeType[:idx]
 		}
+
 		mimeType = strings.TrimSpace(mimeType)
 	}
+
 	fileName := filepath.Base(url)
 	if strings.Contains(fileName, "?") {
 		fileName = strings.Split(fileName, "?")[0]
@@ -125,13 +134,13 @@ func (mp *MediaProcessor) readFromFile(filePath string) ([]byte, string, string,
 	if err != nil {
 		return nil, "", "", err
 	}
+
 	mimeType := mime.TypeByExtension(filepath.Ext(filePath))
 	fileName := filepath.Base(filePath)
 
 	return data, mimeType, fileName, nil
 }
 func (mp *MediaProcessor) decodeBase64(input string) ([]byte, error) {
-
 	base64Data := input
 	if strings.Contains(base64Data, ",") {
 		parts := strings.Split(base64Data, ",")

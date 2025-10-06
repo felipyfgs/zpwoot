@@ -28,12 +28,14 @@ func (cs *ContactService) CheckUser(ctx context.Context, sessionID string, phone
 	if !client.IsConnected() {
 		return nil, ErrNotConnected
 	}
+
 	resp, err := client.WAClient.IsOnWhatsApp(phones)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check users: %w", err)
 	}
 
 	results := make([]input.UserCheckResult, 0, len(resp))
+
 	for _, item := range resp {
 		result := input.UserCheckResult{
 			Query:        item.Query,
@@ -64,6 +66,7 @@ func (cs *ContactService) GetUser(ctx context.Context, sessionID string, phone s
 	if err != nil {
 		return nil, ErrInvalidJID
 	}
+
 	info, err := client.WAClient.GetUserInfo([]types.JID{jid})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user info: %w", err)
@@ -77,9 +80,11 @@ func (cs *ContactService) GetUser(ctx context.Context, sessionID string, phone s
 		if userInfo.VerifiedName != nil {
 			detail.VerifiedName = userInfo.VerifiedName.Details.GetVerifiedName()
 		}
+
 		if userInfo.Status != "" {
 			detail.Status = userInfo.Status
 		}
+
 		if userInfo.PictureID != "" {
 			detail.PictureID = userInfo.PictureID
 		}
@@ -101,6 +106,7 @@ func (cs *ContactService) GetAvatar(ctx context.Context, sessionID string, phone
 	if err != nil {
 		return nil, ErrInvalidJID
 	}
+
 	pic, err := client.WAClient.GetProfilePictureInfo(jid, &whatsmeow.GetProfilePictureParams{
 		Preview: preview,
 	})
@@ -130,12 +136,14 @@ func (cs *ContactService) GetContacts(ctx context.Context, sessionID string) ([]
 	if !client.IsConnected() {
 		return nil, ErrNotConnected
 	}
+
 	contacts, err := client.WAClient.Store.Contacts.GetAllContacts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get contacts: %w", err)
 	}
 
 	results := make([]input.Contact, 0, len(contacts))
+
 	for jid, contact := range contacts {
 		c := input.Contact{
 			JID:    jid.String(),
@@ -163,6 +171,7 @@ func (cs *ContactService) SendPresence(ctx context.Context, sessionID string, pr
 	}
 
 	var presenceType types.Presence
+
 	switch presence {
 	case "available":
 		presenceType = types.PresenceAvailable
@@ -195,6 +204,7 @@ func (cs *ContactService) ChatPresence(ctx context.Context, sessionID string, ph
 	}
 
 	var chatPresence types.ChatPresence
+
 	switch presence {
 	case "composing":
 		chatPresence = types.ChatPresenceComposing
@@ -205,6 +215,7 @@ func (cs *ContactService) ChatPresence(ctx context.Context, sessionID string, ph
 	}
 
 	var mediaType types.ChatPresenceMedia
+
 	if media != "" {
 		switch media {
 		case "text":

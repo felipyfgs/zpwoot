@@ -43,6 +43,7 @@ func (s Status) IsValid() bool {
 func NewSession(name string) *Session {
 	now := time.Now()
 	sessionID := uuid.New().String()
+
 	return &Session{
 		ID:          sessionID,
 		Name:        name,
@@ -56,12 +57,15 @@ func (s *Session) GetStatus() Status {
 	if s.IsConnected {
 		return StatusConnected
 	}
+
 	if s.QRCode != "" && (s.QRCodeExpiresAt == nil || time.Now().Before(*s.QRCodeExpiresAt)) {
 		return StatusQRCode
 	}
+
 	if s.ConnectionError != "" {
 		return StatusError
 	}
+
 	return StatusDisconnected
 }
 

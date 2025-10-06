@@ -125,7 +125,6 @@ type SessionStatusResponse struct {
 } //@name SessionStatusResponse
 
 func (r *CreateRequest) Validate() error {
-
 	if err := validators.ValidateSessionName(r.Name); err != nil {
 		return NewValidationError("name", err.Error())
 	}
@@ -140,6 +139,7 @@ func (r *CreateRequest) Validate() error {
 		if r.Settings.Proxy.Host == "" {
 			return NewValidationError("settings.proxy.host", "proxy host is required when proxy is enabled")
 		}
+
 		if r.Settings.Proxy.Port == "" {
 			return NewValidationError("settings.proxy.port", "proxy port is required when proxy is enabled")
 		}
@@ -235,6 +235,7 @@ func ToCreateResponse(s *session.Session) *CreateSessionResponse {
 	if s.QRCode != "" {
 		response.QRCode = s.QRCode
 		response.QRCodeBase64 = QRBase64(s.QRCode)
+
 		if s.QRCodeExpiresAt != nil {
 			response.QRCodeExpiresAt = s.QRCodeExpiresAt
 		}

@@ -128,9 +128,11 @@ func (p *PaginationRequest) ApplyDefaults() {
 	if p.Limit <= 0 {
 		p.Limit = DefaultLimit
 	}
+
 	if p.Limit > MaxLimit {
 		p.Limit = MaxLimit
 	}
+
 	if p.Offset < 0 {
 		p.Offset = DefaultOffset
 	}
@@ -140,8 +142,10 @@ func (p *PaginationRequest) Validate() error {
 	if p.Limit < 1 || p.Limit > MaxLimit {
 		return NewValidationError("limit", fmt.Sprintf("limit must be between 1 and %d", MaxLimit))
 	}
+
 	if p.Offset < 0 {
 		return NewValidationError("offset", "offset must be non-negative")
 	}
+
 	return nil
 }

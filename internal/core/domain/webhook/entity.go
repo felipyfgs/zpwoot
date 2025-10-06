@@ -19,6 +19,7 @@ type Webhook struct {
 
 func NewWebhook(sessionID, url string, events []string) *Webhook {
 	now := time.Now()
+
 	return &Webhook{
 		ID:        uuid.New().String(),
 		SessionID: sessionID,
@@ -33,6 +34,7 @@ func (w *Webhook) HasEvent(eventType string) bool {
 	if !w.Enabled {
 		return false
 	}
+
 	if len(w.Events) == 0 {
 		return true
 	}
@@ -42,6 +44,7 @@ func (w *Webhook) HasEvent(eventType string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 func (w *Webhook) IsActive() bool {
@@ -70,8 +73,10 @@ func (w *Webhook) UpdateEvents(events []string) {
 func (w *Webhook) Update(url string, events []string, secret *string) {
 	w.URL = url
 	w.Events = events
+
 	if secret != nil {
 		w.Secret = secret
 	}
+
 	w.UpdatedAt = time.Now()
 }

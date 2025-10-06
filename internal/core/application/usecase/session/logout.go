@@ -26,7 +26,6 @@ func NewLogoutUseCase(
 }
 
 func (uc *LogoutUseCase) Execute(ctx context.Context, sessionID string) error {
-
 	if sessionID == "" {
 		return fmt.Errorf("session ID is required")
 	}
@@ -36,6 +35,7 @@ func (uc *LogoutUseCase) Execute(ctx context.Context, sessionID string) error {
 		if err == shared.ErrSessionNotFound {
 			return dto.ErrSessionNotFound
 		}
+
 		return fmt.Errorf("failed to get session from domain: %w", err)
 	}
 
@@ -48,10 +48,8 @@ func (uc *LogoutUseCase) Execute(ctx context.Context, sessionID string) error {
 		if waErr, ok := err.(*output.WhatsAppError); ok {
 			switch waErr.Code {
 			case "SESSION_NOT_FOUND":
-
 				break
 			case "ALREADY_LOGGED_OUT":
-
 				break
 			default:
 				return fmt.Errorf("whatsapp logout error: %w", err)

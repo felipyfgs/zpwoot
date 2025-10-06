@@ -68,11 +68,13 @@ func (r *SessionRepository) GetByID(ctx context.Context, id string) (*session.Se
 	`
 
 	var sess session.Session
+
 	err := r.db.GetContext(ctx, &sess, query, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, shared.ErrSessionNotFound
 		}
+
 		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
 
@@ -89,11 +91,13 @@ func (r *SessionRepository) GetByJID(ctx context.Context, jid string) (*session.
 	`
 
 	var sess session.Session
+
 	err := r.db.GetContext(ctx, &sess, query, jid)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, shared.ErrSessionNotFound
 		}
+
 		return nil, fmt.Errorf("failed to get session by JID: %w", err)
 	}
 
@@ -110,11 +114,13 @@ func (r *SessionRepository) GetByName(ctx context.Context, name string) (*sessio
 	`
 
 	var sess session.Session
+
 	err := r.db.GetContext(ctx, &sess, query, name)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, shared.ErrSessionNotFound
 		}
+
 		return nil, fmt.Errorf("failed to get session by name: %w", err)
 	}
 
@@ -132,6 +138,7 @@ func (r *SessionRepository) List(ctx context.Context, limit, offset int) ([]*ses
 	`
 
 	var sessions []*session.Session
+
 	err := r.db.SelectContext(ctx, &sessions, query, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list sessions: %w", err)

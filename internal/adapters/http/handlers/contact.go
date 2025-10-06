@@ -62,6 +62,7 @@ func (h *ContactHandler) CheckUser(w http.ResponseWriter, r *http.Request) {
 			Msg("Failed to check users")
 
 		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to check users")
+
 		return
 	}
 
@@ -122,6 +123,7 @@ func (h *ContactHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 			Msg("Failed to get user")
 
 		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to get user")
+
 		return
 	}
 
@@ -175,6 +177,7 @@ func (h *ContactHandler) GetAvatar(w http.ResponseWriter, r *http.Request) {
 			Msg("Failed to get avatar")
 
 		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to get avatar")
+
 		return
 	}
 
@@ -215,6 +218,7 @@ func (h *ContactHandler) GetContacts(w http.ResponseWriter, r *http.Request) {
 			Msg("Failed to get contacts")
 
 		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to get contacts")
+
 		return
 	}
 
@@ -276,6 +280,7 @@ func (h *ContactHandler) SendPresence(w http.ResponseWriter, r *http.Request) {
 			Msg("Failed to send presence")
 
 		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to send presence")
+
 		return
 	}
 
@@ -332,6 +337,7 @@ func (h *ContactHandler) ChatPresence(w http.ResponseWriter, r *http.Request) {
 			Msg("Failed to send chat presence")
 
 		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to send chat presence")
+
 		return
 	}
 
@@ -345,6 +351,7 @@ func (h *ContactHandler) ChatPresence(w http.ResponseWriter, r *http.Request) {
 func (h *ContactHandler) writeSuccessResponse(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+
 	response := dto.NewSuccessResponse(data)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to encode response")
@@ -354,6 +361,7 @@ func (h *ContactHandler) writeSuccessResponse(w http.ResponseWriter, status int,
 func (h *ContactHandler) writeError(w http.ResponseWriter, status int, code, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+
 	if err := json.NewEncoder(w).Encode(map[string]string{
 		"error":   code,
 		"message": message,

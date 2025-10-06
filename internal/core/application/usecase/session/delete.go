@@ -27,7 +27,6 @@ func NewDeleteUseCase(
 }
 
 func (uc *DeleteUseCase) Execute(ctx context.Context, sessionID string) error {
-
 	if sessionID == "" {
 		return fmt.Errorf("session ID is required")
 	}
@@ -37,11 +36,11 @@ func (uc *DeleteUseCase) Execute(ctx context.Context, sessionID string) error {
 		if errors.Is(err, shared.ErrSessionNotFound) {
 			return dto.ErrSessionNotFound
 		}
+
 		return fmt.Errorf("failed to get session from domain: %w", err)
 	}
 
 	if domainSession.IsConnected {
-
 		_ = uc.whatsappClient.DisconnectSession(ctx, sessionID)
 	}
 
@@ -50,14 +49,11 @@ func (uc *DeleteUseCase) Execute(ctx context.Context, sessionID string) error {
 		if waErr, ok := err.(*output.WhatsAppError); ok {
 			switch waErr.Code {
 			case "SESSION_NOT_FOUND":
-
 				break
 			default:
-
 				break
 			}
 		}
-
 	}
 
 	err = uc.sessionService.Delete(ctx, sessionID)
@@ -65,6 +61,7 @@ func (uc *DeleteUseCase) Execute(ctx context.Context, sessionID string) error {
 		if err == shared.ErrSessionNotFound {
 			return dto.ErrSessionNotFound
 		}
+
 		return fmt.Errorf("failed to delete session from domain: %w", err)
 	}
 
@@ -72,7 +69,6 @@ func (uc *DeleteUseCase) Execute(ctx context.Context, sessionID string) error {
 }
 
 func (uc *DeleteUseCase) ExecuteForce(ctx context.Context, sessionID string) error {
-
 	if sessionID == "" {
 		return fmt.Errorf("session ID is required")
 	}
@@ -89,7 +85,6 @@ func (uc *DeleteUseCase) ExecuteForce(ctx context.Context, sessionID string) err
 }
 
 func (uc *DeleteUseCase) ExecuteWithValidation(ctx context.Context, sessionID string, force bool) error {
-
 	if sessionID == "" {
 		return fmt.Errorf("session ID is required")
 	}
@@ -99,6 +94,7 @@ func (uc *DeleteUseCase) ExecuteWithValidation(ctx context.Context, sessionID st
 		if err == shared.ErrSessionNotFound {
 			return dto.ErrSessionNotFound
 		}
+
 		return fmt.Errorf("failed to validate session: %w", err)
 	}
 

@@ -27,7 +27,6 @@ func NewGetUseCase(
 }
 
 func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.SessionDetailResponse, error) {
-
 	if sessionID == "" {
 		return nil, fmt.Errorf("session ID is required")
 	}
@@ -37,12 +36,12 @@ func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.Sessi
 		if errors.Is(err, shared.ErrSessionNotFound) {
 			return nil, dto.ErrSessionNotFound
 		}
+
 		return nil, fmt.Errorf("failed to get session from domain: %w", err)
 	}
 
 	waStatus, err := uc.whatsappClient.GetSessionStatus(ctx, sessionID)
 	if err != nil {
-
 		if waErr, ok := err.(*output.WhatsAppError); ok && waErr.Code == "SESSION_NOT_FOUND" {
 			return dto.ToDetailResponse(domainSession), nil
 		}
@@ -51,7 +50,6 @@ func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.Sessi
 	}
 
 	if waStatus != nil {
-
 		if waStatus.Connected && !domainSession.IsConnected {
 			domainSession.SetConnected(waStatus.DeviceJID)
 		} else if !waStatus.Connected && domainSession.IsConnected {
@@ -67,7 +65,6 @@ func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.Sessi
 		}
 
 		go func(ctx context.Context) {
-
 			if waStatus.Connected {
 				_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnected)
 			} else {
@@ -82,7 +79,6 @@ func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.Sessi
 }
 
 func (uc *GetUseCase) ExecuteWithSync(ctx context.Context, sessionID string) (*dto.SessionDetailResponse, error) {
-
 	response, err := uc.Execute(ctx, sessionID)
 	if err != nil {
 		return nil, err
@@ -90,13 +86,13 @@ func (uc *GetUseCase) ExecuteWithSync(ctx context.Context, sessionID string) (*d
 
 	waStatus, err := uc.whatsappClient.GetSessionStatus(ctx, sessionID)
 	if err != nil {
-
 		return response, nil
 	}
 
 	if waStatus != nil {
 		response.DeviceJID = waStatus.DeviceJID
 		response.Connected = waStatus.Connected
+
 		if waStatus.Connected {
 			response.Status = "connected"
 		} else if waStatus.LoggedIn {
@@ -104,9 +100,11 @@ func (uc *GetUseCase) ExecuteWithSync(ctx context.Context, sessionID string) (*d
 		} else {
 			response.Status = "qr_code"
 		}
+
 		if !waStatus.ConnectedAt.IsZero() {
 			response.ConnectedAt = &waStatus.ConnectedAt
 		}
+
 		if !waStatus.LastSeen.IsZero() {
 			response.LastSeen = &waStatus.LastSeen
 		}

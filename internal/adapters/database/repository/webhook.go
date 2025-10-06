@@ -55,6 +55,7 @@ func (r *WebhookRepository) Create(ctx context.Context, wh *webhook.Webhook) err
 				return fmt.Errorf("webhook already exists for session")
 			}
 		}
+
 		return fmt.Errorf("failed to create webhook: %w", err)
 	}
 
@@ -69,11 +70,13 @@ func (r *WebhookRepository) GetByID(ctx context.Context, id string) (*webhook.We
 	`
 
 	var wh webhookDB
+
 	err := r.db.GetContext(ctx, &wh, query, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("webhook not found")
 		}
+
 		return nil, fmt.Errorf("failed to get webhook: %w", err)
 	}
 
@@ -88,11 +91,13 @@ func (r *WebhookRepository) GetBySessionID(ctx context.Context, sessionID string
 	`
 
 	var wh webhookDB
+
 	err := r.db.GetContext(ctx, &wh, query, sessionID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("webhook not found")
 		}
+
 		return nil, fmt.Errorf("failed to get webhook: %w", err)
 	}
 
@@ -186,17 +191,20 @@ func (r *WebhookRepository) List(ctx context.Context, limit, offset int) ([]*web
 	`
 
 	var webhooksDB []webhookDB
+
 	err := r.db.SelectContext(ctx, &webhooksDB, query, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list webhooks: %w", err)
 	}
 
 	webhooks := make([]*webhook.Webhook, 0, len(webhooksDB))
+
 	for _, whDB := range webhooksDB {
 		wh, err := whDB.toDomain()
 		if err != nil {
 			return nil, err
 		}
+
 		webhooks = append(webhooks, wh)
 	}
 

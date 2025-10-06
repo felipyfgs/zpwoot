@@ -130,6 +130,7 @@ func (eh *DefaultEventHandler) handleAppStateSyncComplete(client *Client, evt *e
 		Str("session_name", client.Name).
 		Str("sync_name", string(evt.Name)).
 		Msg("App state sync complete in session")
+
 	return nil
 }
 
@@ -137,6 +138,7 @@ func (eh *DefaultEventHandler) handlePushNameSetting(client *Client, _ *events.P
 	eh.logger.Debug().
 		Str("session_name", client.Name).
 		Msg("Push name setting in session")
+
 	return nil
 }
 
@@ -144,6 +146,7 @@ func (eh *DefaultEventHandler) handleBlocklistChange(client *Client, _ *events.B
 	eh.logger.Debug().
 		Str("session_name", client.Name).
 		Msg("Blocklist change in session")
+
 	return nil
 }
 
@@ -152,6 +155,7 @@ func (eh *DefaultEventHandler) handleGroupInfo(client *Client, evt *events.Group
 		Str("session_name", client.Name).
 		Str("group_jid", evt.JID.String()).
 		Msg("Group info event in session")
+
 	return nil
 }
 
@@ -160,6 +164,7 @@ func (eh *DefaultEventHandler) handleJoinedGroup(client *Client, evt *events.Joi
 		Str("session_name", client.Name).
 		Str("group_jid", evt.GroupInfo.JID.String()).
 		Msg("Joined group in session")
+
 	return nil
 }
 
@@ -167,6 +172,7 @@ func (eh *DefaultEventHandler) handleOfflineSyncPreview(client *Client, _ *event
 	eh.logger.Debug().
 		Str("session_name", client.Name).
 		Msg("Offline sync preview in session")
+
 	return nil
 }
 
@@ -177,17 +183,17 @@ func (eh *DefaultEventHandler) logUnhandledEvent(event interface{}) {
 }
 
 func (eh *DefaultEventHandler) sendWebhookIfEnabled(client *Client, eventType EventType, eventData interface{}) error {
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	webhookConfig, err := eh.webhookRepo.GetBySessionID(ctx, client.SessionID)
 	if err != nil {
-
 		if err.Error() == "webhook not found" {
 			return nil
 		}
+
 		eh.logger.Error().Err(err).Str("session_id", client.SessionID).Msg("Failed to load webhook config")
+
 		return nil
 	}
 
@@ -202,9 +208,11 @@ func (eh *DefaultEventHandler) shouldSendWebhook(webhookConfig *webhook.Webhook,
 	if eh.webhookSender == nil || !webhookConfig.Enabled {
 		return false
 	}
+
 	if len(webhookConfig.Events) == 0 {
 		return true
 	}
+
 	eventTypeStr := string(eventType)
 	for _, subscribedEvent := range webhookConfig.Events {
 		if subscribedEvent == eventTypeStr {
@@ -216,12 +224,10 @@ func (eh *DefaultEventHandler) shouldSendWebhook(webhookConfig *webhook.Webhook,
 }
 
 func (eh *DefaultEventHandler) sendWebhook(webhookConfig *webhook.Webhook, eventType EventType, eventData interface{}, sessionID string) error {
-
 	var data map[string]interface{}
 	if mapData, ok := eventData.(map[string]interface{}); ok {
 		data = mapData
 	} else {
-
 		jsonData, err := json.Marshal(eventData)
 		if err != nil {
 			eh.logger.Error().Err(err).Msg("Failed to marshal event data")
@@ -233,6 +239,7 @@ func (eh *DefaultEventHandler) sendWebhook(webhookConfig *webhook.Webhook, event
 			return err
 		}
 	}
+
 	webhookEvent := &output.WebhookEvent{
 		ID:        uuid.New().String(),
 		Type:      string(eventType),
@@ -265,42 +272,55 @@ func getMessageType(msg interface{}) string {
 	if _, ok := msgMap["conversation"]; ok {
 		return "text"
 	}
+
 	if _, ok := msgMap["extendedTextMessage"]; ok {
 		return "text"
 	}
+
 	if _, ok := msgMap["imageMessage"]; ok {
 		return "image"
 	}
+
 	if _, ok := msgMap["audioMessage"]; ok {
 		return "audio"
 	}
+
 	if _, ok := msgMap["videoMessage"]; ok {
 		return "video"
 	}
+
 	if _, ok := msgMap["documentMessage"]; ok {
 		return "document"
 	}
+
 	if _, ok := msgMap["stickerMessage"]; ok {
 		return "sticker"
 	}
+
 	if _, ok := msgMap["locationMessage"]; ok {
 		return "location"
 	}
+
 	if _, ok := msgMap["contactMessage"]; ok {
 		return "contact"
 	}
+
 	if _, ok := msgMap["contactsArrayMessage"]; ok {
 		return "contacts"
 	}
+
 	if _, ok := msgMap["liveLocationMessage"]; ok {
 		return "liveLocation"
 	}
+
 	if _, ok := msgMap["buttonsMessage"]; ok {
 		return "buttons"
 	}
+
 	if _, ok := msgMap["listMessage"]; ok {
 		return "list"
 	}
+
 	if _, ok := msgMap["templateMessage"]; ok {
 		return "template"
 	}
@@ -315,15 +335,16 @@ type EventFilter struct {
 }
 
 func (ef *EventFilter) ShouldProcess(eventType EventType, chat, sender string) bool {
-
 	if len(ef.AllowedEvents) > 0 {
 		allowed := false
+
 		for _, allowedEvent := range ef.AllowedEvents {
 			if allowedEvent == eventType {
 				allowed = true
 				break
 			}
 		}
+
 		if !allowed {
 			return false
 		}

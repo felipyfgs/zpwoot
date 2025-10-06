@@ -54,6 +54,7 @@ func (h *GroupHandler) ListGroups(w http.ResponseWriter, r *http.Request) {
 			Str("session_id", sessionID).
 			Msg("Failed to list groups")
 		h.handleGroupError(w, err)
+
 		return
 	}
 
@@ -99,6 +100,7 @@ func (h *GroupHandler) GetGroupInfo(w http.ResponseWriter, r *http.Request) {
 			Str("group_jid", groupJID).
 			Msg("Failed to get group info")
 		h.handleGroupError(w, err)
+
 		return
 	}
 
@@ -148,6 +150,7 @@ func (h *GroupHandler) GetGroupInviteInfo(w http.ResponseWriter, r *http.Request
 			Str("code", req.Code).
 			Msg("Failed to get group invite info")
 		h.handleGroupError(w, err)
+
 		return
 	}
 
@@ -196,6 +199,7 @@ func (h *GroupHandler) GetGroupInviteLink(w http.ResponseWriter, r *http.Request
 			Bool("reset", reset).
 			Msg("Failed to get group invite link")
 		h.handleGroupError(w, err)
+
 		return
 	}
 
@@ -248,6 +252,7 @@ func (h *GroupHandler) JoinGroup(w http.ResponseWriter, r *http.Request) {
 			Str("code", req.Code).
 			Msg("Failed to join group")
 		h.handleGroupError(w, err)
+
 		return
 	}
 
@@ -305,6 +310,7 @@ func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 			Str("group_name", req.Name).
 			Msg("Failed to create group")
 		h.handleGroupError(w, err)
+
 		return
 	}
 
@@ -355,6 +361,7 @@ func (h *GroupHandler) LeaveGroup(w http.ResponseWriter, r *http.Request) {
 			Str("group_jid", req.GroupJID).
 			Msg("Failed to leave group")
 		h.handleGroupError(w, err)
+
 		return
 	}
 
@@ -418,6 +425,7 @@ func (h *GroupHandler) UpdateGroupParticipants(w http.ResponseWriter, r *http.Re
 			Str("action", req.Action).
 			Msg("Failed to update group participants")
 		h.handleGroupError(w, err)
+
 		return
 	}
 
@@ -478,6 +486,7 @@ func (h *GroupHandler) SetGroupName(w http.ResponseWriter, r *http.Request) {
 			Str("name", req.Name).
 			Msg("Failed to set group name")
 		h.handleGroupError(w, err)
+
 		return
 	}
 
@@ -536,6 +545,7 @@ func (h *GroupHandler) SetGroupTopic(w http.ResponseWriter, r *http.Request) {
 			Str("group_jid", req.GroupJID).
 			Msg("Failed to set group topic")
 		h.handleGroupError(w, err)
+
 		return
 	}
 
@@ -589,6 +599,7 @@ func (h *GroupHandler) SetGroupLocked(w http.ResponseWriter, r *http.Request) {
 			Bool("locked", req.Locked).
 			Msg("Failed to set group locked")
 		h.handleGroupError(w, err)
+
 		return
 	}
 
@@ -643,6 +654,7 @@ func (h *GroupHandler) SetGroupAnnounce(w http.ResponseWriter, r *http.Request) 
 			Bool("announce", req.Announce).
 			Msg("Failed to set group announce")
 		h.handleGroupError(w, err)
+
 		return
 	}
 
@@ -702,6 +714,7 @@ func (h *GroupHandler) SetDisappearingTimer(w http.ResponseWriter, r *http.Reque
 			Str("duration", req.Duration).
 			Msg("Failed to set disappearing timer")
 		h.handleGroupError(w, err)
+
 		return
 	}
 
@@ -751,6 +764,7 @@ func (h *GroupHandler) SetGroupPhoto(w http.ResponseWriter, r *http.Request) {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "image is required")
 		return
 	}
+
 	imageData, err := decodeBase64Image(req.Image)
 	if err != nil {
 		h.logger.Error().
@@ -758,6 +772,7 @@ func (h *GroupHandler) SetGroupPhoto(w http.ResponseWriter, r *http.Request) {
 			Str("session_id", sessionID).
 			Msg("Failed to decode image")
 		h.writeError(w, http.StatusBadRequest, "invalid_image", "Failed to decode image: "+err.Error())
+
 		return
 	}
 
@@ -769,6 +784,7 @@ func (h *GroupHandler) SetGroupPhoto(w http.ResponseWriter, r *http.Request) {
 			Str("group_jid", req.GroupJID).
 			Msg("Failed to set group photo")
 		h.handleGroupError(w, err)
+
 		return
 	}
 
@@ -821,6 +837,7 @@ func (h *GroupHandler) RemoveGroupPhoto(w http.ResponseWriter, r *http.Request) 
 			Str("group_jid", req.GroupJID).
 			Msg("Failed to remove group photo")
 		h.handleGroupError(w, err)
+
 		return
 	}
 
@@ -836,6 +853,7 @@ func (h *GroupHandler) RemoveGroupPhoto(w http.ResponseWriter, r *http.Request) 
 }
 func (h *GroupHandler) writeJSON(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
+
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to encode response")
 	}
@@ -843,6 +861,7 @@ func (h *GroupHandler) writeJSON(w http.ResponseWriter, data interface{}) {
 func (h *GroupHandler) writeError(w http.ResponseWriter, status int, code string, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+
 	if err := json.NewEncoder(w).Encode(dto.ErrorResponse{
 		Error:   code,
 		Message: message,
@@ -871,12 +890,12 @@ func (h *GroupHandler) handleGroupError(w http.ResponseWriter, err error) {
 	}
 }
 func decodeBase64Image(imageStr string) ([]byte, error) {
-
 	if strings.HasPrefix(imageStr, "data:") {
 		parts := strings.SplitN(imageStr, ",", 2)
 		if len(parts) != 2 {
 			return nil, errors.New("invalid base64 data URI format")
 		}
+
 		imageStr = parts[1]
 	}
 

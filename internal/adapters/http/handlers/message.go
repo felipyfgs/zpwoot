@@ -86,6 +86,7 @@ func (h *MessageHandler) SendText(w http.ResponseWriter, r *http.Request) {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "text is required")
 		return
 	}
+
 	var contextInfo *output.MessageContextInfo
 	if req.ContextInfo != nil {
 		contextInfo = &output.MessageContextInfo{
@@ -102,6 +103,7 @@ func (h *MessageHandler) SendText(w http.ResponseWriter, r *http.Request) {
 			Str("phone", req.Phone).
 			Msg("Failed to send text message")
 		h.handleMessageError(w, err)
+
 		return
 	}
 
@@ -151,6 +153,7 @@ func (h *MessageHandler) SendImage(w http.ResponseWriter, r *http.Request) {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "file is required")
 		return
 	}
+
 	var contextInfo *output.MessageContextInfo
 	if req.ContextInfo != nil {
 		contextInfo = &output.MessageContextInfo{
@@ -158,7 +161,9 @@ func (h *MessageHandler) SendImage(w http.ResponseWriter, r *http.Request) {
 			Participant: req.ContextInfo.Participant,
 		}
 	}
+
 	mediaProcessor := utils.NewMediaProcessor()
+
 	media, err := mediaProcessor.ProcessMedia(req.File, req.MimeType, req.FileName)
 	if err != nil {
 		h.logger.Error().
@@ -167,6 +172,7 @@ func (h *MessageHandler) SendImage(w http.ResponseWriter, r *http.Request) {
 			Str("file", req.File).
 			Msg("Failed to process media")
 		h.writeError(w, http.StatusBadRequest, "media_processing_error", fmt.Sprintf("Failed to process media: %v", err))
+
 		return
 	}
 
@@ -225,6 +231,7 @@ func (h *MessageHandler) SendAudio(w http.ResponseWriter, r *http.Request) {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "file is required")
 		return
 	}
+
 	var contextInfo *output.MessageContextInfo
 	if req.ContextInfo != nil {
 		contextInfo = &output.MessageContextInfo{
@@ -232,7 +239,9 @@ func (h *MessageHandler) SendAudio(w http.ResponseWriter, r *http.Request) {
 			Participant: req.ContextInfo.Participant,
 		}
 	}
+
 	mediaProcessor := utils.NewMediaProcessor()
+
 	media, err := mediaProcessor.ProcessMedia(req.File, req.MimeType, req.FileName)
 	if err != nil {
 		h.logger.Error().
@@ -241,6 +250,7 @@ func (h *MessageHandler) SendAudio(w http.ResponseWriter, r *http.Request) {
 			Str("file", req.File).
 			Msg("Failed to process media")
 		h.writeError(w, http.StatusBadRequest, "media_processing_error", fmt.Sprintf("Failed to process media: %v", err))
+
 		return
 	}
 
@@ -264,6 +274,7 @@ func (h *MessageHandler) SendAudio(w http.ResponseWriter, r *http.Request) {
 func (h *MessageHandler) writeJSON(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to encode JSON response")
 	}
@@ -272,6 +283,7 @@ func (h *MessageHandler) writeJSON(w http.ResponseWriter, data interface{}) {
 func (h *MessageHandler) writeError(w http.ResponseWriter, status int, code, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+
 	if err := json.NewEncoder(w).Encode(map[string]string{
 		"error":   code,
 		"message": message,
@@ -283,6 +295,7 @@ func (h *MessageHandler) writeError(w http.ResponseWriter, status int, code, mes
 func (h *MessageHandler) writeSuccessResponse(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+
 	response := dto.NewSuccessResponse(data)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to encode success response")
@@ -302,8 +315,10 @@ func (h *MessageHandler) handleMessageError(w http.ResponseWriter, err error) {
 		default:
 			h.writeError(w, http.StatusInternalServerError, "whatsapp_error", waErr.Message)
 		}
+
 		return
 	}
+
 	h.writeError(w, http.StatusInternalServerError, "internal_error", "Internal server error")
 }
 
@@ -352,7 +367,9 @@ func (h *MessageHandler) SendVideo(w http.ResponseWriter, r *http.Request) {
 			Participant: req.ContextInfo.Participant,
 		}
 	}
+
 	mediaProcessor := utils.NewMediaProcessor()
+
 	media, err := mediaProcessor.ProcessMedia(req.File, req.MimeType, req.FileName)
 	if err != nil {
 		h.logger.Error().
@@ -361,6 +378,7 @@ func (h *MessageHandler) SendVideo(w http.ResponseWriter, r *http.Request) {
 			Str("file", req.File).
 			Msg("Failed to process media")
 		h.writeError(w, http.StatusBadRequest, "media_processing_error", fmt.Sprintf("Failed to process media: %v", err))
+
 		return
 	}
 
@@ -427,7 +445,9 @@ func (h *MessageHandler) SendDocument(w http.ResponseWriter, r *http.Request) {
 			Participant: req.ContextInfo.Participant,
 		}
 	}
+
 	mediaProcessor := utils.NewMediaProcessor()
+
 	media, err := mediaProcessor.ProcessMedia(req.File, req.MimeType, req.FileName)
 	if err != nil {
 		h.logger.Error().
@@ -436,6 +456,7 @@ func (h *MessageHandler) SendDocument(w http.ResponseWriter, r *http.Request) {
 			Str("file", req.File).
 			Msg("Failed to process media")
 		h.writeError(w, http.StatusBadRequest, "media_processing_error", fmt.Sprintf("Failed to process media: %v", err))
+
 		return
 	}
 
@@ -624,6 +645,7 @@ func (h *MessageHandler) SendReaction(w http.ResponseWriter, r *http.Request) {
 		fromMe = true
 		messageID = messageID[len("me:"):]
 	}
+
 	if req.FromMe != nil {
 		fromMe = *req.FromMe
 	}
@@ -637,6 +659,7 @@ func (h *MessageHandler) SendReaction(w http.ResponseWriter, r *http.Request) {
 			Str("message_id", req.MessageID).
 			Msg("Failed to send reaction")
 		h.handleMessageError(w, err)
+
 		return
 	}
 
@@ -744,6 +767,7 @@ func (h *MessageHandler) SendSticker(w http.ResponseWriter, r *http.Request) {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "file is required")
 		return
 	}
+
 	var contextInfo *output.MessageContextInfo
 	if req.ContextInfo != nil {
 		contextInfo = &output.MessageContextInfo{
@@ -751,7 +775,9 @@ func (h *MessageHandler) SendSticker(w http.ResponseWriter, r *http.Request) {
 			Participant: req.ContextInfo.Participant,
 		}
 	}
+
 	mediaProcessor := utils.NewMediaProcessor()
+
 	media, err := mediaProcessor.ProcessMedia(req.File, req.MimeType, req.FileName)
 	if err != nil {
 		h.logger.Error().
@@ -760,6 +786,7 @@ func (h *MessageHandler) SendSticker(w http.ResponseWriter, r *http.Request) {
 			Str("file", req.File).
 			Msg("Failed to process media")
 		h.writeError(w, http.StatusBadRequest, "media_processing_error", fmt.Sprintf("Failed to process media: %v", err))
+
 		return
 	}
 
@@ -815,6 +842,7 @@ func (h *MessageHandler) SendContactsArray(w http.ResponseWriter, r *http.Reques
 		h.writeError(w, http.StatusBadRequest, "validation_error", "contacts array is required and must not be empty")
 		return
 	}
+
 	contacts := make([]*input.ContactInfo, len(req.Contacts))
 	for i, contact := range req.Contacts {
 		contacts[i] = &input.ContactInfo{
@@ -924,6 +952,7 @@ func (h *MessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 			Msg("Failed to delete message")
 
 		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to delete message")
+
 		return
 	}
 
@@ -987,6 +1016,7 @@ func (h *MessageHandler) EditMessage(w http.ResponseWriter, r *http.Request) {
 			Msg("Failed to edit message")
 
 		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to edit message")
+
 		return
 	}
 
@@ -1044,6 +1074,7 @@ func (h *MessageHandler) MarkRead(w http.ResponseWriter, r *http.Request) {
 			Msg("Failed to mark messages as read")
 
 		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to mark messages as read")
+
 		return
 	}
 
@@ -1079,7 +1110,6 @@ func (h *MessageHandler) RequestHistorySync(w http.ResponseWriter, r *http.Reque
 	if r.Body != nil {
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			h.logger.Error().Err(err).Msg("Failed to decode request body")
-
 		}
 	}
 
@@ -1097,6 +1127,7 @@ func (h *MessageHandler) RequestHistorySync(w http.ResponseWriter, r *http.Reque
 			Msg("Failed to request history sync")
 
 		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to request history sync")
+
 		return
 	}
 

@@ -84,6 +84,7 @@ func main() {
 		logger.WithComponent("server").Info().
 			Str("address", cfg.GetServerAddress()).
 			Msg("Starting HTTP server")
+
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.WithComponent("server").Fatal().
 				Err(err).

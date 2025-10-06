@@ -204,12 +204,15 @@ func (r *SendMessageRequest) validateMedia() error {
 	if r.Media == nil {
 		return ErrMediaRequired
 	}
+
 	if r.Media.URL == "" && r.Media.Base64 == "" {
 		return ErrMediaContentRequired
 	}
+
 	if err := validators.ValidateCaption(r.Media.Caption); err != nil {
 		return err
 	}
+
 	return validators.ValidateFileName(r.Media.FileName)
 }
 
@@ -217,6 +220,7 @@ func (r *SendMessageRequest) validateLocation() error {
 	if r.Location == nil {
 		return ErrLocationRequired
 	}
+
 	return r.Location.Validate()
 }
 
@@ -224,6 +228,7 @@ func (r *SendMessageRequest) validateContact() error {
 	if r.Contact == nil {
 		return ErrContactRequired
 	}
+
 	return r.Contact.Validate()
 }
 
@@ -231,15 +236,19 @@ func (l *Location) Validate() error {
 	if err := validators.ValidateLatitude(l.Latitude); err != nil {
 		return err
 	}
+
 	if err := validators.ValidateLongitude(l.Longitude); err != nil {
 		return err
 	}
+
 	if err := validators.ValidateLocationName(l.Name); err != nil {
 		return err
 	}
+
 	if err := validators.ValidateLocationAddress(l.Address); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -247,12 +256,15 @@ func (c *ContactInfo) Validate() error {
 	if err := validators.ValidateContactName(c.Name); err != nil {
 		return err
 	}
+
 	if err := validators.ValidatePhoneNumber(c.Phone); err != nil {
 		return err
 	}
+
 	if c.Phone == "" {
 		return ErrContactPhoneRequired
 	}
+
 	return nil
 }
 
@@ -280,9 +292,10 @@ func (m *MediaData) ToInterfacesMediaData() *output.MediaData {
 	}
 
 	var data []byte
-	var err error
-	if m.Base64 != "" {
 
+	var err error
+
+	if m.Base64 != "" {
 		base64Data := m.Base64
 		if strings.Contains(base64Data, ",") {
 			parts := strings.Split(base64Data, ",")
@@ -293,11 +306,9 @@ func (m *MediaData) ToInterfacesMediaData() *output.MediaData {
 
 		data, err = base64.StdEncoding.DecodeString(base64Data)
 		if err != nil {
-
 			data = []byte{}
 		}
 	} else if m.URL != "" {
-
 		data = []byte{}
 	}
 
@@ -321,6 +332,7 @@ func (l *Location) ToInterfacesLocation() *output.Location {
 	if l == nil {
 		return nil
 	}
+
 	return &output.Location{
 		Latitude:  l.Latitude,
 		Longitude: l.Longitude,
@@ -333,6 +345,7 @@ func (c *ContactInfo) ToInterfacesContactInfo() *output.ContactInfo {
 	if c == nil {
 		return nil
 	}
+
 	return &output.ContactInfo{
 		Name:        c.Name,
 		PhoneNumber: c.Phone,

@@ -11,7 +11,6 @@ import (
 func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 			if r.URL.Path == "/health" || r.URL.Path == "/" {
 				next.ServeHTTP(w, r)
 				return
@@ -20,12 +19,10 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 			apiKey := r.Header.Get("Authorization")
 
 			if apiKey == "" || strings.HasPrefix(apiKey, "Bearer ") {
-
 				xAPIKey := r.Header.Get("X-API-Key")
 				if xAPIKey != "" {
 					apiKey = xAPIKey
 				} else if strings.HasPrefix(apiKey, "Bearer ") {
-
 					apiKey = strings.TrimPrefix(apiKey, "Bearer ")
 				}
 			}
@@ -33,11 +30,12 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 			if apiKey == "" || apiKey != cfg.APIKey {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusUnauthorized)
+
 				errorMsg := `{"error":"unauthorized","message":"invalid or missing API key. Use 'Authorization: YOUR_API_KEY' or 'X-API-Key: YOUR_API_KEY' header"}`
 				if _, err := w.Write([]byte(errorMsg)); err != nil {
-
 					log.Printf("Failed to write unauthorized response: %v", err)
 				}
+
 				return
 			}
 
@@ -76,7 +74,6 @@ func JSONMiddleware() func(http.Handler) http.Handler {
 func SecurityHeadersMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 			w.Header().Set("X-Content-Type-Options", "nosniff")
 			w.Header().Set("X-Frame-Options", "DENY")
 			w.Header().Set("X-XSS-Protection", "1; mode=block")

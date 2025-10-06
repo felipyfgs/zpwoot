@@ -20,12 +20,15 @@ func (s *Service) ValidateURL(webhookURL string) error {
 	if err != nil {
 		return fmt.Errorf("invalid webhook URL: %w", err)
 	}
+
 	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
 		return fmt.Errorf("webhook URL must use http or https scheme")
 	}
+
 	if parsedURL.Host == "" {
 		return fmt.Errorf("webhook URL must have a valid host")
 	}
+
 	if strings.Contains(parsedURL.Host, "localhost") || strings.Contains(parsedURL.Host, "127.0.0.1") {
 	}
 
@@ -33,12 +36,12 @@ func (s *Service) ValidateURL(webhookURL string) error {
 }
 func (s *Service) ValidateEvents(events []string) error {
 	if len(events) == 0 {
-
 		return nil
 	}
 
 	validEvents := s.GetValidEventTypes()
 	validEventMap := make(map[string]bool)
+
 	for _, e := range validEvents {
 		validEventMap[e] = true
 	}

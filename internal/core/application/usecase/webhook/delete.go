@@ -20,5 +20,6 @@ func (uc *DeleteUseCase) Execute(ctx context.Context, sessionID string) error {
 	if err := uc.webhookRepo.DeleteBySessionID(ctx, sessionID); err != nil {
 		return fmt.Errorf("failed to delete webhook: %w", err)
 	}
+
 	return nil
 }

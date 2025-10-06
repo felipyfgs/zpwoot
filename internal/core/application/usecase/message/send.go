@@ -28,7 +28,6 @@ func NewSendUseCase(
 }
 
 func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.SendMessageRequest) (*dto.SendMessageResponse, error) {
-
 	if sessionID == "" {
 		return nil, fmt.Errorf("session ID is required")
 	}
@@ -42,6 +41,7 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 		if err == shared.ErrSessionNotFound {
 			return nil, dto.ErrSessionNotFound
 		}
+
 		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
 
@@ -52,6 +52,7 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 	messageID := uuid.New().String()
 
 	var messageResult *output.MessageResult
+
 	switch req.Type {
 	case "text":
 		messageResult, err = uc.whatsappClient.SendTextMessage(ctx, sessionID, req.To, req.Text)
@@ -78,13 +79,12 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 				return nil, fmt.Errorf("whatsapp send error: %w", err)
 			}
 		}
+
 		return nil, fmt.Errorf("failed to send message: %w", err)
 	}
 
 	go func(ctx context.Context) {
-
 		if err := uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnected); err != nil {
-
 			fmt.Printf("Failed to update session status: %v\n", err)
 		}
 	}(ctx)
@@ -110,6 +110,7 @@ func (uc *SendUseCase) SendText(ctx context.Context, sessionID, to, text string)
 		Type: "text",
 		Text: text,
 	}
+
 	return uc.Execute(ctx, sessionID, req)
 }
 
@@ -119,6 +120,7 @@ func (uc *SendUseCase) SendMedia(ctx context.Context, sessionID, to string, medi
 		Type:  "media",
 		Media: media,
 	}
+
 	return uc.Execute(ctx, sessionID, req)
 }
 
@@ -128,6 +130,7 @@ func (uc *SendUseCase) SendLocation(ctx context.Context, sessionID, to string, l
 		Type:     "location",
 		Location: location,
 	}
+
 	return uc.Execute(ctx, sessionID, req)
 }
 
@@ -137,5 +140,6 @@ func (uc *SendUseCase) SendContact(ctx context.Context, sessionID, to string, co
 		Type:    "contact",
 		Contact: contact,
 	}
+
 	return uc.Execute(ctx, sessionID, req)
 }

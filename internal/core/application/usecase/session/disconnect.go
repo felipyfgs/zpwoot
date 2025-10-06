@@ -26,7 +26,6 @@ func NewDisconnectUseCase(
 }
 
 func (uc *DisconnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.SessionStatusResponse, error) {
-
 	if sessionID == "" {
 		return nil, fmt.Errorf("session ID is required")
 	}
@@ -36,6 +35,7 @@ func (uc *DisconnectUseCase) Execute(ctx context.Context, sessionID string) (*dt
 		if err == shared.ErrSessionNotFound {
 			return nil, dto.ErrSessionNotFound
 		}
+
 		return nil, fmt.Errorf("failed to get session from domain: %w", err)
 	}
 
@@ -53,18 +53,20 @@ func (uc *DisconnectUseCase) Execute(ctx context.Context, sessionID string) (*dt
 		if waErr, ok := err.(*output.WhatsAppError); ok {
 			switch waErr.Code {
 			case "SESSION_NOT_FOUND":
-
 				domainSession.SetDisconnected()
+
 				_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
+
 				return &dto.SessionStatusResponse{
 					ID:        sessionID,
 					Status:    string(session.StatusDisconnected),
 					Connected: false,
 				}, nil
 			case "ALREADY_DISCONNECTED":
-
 				domainSession.SetDisconnected()
+
 				_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
+
 				return &dto.SessionStatusResponse{
 					ID:        sessionID,
 					Status:    string(session.StatusDisconnected),
@@ -74,10 +76,12 @@ func (uc *DisconnectUseCase) Execute(ctx context.Context, sessionID string) (*dt
 				return nil, fmt.Errorf("whatsapp disconnection error: %w", err)
 			}
 		}
+
 		return nil, fmt.Errorf("failed to disconnect WhatsApp session: %w", err)
 	}
 
 	domainSession.SetDisconnected()
+
 	err = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
 	if err != nil {
 
@@ -91,7 +95,6 @@ func (uc *DisconnectUseCase) Execute(ctx context.Context, sessionID string) (*dt
 }
 
 func (uc *DisconnectUseCase) ExecuteForce(ctx context.Context, sessionID string) (*dto.SessionStatusResponse, error) {
-
 	if sessionID == "" {
 		return nil, fmt.Errorf("session ID is required")
 	}
@@ -101,12 +104,14 @@ func (uc *DisconnectUseCase) ExecuteForce(ctx context.Context, sessionID string)
 		if err == shared.ErrSessionNotFound {
 			return nil, dto.ErrSessionNotFound
 		}
+
 		return nil, fmt.Errorf("failed to get session from domain: %w", err)
 	}
 
 	_ = uc.whatsappClient.DisconnectSession(ctx, sessionID)
 
 	domainSession.SetDisconnected()
+
 	_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
 
 	return &dto.SessionStatusResponse{

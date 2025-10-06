@@ -49,6 +49,7 @@ func (db *Database) Close() error {
 	if db.DB != nil {
 		return db.DB.Close()
 	}
+
 	return nil
 }
 

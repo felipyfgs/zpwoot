@@ -36,7 +36,6 @@ func shortCaller(file string, line int) string {
 }
 
 func extractPackageFromFile(file string) string {
-
 	if strings.Contains(file, "/workspaces/zpwoot/") {
 		parts := strings.Split(file, "/workspaces/zpwoot/")
 		if len(parts) > 1 {
@@ -53,6 +52,7 @@ func extractPackageFromFile(file string) string {
 				if lastPart == "zpwoot" || strings.HasPrefix(dir, "cmd/") {
 					return "main"
 				}
+
 				return lastPart
 			}
 		}
@@ -74,11 +74,9 @@ func extractPackageFromFile(file string) string {
 type packageHook struct{}
 
 func (h packageHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
-
 	for depth := 3; depth <= 6; depth++ {
 		_, file, _, ok := runtime.Caller(depth)
 		if ok {
-
 			if strings.Contains(file, "/logger/") ||
 				strings.Contains(file, "/zerolog/") ||
 				strings.Contains(file, "/runtime/") {
@@ -97,7 +95,6 @@ func (h packageHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
 }
 
 func Init(level string) {
-
 	logLevel := parseLogLevel(level)
 
 	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
@@ -122,7 +119,6 @@ func Init(level string) {
 }
 
 func InitWithConfig(cfg *config.Config) {
-
 	logLevel := parseLogLevel(cfg.LogLevel)
 
 	zerolog.CallerMarshalFunc = func(pc uintptr, file string, line int) string {
@@ -130,6 +126,7 @@ func InitWithConfig(cfg *config.Config) {
 	}
 
 	var output *os.File
+
 	switch LogOutput(strings.ToLower(cfg.LogOutput)) {
 	case OutputStderr:
 		output = os.Stderr
@@ -140,9 +137,9 @@ func InitWithConfig(cfg *config.Config) {
 	}
 
 	var logger zerolog.Logger
+
 	switch LogFormat(strings.ToLower(cfg.LogFormat)) {
 	case FormatJSON:
-
 		logger = zerolog.New(output).
 			Level(logLevel).
 			Hook(packageHook{}).
@@ -153,7 +150,6 @@ func InitWithConfig(cfg *config.Config) {
 			Str("version", "1.0.0").
 			Logger()
 	case FormatConsole:
-
 		logger = zerolog.New(zerolog.ConsoleWriter{
 			Out:        output,
 			TimeFormat: time.RFC3339,
@@ -165,7 +161,6 @@ func InitWithConfig(cfg *config.Config) {
 			Caller().
 			Logger()
 	default:
-
 		logger = zerolog.New(zerolog.ConsoleWriter{
 			Out:        output,
 			TimeFormat: time.RFC3339,
@@ -244,6 +239,7 @@ func (l *Logger) WithFields(fields map[string]interface{}) *Logger {
 	for key, value := range fields {
 		logContext = logContext.Interface(key, value)
 	}
+
 	return &Logger{
 		logger: logContext.Logger(),
 	}
@@ -370,6 +366,7 @@ func WithFields(fields map[string]interface{}) *Logger {
 	for key, value := range fields {
 		logContext = logContext.Interface(key, value)
 	}
+
 	return &Logger{
 		logger: logContext.Logger(),
 	}

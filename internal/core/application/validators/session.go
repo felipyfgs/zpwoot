@@ -27,6 +27,7 @@ func ValidateSessionName(name string) error {
 	if length < SessionNameMinLength {
 		return fmt.Errorf("session name must be at least %d characters", SessionNameMinLength)
 	}
+
 	if length > SessionNameMaxLength {
 		return fmt.Errorf("session name must not exceed %d characters", SessionNameMaxLength)
 	}

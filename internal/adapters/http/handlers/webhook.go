@@ -46,12 +46,15 @@ func (h *WebhookHandler) SetWebhook(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to decode webhook request")
 		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeBadRequest, "Invalid JSON body")
+
 		return
 	}
+
 	response, err := h.webhookUseCases.Upsert(r.Context(), sessionID, &req)
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to set webhook")
 		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, err.Error())
+
 		return
 	}
 
@@ -83,11 +86,14 @@ func (h *WebhookHandler) GetWebhook(w http.ResponseWriter, r *http.Request) {
 	response, err := h.webhookUseCases.Get(r.Context(), sessionID)
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to get webhook")
+
 		if err.Error() == "webhook not found" {
 			h.writeError(w, http.StatusNotFound, dto.ErrorCodeNotFound, "Webhook not found for this session")
 			return
 		}
+
 		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, err.Error())
+
 		return
 	}
 
@@ -114,11 +120,14 @@ func (h *WebhookHandler) DeleteWebhook(w http.ResponseWriter, r *http.Request) {
 	err := h.webhookUseCases.Delete(r.Context(), sessionID)
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to delete webhook")
+
 		if err.Error() == "webhook not found" {
 			h.writeError(w, http.StatusNotFound, dto.ErrorCodeNotFound, "Webhook not found for this session")
 			return
 		}
+
 		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, err.Error())
+
 		return
 	}
 
@@ -143,6 +152,7 @@ func (h *WebhookHandler) ListEvents(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.logger.Error().Err(err).Msg("Failed to list webhook events")
 		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, err.Error())
+
 		return
 	}
 
@@ -151,6 +161,7 @@ func (h *WebhookHandler) ListEvents(w http.ResponseWriter, r *http.Request) {
 func (h *WebhookHandler) writeJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
+
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to encode JSON response")
 	}

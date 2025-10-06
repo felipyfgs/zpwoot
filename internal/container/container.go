@@ -49,24 +49,27 @@ func (c *Container) Init() error {
 }
 
 func (c *Container) InitWithContext(ctx context.Context) error {
-
 	logger.Init(c.config.LogLevel)
 	c.logger = logger.NewFromAppConfig(c.config)
 	c.logger.Info().Msg("Initializing zpwoot container")
 
 	c.logger.Info().Msg("Connecting to database")
+
 	db, err := database.New(c.config, c.logger)
 	if err != nil {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
+
 	c.database = db
 	c.logger.Info().Msg("Database connection established")
 
 	c.logger.Info().Msg("Running database migrations")
+
 	c.migrator = database.NewMigrator(db, c.logger)
 	if err := c.migrator.RunMigrations(); err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
+
 	c.logger.Info().Msg("Database migrations completed")
 
 	c.logger.Info().Msg("Initializing domain services")
@@ -86,6 +89,7 @@ func (c *Container) InitWithContext(ctx context.Context) error {
 	c.webhookUseCases = c.initWebhookUseCases()
 
 	c.logger.Info().Msg("Container initialization completed successfully")
+
 	return nil
 }
 
@@ -111,6 +115,7 @@ func (c *Container) Stop(ctx context.Context) error {
 	if c.database != nil {
 		return c.database.Close()
 	}
+
 	return nil
 }
 

@@ -29,6 +29,7 @@ func (m *UseCases) SendTextMessage(ctx context.Context, sessionID, to, text stri
 		Text: text,
 	}
 	_, err := m.send.Execute(ctx, sessionID, req)
+
 	return err
 }
 
@@ -39,6 +40,7 @@ func (m *UseCases) SendMediaMessage(ctx context.Context, sessionID, to string, m
 		Media: media,
 	}
 	_, err := m.send.Execute(ctx, sessionID, req)
+
 	return err
 }
 
@@ -53,6 +55,7 @@ func (m *UseCases) SendLocationMessage(ctx context.Context, sessionID, to string
 		},
 	}
 	_, err := m.send.Execute(ctx, sessionID, req)
+
 	return err
 }
 
@@ -63,6 +66,7 @@ func (m *UseCases) SendContactMessage(ctx context.Context, sessionID, to string,
 		Contact: contact,
 	}
 	_, err := m.send.Execute(ctx, sessionID, req)
+
 	return err
 }
 

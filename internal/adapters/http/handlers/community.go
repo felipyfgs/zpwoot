@@ -25,23 +25,28 @@ func NewCommunityHandler(communityService input.CommunityService, logger *logger
 }
 func (h *CommunityHandler) writeJSON(w http.ResponseWriter, data interface{}) error {
 	w.Header().Set("Content-Type", "application/json")
+
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to encode JSON response")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
+
 		return err
 	}
+
 	return nil
 }
 func (h *CommunityHandler) validateCommunityRequest(w http.ResponseWriter, sessionID, communityJID string) bool {
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
 		http.Error(w, "Session ID is required", http.StatusBadRequest)
+
 		return false
 	}
 
 	if communityJID == "" {
 		h.logger.Error().Msg("Community JID is required")
 		http.Error(w, "Community JID is required", http.StatusBadRequest)
+
 		return false
 	}
 
@@ -70,6 +75,7 @@ func (h *CommunityHandler) handleGroupLinkOperation(
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to decode request body")
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+
 		return
 	}
 
@@ -88,6 +94,7 @@ func (h *CommunityHandler) handleGroupLinkOperation(
 			Str("group_jid", groupJID).
 			Msgf("Failed to %s group", operation)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
@@ -124,6 +131,7 @@ func (h *CommunityHandler) ListCommunities(w http.ResponseWriter, r *http.Reques
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
 		http.Error(w, "Session ID is required", http.StatusBadRequest)
+
 		return
 	}
 
@@ -131,6 +139,7 @@ func (h *CommunityHandler) ListCommunities(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to list communities")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
@@ -158,12 +167,14 @@ func (h *CommunityHandler) GetCommunityInfo(w http.ResponseWriter, r *http.Reque
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
 		http.Error(w, "Session ID is required", http.StatusBadRequest)
+
 		return
 	}
 
 	if communityJID == "" {
 		h.logger.Error().Msg("Community JID is required")
 		http.Error(w, "Community JID is required", http.StatusBadRequest)
+
 		return
 	}
 
@@ -171,6 +182,7 @@ func (h *CommunityHandler) GetCommunityInfo(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Str("community_jid", communityJID).Msg("Failed to get community info")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
@@ -195,6 +207,7 @@ func (h *CommunityHandler) CreateCommunity(w http.ResponseWriter, r *http.Reques
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
 		http.Error(w, "Session ID is required", http.StatusBadRequest)
+
 		return
 	}
 
@@ -202,6 +215,7 @@ func (h *CommunityHandler) CreateCommunity(w http.ResponseWriter, r *http.Reques
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to decode request body")
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+
 		return
 	}
 
@@ -209,10 +223,12 @@ func (h *CommunityHandler) CreateCommunity(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to create community")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
+
 	if err := h.writeJSON(w, community); err != nil {
 		return
 	}
@@ -272,12 +288,14 @@ func (h *CommunityHandler) GetSubGroups(w http.ResponseWriter, r *http.Request) 
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
 		http.Error(w, "Session ID is required", http.StatusBadRequest)
+
 		return
 	}
 
 	if communityJID == "" {
 		h.logger.Error().Msg("Community JID is required")
 		http.Error(w, "Community JID is required", http.StatusBadRequest)
+
 		return
 	}
 
@@ -285,6 +303,7 @@ func (h *CommunityHandler) GetSubGroups(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Str("community_jid", communityJID).Msg("Failed to get sub groups")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
@@ -311,12 +330,14 @@ func (h *CommunityHandler) GetParticipants(w http.ResponseWriter, r *http.Reques
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
 		http.Error(w, "Session ID is required", http.StatusBadRequest)
+
 		return
 	}
 
 	if communityJID == "" {
 		h.logger.Error().Msg("Community JID is required")
 		http.Error(w, "Community JID is required", http.StatusBadRequest)
+
 		return
 	}
 
@@ -324,6 +345,7 @@ func (h *CommunityHandler) GetParticipants(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Str("community_jid", communityJID).Msg("Failed to get participants")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 

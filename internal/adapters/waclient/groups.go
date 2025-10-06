@@ -153,12 +153,15 @@ func (gs *GroupService) CreateGroup(ctx context.Context, sessionID string, name 
 	if len(participants) < 1 {
 		return nil, errors.New("at least one participant is required")
 	}
+
 	participantJIDs := make([]types.JID, len(participants))
+
 	for i, phone := range participants {
 		jid, err := parseJID(phone)
 		if err != nil {
 			return nil, fmt.Errorf("invalid participant phone %s: %w", phone, err)
 		}
+
 		participantJIDs[i] = jid
 	}
 
@@ -219,14 +222,18 @@ func (gs *GroupService) UpdateGroupParticipants(ctx context.Context, sessionID s
 	if len(participants) < 1 {
 		return errors.New("at least one participant is required")
 	}
+
 	participantJIDs := make([]types.JID, len(participants))
+
 	for i, phone := range participants {
 		pjid, err := parseJID(phone)
 		if err != nil {
 			return fmt.Errorf("invalid participant phone %s: %w", phone, err)
 		}
+
 		participantJIDs[i] = pjid
 	}
+
 	var participantChange whatsmeow.ParticipantChange
 	switch action {
 	case "add":
@@ -334,6 +341,7 @@ func (gs *GroupService) SetDisappearingTimer(ctx context.Context, sessionID stri
 	if err != nil {
 		return fmt.Errorf("invalid group JID: %w", err)
 	}
+
 	var timer time.Duration
 	switch duration {
 	case "24h":
@@ -369,6 +377,7 @@ func (gs *GroupService) SetGroupPhoto(ctx context.Context, sessionID string, gro
 	if len(imageData) == 0 {
 		return "", errors.New("image data is required")
 	}
+
 	if len(imageData) < 3 || imageData[0] != 0xFF || imageData[1] != 0xD8 || imageData[2] != 0xFF {
 		return "", errors.New("image must be in JPEG format")
 	}
@@ -399,14 +408,15 @@ func (gs *GroupService) RemoveGroupPhoto(ctx context.Context, sessionID string, 
 	return nil
 }
 func parseGroupJID(groupJID string) (types.JID, error) {
-
 	if strings.Contains(groupJID, "@g.us") {
 		jid, err := types.ParseJID(groupJID)
 		if err != nil {
 			return types.JID{}, fmt.Errorf("invalid group JID: %w", err)
 		}
+
 		return jid, nil
 	}
+
 	jid, err := types.ParseJID(groupJID + "@g.us")
 	if err != nil {
 		return types.JID{}, fmt.Errorf("invalid group JID: %w", err)
@@ -415,12 +425,12 @@ func parseGroupJID(groupJID string) (types.JID, error) {
 	return jid, nil
 }
 func decodeBase64Image(imageStr string) ([]byte, error) {
-
 	if strings.HasPrefix(imageStr, "data:") {
 		parts := strings.SplitN(imageStr, ",", 2)
 		if len(parts) != 2 {
 			return nil, errors.New("invalid base64 data URI format")
 		}
+
 		imageStr = parts[1]
 	}
 

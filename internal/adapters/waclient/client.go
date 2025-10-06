@@ -29,6 +29,7 @@ func (w *WAClientAdapter) CreateSession(ctx context.Context, sessionID string) e
 		SessionID: sessionID,
 	}
 	_, err := w.client.CreateSession(ctx, config)
+
 	return err
 }
 
@@ -69,6 +70,7 @@ func (w *WAClientAdapter) IsConnected(ctx context.Context, sessionID string) boo
 	if err != nil {
 		return false
 	}
+
 	return client.IsConnected()
 }
 
@@ -77,6 +79,7 @@ func (w *WAClientAdapter) IsLoggedIn(ctx context.Context, sessionID string) bool
 	if err != nil {
 		return false
 	}
+
 	return client.IsLoggedIn()
 }
 
@@ -113,6 +116,7 @@ func (w *WAClientAdapter) PairPhone(ctx context.Context, sessionID string, phone
 
 func (w *WAClientAdapter) SendTextMessage(ctx context.Context, sessionID, to, text string) (*output.MessageResult, error) {
 	messageSender := NewSender(w.client)
+
 	resp, err := messageSender.SendTextMessage(ctx, sessionID, to, text, nil)
 	if err != nil {
 		return nil, w.convertError(err)
@@ -127,6 +131,7 @@ func (w *WAClientAdapter) SendTextMessage(ctx context.Context, sessionID, to, te
 
 func (w *WAClientAdapter) SendMediaMessage(ctx context.Context, sessionID, to string, media *output.MediaData) (*output.MessageResult, error) {
 	messageSender := NewSender(w.client)
+
 	resp, err := messageSender.SendMediaMessage(ctx, sessionID, to, media)
 	if err != nil {
 		return nil, w.convertError(err)
@@ -141,6 +146,7 @@ func (w *WAClientAdapter) SendMediaMessage(ctx context.Context, sessionID, to st
 
 func (w *WAClientAdapter) SendLocationMessage(ctx context.Context, sessionID, to string, location *output.Location) (*output.MessageResult, error) {
 	messageSender := NewSender(w.client)
+
 	err := messageSender.SendLocationMessage(ctx, sessionID, to, location.Latitude, location.Longitude, location.Name)
 	if err != nil {
 		return nil, w.convertError(err)
@@ -159,6 +165,7 @@ func (w *WAClientAdapter) SendContactMessage(ctx context.Context, sessionID, to 
 		Name:  contact.Name,
 		Phone: contact.PhoneNumber,
 	}
+
 	err := messageSender.SendContactMessage(ctx, sessionID, to, contactInfo)
 	if err != nil {
 		return nil, w.convertError(err)
@@ -190,7 +197,6 @@ func (w *WAClientAdapter) convertError(err error) error {
 	case ErrConnectionFailed:
 		return output.ErrConnectionFailed
 	default:
-
 		return &output.WhatsAppError{
 			Code:    "INTERNAL_ERROR",
 			Message: err.Error(),
@@ -204,20 +210,22 @@ func generateMessageID() string {
 
 func randomString(length int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
 	b := make([]byte, length)
 
 	randomBytes := make([]byte, length)
 	if _, err := rand.Read(randomBytes); err != nil {
-
 		for i := range b {
 			b[i] = charset[time.Now().UnixNano()%int64(len(charset))]
 		}
+
 		return string(b)
 	}
 
 	for i := range b {
 		b[i] = charset[randomBytes[i]%byte(len(charset))]
 	}
+
 	return string(b)
 }
 
@@ -242,6 +250,7 @@ func (s *Manager) CreateSession(ctx context.Context, sessionID string) error {
 		SessionID: sessionID,
 	}
 	_, err := s.client.CreateSession(ctx, config)
+
 	return err
 }
 
@@ -282,6 +291,7 @@ func (s *Manager) IsConnected(ctx context.Context, sessionID string) bool {
 	if err != nil {
 		return false
 	}
+
 	return client.IsConnected()
 }
 
@@ -290,6 +300,7 @@ func (s *Manager) IsLoggedIn(ctx context.Context, sessionID string) bool {
 	if err != nil {
 		return false
 	}
+
 	return client.IsLoggedIn()
 }
 

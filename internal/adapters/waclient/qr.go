@@ -71,6 +71,7 @@ func (wac *WAClient) RefreshQRCode(ctx context.Context, sessionID string) (*QREv
 		if err = wac.DisconnectSession(ctx, sessionID); err != nil {
 			wac.logger.Warn().Err(err).Str("session_id", sessionID).Msg("Failed to disconnect session for QR refresh")
 		}
+
 		wac.waitBriefly(ctx)
 	}
 
@@ -88,11 +89,14 @@ func (wac *WAClient) CleanupExpiredQRCodes(ctx context.Context) error {
 	}
 
 	cleanedCount := 0
+
 	for _, client := range sessions {
 		if wac.isQRCodeExpired(client) {
 			wac.clearQRCode(client)
 			wac.updateSessionStatus(ctx, client)
+
 			cleanedCount++
+
 			wac.logger.Debug().Str("session_name", client.Name).Msg("Cleaned expired QR code for session")
 		}
 	}

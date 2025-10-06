@@ -145,7 +145,6 @@ func (ns *NewsletterService) FollowNewsletter(ctx context.Context, sessionID str
 	}
 
 	if req.NewsletterJID != "" {
-
 		jid, err := parseJID(req.NewsletterJID)
 		if err != nil {
 			return fmt.Errorf("invalid newsletter JID: %w", err)
@@ -160,6 +159,7 @@ func (ns *NewsletterService) FollowNewsletter(ctx context.Context, sessionID str
 		if err != nil {
 			return fmt.Errorf("failed to get newsletter info with invite: %w", err)
 		}
+
 		err = client.WAClient.FollowNewsletter(newsletter.ID)
 		if err != nil {
 			return fmt.Errorf("failed to follow newsletter: %w", err)
@@ -206,14 +206,15 @@ func (ns *NewsletterService) GetMessages(ctx context.Context, sessionID string, 
 	if err != nil {
 		return nil, fmt.Errorf("invalid newsletter JID: %w", err)
 	}
+
 	params := &whatsmeow.GetNewsletterMessagesParams{
 		Count: 50,
 	}
 	if req.Count > 0 {
 		params.Count = req.Count
 	}
-	if req.Before != "" {
 
+	if req.Before != "" {
 		if beforeID, err := strconv.Atoi(req.Before); err == nil {
 			params.Before = beforeID
 		}
@@ -259,9 +260,10 @@ func (ns *NewsletterService) MarkViewed(ctx context.Context, sessionID string, n
 	if err != nil {
 		return fmt.Errorf("invalid newsletter JID: %w", err)
 	}
-	serverIDs := make([]types.MessageServerID, len(req.ServerIDs))
-	for i, serverIDStr := range req.ServerIDs {
 
+	serverIDs := make([]types.MessageServerID, len(req.ServerIDs))
+
+	for i, serverIDStr := range req.ServerIDs {
 		if serverID, err := strconv.Atoi(serverIDStr); err == nil {
 			serverIDs[i] = serverID
 		}
@@ -288,10 +290,12 @@ func (ns *NewsletterService) SendReaction(ctx context.Context, sessionID string,
 	if err != nil {
 		return fmt.Errorf("invalid newsletter JID: %w", err)
 	}
+
 	serverIDInt, err := strconv.Atoi(req.ServerID)
 	if err != nil {
 		return fmt.Errorf("invalid server ID: %w", err)
 	}
+
 	serverID := serverIDInt
 	messageID := req.MessageID
 

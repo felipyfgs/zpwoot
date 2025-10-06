@@ -25,10 +25,10 @@ func NewListUseCase(
 }
 
 func (uc *ListUseCase) Execute(ctx context.Context, pagination *dto.PaginationRequest) (*dto.PaginationResponse, error) {
-
 	if pagination == nil {
 		pagination = &dto.PaginationRequest{Limit: 20, Offset: 0}
 	}
+
 	pagination.Validate()
 
 	domainSessions, err := uc.sessionService.List(ctx, pagination.Limit, pagination.Offset)
@@ -37,8 +37,8 @@ func (uc *ListUseCase) Execute(ctx context.Context, pagination *dto.PaginationRe
 	}
 
 	sessionResponses := make([]dto.SessionListInfo, len(domainSessions))
-	for i, domainSession := range domainSessions {
 
+	for i, domainSession := range domainSessions {
 		sessionResponse := dto.ToListInfo(domainSession)
 
 		if uc.whatsappClient != nil {
@@ -46,6 +46,7 @@ func (uc *ListUseCase) Execute(ctx context.Context, pagination *dto.PaginationRe
 			if err == nil && waStatus != nil {
 				sessionResponse.Connected = waStatus.Connected
 				sessionResponse.DeviceJID = waStatus.DeviceJID
+
 				if waStatus.Connected {
 					sessionResponse.Status = "connected"
 				} else if waStatus.LoggedIn {
@@ -53,9 +54,11 @@ func (uc *ListUseCase) Execute(ctx context.Context, pagination *dto.PaginationRe
 				} else {
 					sessionResponse.Status = "qr_code"
 				}
+
 				if !waStatus.ConnectedAt.IsZero() {
 					sessionResponse.ConnectedAt = &waStatus.ConnectedAt
 				}
+
 				if !waStatus.LastSeen.IsZero() {
 					sessionResponse.LastSeen = &waStatus.LastSeen
 				}
@@ -80,7 +83,6 @@ func (uc *ListUseCase) Execute(ctx context.Context, pagination *dto.PaginationRe
 }
 
 func (uc *ListUseCase) ExecuteSimple(ctx context.Context) ([]*dto.SessionListResponse, error) {
-
 	pagination := &dto.PaginationRequest{Limit: 100, Offset: 0}
 
 	result, err := uc.Execute(ctx, pagination)
@@ -97,7 +99,6 @@ func (uc *ListUseCase) ExecuteSimple(ctx context.Context) ([]*dto.SessionListRes
 }
 
 func (uc *ListUseCase) ExecuteWithFilter(ctx context.Context, filter *SessionFilter, pagination *dto.PaginationRequest) (*dto.PaginationResponse, error) {
-
 	return uc.Execute(ctx, pagination)
 }
 

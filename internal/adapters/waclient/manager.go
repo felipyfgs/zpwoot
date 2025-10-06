@@ -58,18 +58,20 @@ func NewWAClient(container *sqlstore.Container, logger *logger.Logger, sessionRe
 		logger:      logger,
 		sessionRepo: sessionRepo,
 	}
+
 	if webhookSender != nil && webhookRepo != nil {
 		eventHandler := NewDefaultEventHandler(logger, webhookSender, webhookRepo)
 		wac.SetEventHandler(eventHandler)
 	}
 
 	go wac.loadSessionsFromDatabase()
+
 	return wac
 }
 
 func (wac *WAClient) loadSessionsFromDatabase() {
-
 	ctx := context.Background()
+
 	sessions, err := wac.sessionRepo.List(ctx, 1000, 0)
 	if err != nil {
 		wac.logger.Error().Err(err).Msg("Failed to load sessions from database")
@@ -112,8 +114,8 @@ func (wac *WAClient) autoReconnect(client *Client) {
 		client.Status = session.StatusDisconnected
 	} else {
 		wac.logger.Debug().Str("session_id", client.SessionID).Msg("Auto-reconnected")
-
 	}
+
 	wac.updateSessionStatus(client.ctx, client)
 }
 
@@ -151,6 +153,7 @@ func (wac *WAClient) createClient(ctx context.Context, sess *session.Session, de
 	}
 
 	client.EventHandler = waClient.AddEventHandler(wac.createEventHandler(client))
+
 	return client
 }
 
@@ -158,6 +161,7 @@ func getTimeValue(t *time.Time) time.Time {
 	if t == nil {
 		return time.Time{}
 	}
+
 	return *t
 }
 
@@ -169,11 +173,13 @@ func (wac *WAClient) getOrCreateDeviceStore(ctx context.Context, deviceJID strin
 			if err == nil {
 				return deviceStore
 			}
+
 			wac.logger.Warn().Err(err).Str("jid", deviceJID).Msg("Failed to get device by JID, creating new one")
 		} else {
 			wac.logger.Warn().Err(err).Str("jid", deviceJID).Msg("Failed to parse JID, creating new device")
 		}
 	}
+
 	return wac.container.NewDevice()
 }
 
@@ -199,6 +205,7 @@ func (wac *WAClient) CreateSession(ctx context.Context, config *SessionConfig) (
 	wac.sessions[config.SessionID] = client
 
 	wac.logger.Info().Str("session_id", config.SessionID).Msg("WhatsApp session initialized")
+
 	return client, nil
 }
 
@@ -210,6 +217,7 @@ func (wac *WAClient) GetSession(ctx context.Context, sessionID string) (*Client,
 	if !exists {
 		return nil, ErrSessionNotFound
 	}
+
 	return client, nil
 }
 
@@ -222,6 +230,7 @@ func (wac *WAClient) GetSessionByName(ctx context.Context, name string) (*Client
 			return client, nil
 		}
 	}
+
 	return nil, ErrSessionNotFound
 }
 
@@ -233,6 +242,7 @@ func (wac *WAClient) ListSessions(ctx context.Context) ([]*Client, error) {
 	for _, client := range wac.sessions {
 		sessions = append(sessions, client)
 	}
+
 	return sessions, nil
 }
 
@@ -243,6 +253,7 @@ func (wac *WAClient) ConnectSession(ctx context.Context, sessionID string) error
 		if dbErr != nil {
 			return fmt.Errorf("session not found: %w", dbErr)
 		}
+
 		client, err = wac.recreateClient(ctx, sess)
 		if err != nil {
 			return fmt.Errorf("failed to recreate client: %w", err)
@@ -259,11 +270,12 @@ func (wac *WAClient) ConnectSession(ctx context.Context, sessionID string) error
 	wac.updateSessionStatus(ctx, client)
 
 	if client.WAClient.Store.ID == nil {
-
 		if err = client.WAClient.Connect(); err != nil {
 			wac.logger.Error().Err(err).Msg("Failed to connect client")
+
 			client.Status = session.StatusError
 			wac.updateSessionStatus(ctx, client)
+
 			return fmt.Errorf("failed to connect: %w", err)
 		}
 
@@ -272,6 +284,7 @@ func (wac *WAClient) ConnectSession(ctx context.Context, sessionID string) error
 		if err = client.WAClient.Connect(); err != nil {
 			client.Status = session.StatusError
 			wac.updateSessionStatus(ctx, client)
+
 			return fmt.Errorf("failed to reconnect: %w", err)
 		}
 	}
@@ -352,6 +365,7 @@ func (wac *WAClient) LogoutSession(ctx context.Context, sessionID string) error 
 	}
 
 	wac.logger.Info().Str("session_id", client.SessionID).Msg("Session logged out (device unlinked from WhatsApp)")
+
 	return nil
 }
 
@@ -372,6 +386,7 @@ func (wac *WAClient) DeleteSession(ctx context.Context, sessionID string) error 
 		} else {
 			client.WAClient.Disconnect()
 		}
+
 		client.cancel()
 	}
 
@@ -379,6 +394,7 @@ func (wac *WAClient) DeleteSession(ctx context.Context, sessionID string) error 
 	delete(wac.sessions, sessionID)
 
 	wac.logger.Info().Str("session_id", sessionID).Msg("Session deleted")
+
 	return nil
 }
 
@@ -460,6 +476,7 @@ func (wac *WAClient) handleQREvent(client *Client, evt *events.QR) {
 		wac.logger.Error().
 			Str("session_id", client.SessionID).
 			Msg("No QR codes received")
+
 		return
 	}
 
@@ -471,12 +488,12 @@ func (wac *WAClient) handleQREvent(client *Client, evt *events.QR) {
 
 func (wac *WAClient) processAllQRCodesFromEvent(ctx context.Context, client *Client, codes []string) {
 	for i, code := range codes {
-
 		if client.Status != session.StatusQRCode {
 			wac.logger.Info().
 				Str("session_id", client.SessionID).
 				Int("qr_number", i+1).
 				Msg("QR processing stopped - client status changed")
+
 			return
 		}
 
@@ -523,6 +540,7 @@ func (wac *WAClient) processAllQRCodesFromEvent(ctx context.Context, client *Cli
 			wac.logger.Info().
 				Str("session_id", client.SessionID).
 				Msg("QR processing canceled")
+
 			return
 		}
 	}
@@ -645,9 +663,11 @@ func (wac *WAClient) updateSessionStatus(ctx context.Context, client *Client) {
 	if !client.QRExpiresAt.IsZero() {
 		sess.QRCodeExpiresAt = &client.QRExpiresAt
 	}
+
 	if !client.ConnectedAt.IsZero() {
 		sess.ConnectedAt = &client.ConnectedAt
 	}
+
 	if !client.LastSeen.IsZero() {
 		sess.LastSeen = &client.LastSeen
 	}
@@ -656,7 +676,6 @@ func (wac *WAClient) updateSessionStatus(ctx context.Context, client *Client) {
 	defer cancel()
 
 	if err := wac.sessionRepo.Update(dbCtx, sess); err != nil {
-
 		if !errors.Is(err, context.Canceled) {
 			wac.logger.Error().Err(err).Str("session_id", client.SessionID).Str("device_jid", deviceJID).Msg("Failed to update session status")
 		}
@@ -669,6 +688,7 @@ func NewWAStoreContainer(db *sqlx.DB, logger *logger.Logger, dbURL string) *sqls
 		logger.Error().
 			Err(err).
 			Msg("Failed to create WhatsApp store container")
+
 		return nil
 	}
 
@@ -676,7 +696,6 @@ func NewWAStoreContainer(db *sqlx.DB, logger *logger.Logger, dbURL string) *sqls
 }
 
 func maskDBURL(dbURL string) string {
-
 	if dbURL == "" {
 		return ""
 	}

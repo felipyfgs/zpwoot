@@ -29,6 +29,7 @@ func (cs *CommunityService) ListCommunities(ctx context.Context, sessionID strin
 	if !client.IsConnected() {
 		return nil, ErrNotConnected
 	}
+
 	groups, err := client.WAClient.GetJoinedGroups(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get joined groups: %w", err)
@@ -39,7 +40,6 @@ func (cs *CommunityService) ListCommunities(ctx context.Context, sessionID strin
 	}
 
 	for _, group := range groups {
-
 		if group.IsParent {
 			community := dto.CommunityInfo{
 				JID:               group.JID.String(),
@@ -50,6 +50,7 @@ func (cs *CommunityService) ListCommunities(ctx context.Context, sessionID strin
 				LinkedGroupsCount: 0,
 				CreatedAt:         group.GroupCreated.Unix(),
 			}
+
 			if client.WAClient.Store.ID != nil {
 				for _, participant := range group.Participants {
 					if participant.JID.String() == client.WAClient.Store.ID.String() {
@@ -98,6 +99,7 @@ func (cs *CommunityService) GetCommunityInfo(ctx context.Context, sessionID stri
 		LinkedGroupsCount: 0,
 		CreatedAt:         group.GroupCreated.Unix(),
 	}
+
 	if client.WAClient.Store.ID != nil {
 		for _, participant := range group.Participants {
 			if participant.JID.String() == client.WAClient.Store.ID.String() {
@@ -124,14 +126,18 @@ func (cs *CommunityService) CreateCommunity(ctx context.Context, sessionID strin
 	if req.Name == "" {
 		return nil, fmt.Errorf("community name is required")
 	}
+
 	participantJIDs := make([]types.JID, len(req.Participants))
+
 	for i, phone := range req.Participants {
 		jid, err := parseJID(phone)
 		if err != nil {
 			return nil, fmt.Errorf("invalid participant phone %s: %w", phone, err)
 		}
+
 		participantJIDs[i] = jid
 	}
+
 	createReq := whatsmeow.ReqCreateGroup{
 		Name:         req.Name,
 		Participants: participantJIDs,
@@ -237,6 +243,7 @@ func (cs *CommunityService) GetParticipants(ctx context.Context, sessionID strin
 	if err != nil {
 		return nil, fmt.Errorf("invalid community JID: %w", err)
 	}
+
 	group, err := client.WAClient.GetGroupInfo(jid)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get community info: %w", err)
@@ -256,6 +263,7 @@ func (cs *CommunityService) GetParticipants(ctx context.Context, sessionID strin
 		} else if participant.IsAdmin {
 			communityParticipant.Role = "admin"
 		}
+
 		contact, err := client.WAClient.Store.Contacts.GetContact(ctx, participant.JID)
 		if err == nil {
 			if contact.FullName != "" {

@@ -12,7 +12,6 @@ import (
 )
 
 func main() {
-
 	cfg := config.Load()
 
 	logger.InitWithConfig(cfg)
@@ -159,7 +158,6 @@ func processData() error {
 }
 
 func demonstrateContextLogging(ctx context.Context) {
-
 	if requestID, ok := ctx.Value("request_id").(string); ok {
 		logger.WithRequestID(requestID).Info().
 			Msg("Processing request with context")

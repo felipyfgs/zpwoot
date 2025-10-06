@@ -40,9 +40,7 @@ type PostgresConfig struct {
 }
 
 func Load() *Config {
-
 	if err := godotenv.Load(); err != nil {
-
 		log.Printf("Warning: .env file not found or could not be loaded: %v", err)
 	}
 
@@ -96,6 +94,7 @@ func getEnv(key, fallback string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
 	}
+
 	return fallback
 }
 
@@ -105,6 +104,7 @@ func getEnvAsInt(key string, fallback int) int {
 			return intValue
 		}
 	}
+
 	return fallback
 }
 
@@ -114,6 +114,7 @@ func getEnvAsBool(key string, fallback bool) bool {
 			return boolValue
 		}
 	}
+
 	return fallback
 }
 

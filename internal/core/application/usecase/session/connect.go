@@ -26,7 +26,6 @@ func NewConnectUseCase(
 }
 
 func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.SessionStatusResponse, error) {
-
 	if sessionID == "" {
 		return nil, fmt.Errorf("session ID is required")
 	}
@@ -36,6 +35,7 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 		if err == shared.ErrSessionNotFound {
 			return nil, dto.ErrSessionNotFound
 		}
+
 		return nil, fmt.Errorf("failed to get session from domain: %w", err)
 	}
 
@@ -50,10 +50,9 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 
 	err = uc.whatsappClient.ConnectSession(ctx, sessionID)
 	if err != nil {
-
 		domainSession.SetError(err.Error())
-		if updateErr := uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusError); updateErr != nil {
 
+		if updateErr := uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusError); updateErr != nil {
 			fmt.Printf("Failed to update session status: %v\n", updateErr)
 		}
 
@@ -62,9 +61,10 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 			case "SESSION_NOT_FOUND":
 				return nil, dto.ErrSessionNotFound
 			case "ALREADY_CONNECTED":
-
 				domainSession.SetConnected(domainSession.DeviceJID)
+
 				_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnected)
+
 				return &dto.SessionStatusResponse{
 					ID:        sessionID,
 					Status:    string(session.StatusConnected),
@@ -75,6 +75,7 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 				return nil, fmt.Errorf("whatsapp connection error: %w", err)
 			}
 		}
+
 		return nil, fmt.Errorf("failed to connect WhatsApp session: %w", err)
 	}
 
@@ -85,7 +86,6 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 
 	waStatus, err := uc.whatsappClient.GetSessionStatus(ctx, sessionID)
 	if err != nil {
-
 		return &dto.SessionStatusResponse{
 			ID:        sessionID,
 			Status:    string(session.StatusConnecting),
@@ -95,15 +95,14 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 
 	if waStatus.Connected {
 		domainSession.SetConnected(waStatus.DeviceJID)
+
 		_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnected)
-
 	} else if !waStatus.LoggedIn {
-
 		qrInfo, err := uc.whatsappClient.GetQRCode(ctx, sessionID)
 		if err == nil && qrInfo.Code != "" {
 			domainSession.SetQRCode(qrInfo.Code, qrInfo.ExpiresAt)
-			_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusQRCode)
 
+			_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusQRCode)
 		}
 	}
 
@@ -115,6 +114,5 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 }
 
 func (uc *ConnectUseCase) ExecuteWithAutoReconnect(ctx context.Context, sessionID string, autoReconnect bool) (*dto.SessionStatusResponse, error) {
-
 	return uc.Execute(ctx, sessionID)
 }

@@ -26,23 +26,28 @@ func NewNewsletterHandler(newsletterService input.NewsletterService, logger *log
 }
 func (h *NewsletterHandler) writeJSON(w http.ResponseWriter, data interface{}) error {
 	w.Header().Set("Content-Type", "application/json")
+
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to encode JSON response")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
+
 		return err
 	}
+
 	return nil
 }
 func (h *NewsletterHandler) validateNewsletterRequest(w http.ResponseWriter, sessionID, newsletterJID string) bool {
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
 		http.Error(w, "Session ID is required", http.StatusBadRequest)
+
 		return false
 	}
 
 	if newsletterJID == "" {
 		h.logger.Error().Msg("Newsletter JID is required")
 		http.Error(w, "Newsletter JID is required", http.StatusBadRequest)
+
 		return false
 	}
 
@@ -65,6 +70,7 @@ func (h *NewsletterHandler) handleNewsletterOperation(
 	if err := json.NewDecoder(r.Body).Decode(requestType); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to decode request body")
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+
 		return
 	}
 
@@ -72,10 +78,12 @@ func (h *NewsletterHandler) handleNewsletterOperation(
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Str("newsletter_jid", newsletterJID).Msgf("Failed to %s", operation)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
 	var message string
+
 	switch operation {
 	case "mark_viewed":
 		message = "Messages marked as viewed successfully"
@@ -113,6 +121,7 @@ func (h *NewsletterHandler) ListNewsletters(w http.ResponseWriter, r *http.Reque
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
 		http.Error(w, "Session ID is required", http.StatusBadRequest)
+
 		return
 	}
 
@@ -120,6 +129,7 @@ func (h *NewsletterHandler) ListNewsletters(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to list newsletters")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
@@ -147,12 +157,14 @@ func (h *NewsletterHandler) GetNewsletterInfo(w http.ResponseWriter, r *http.Req
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
 		http.Error(w, "Session ID is required", http.StatusBadRequest)
+
 		return
 	}
 
 	if newsletterJID == "" {
 		h.logger.Error().Msg("Newsletter JID is required")
 		http.Error(w, "Newsletter JID is required", http.StatusBadRequest)
+
 		return
 	}
 
@@ -160,6 +172,7 @@ func (h *NewsletterHandler) GetNewsletterInfo(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Str("newsletter_jid", newsletterJID).Msg("Failed to get newsletter info")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
@@ -184,6 +197,7 @@ func (h *NewsletterHandler) GetNewsletterInfoWithInvite(w http.ResponseWriter, r
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
 		http.Error(w, "Session ID is required", http.StatusBadRequest)
+
 		return
 	}
 
@@ -191,6 +205,7 @@ func (h *NewsletterHandler) GetNewsletterInfoWithInvite(w http.ResponseWriter, r
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to decode request body")
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+
 		return
 	}
 
@@ -198,6 +213,7 @@ func (h *NewsletterHandler) GetNewsletterInfoWithInvite(w http.ResponseWriter, r
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to get newsletter info with invite")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
@@ -222,6 +238,7 @@ func (h *NewsletterHandler) CreateNewsletter(w http.ResponseWriter, r *http.Requ
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
 		http.Error(w, "Session ID is required", http.StatusBadRequest)
+
 		return
 	}
 
@@ -229,6 +246,7 @@ func (h *NewsletterHandler) CreateNewsletter(w http.ResponseWriter, r *http.Requ
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to decode request body")
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+
 		return
 	}
 
@@ -236,10 +254,12 @@ func (h *NewsletterHandler) CreateNewsletter(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to create newsletter")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
+
 	if err := h.writeJSON(w, newsletter); err != nil {
 		return
 	}
@@ -261,6 +281,7 @@ func (h *NewsletterHandler) FollowNewsletter(w http.ResponseWriter, r *http.Requ
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
 		http.Error(w, "Session ID is required", http.StatusBadRequest)
+
 		return
 	}
 
@@ -268,6 +289,7 @@ func (h *NewsletterHandler) FollowNewsletter(w http.ResponseWriter, r *http.Requ
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to decode request body")
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+
 		return
 	}
 
@@ -275,6 +297,7 @@ func (h *NewsletterHandler) FollowNewsletter(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to follow newsletter")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
@@ -306,12 +329,14 @@ func (h *NewsletterHandler) UnfollowNewsletter(w http.ResponseWriter, r *http.Re
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
 		http.Error(w, "Session ID is required", http.StatusBadRequest)
+
 		return
 	}
 
 	if newsletterJID == "" {
 		h.logger.Error().Msg("Newsletter JID is required")
 		http.Error(w, "Newsletter JID is required", http.StatusBadRequest)
+
 		return
 	}
 
@@ -319,6 +344,7 @@ func (h *NewsletterHandler) UnfollowNewsletter(w http.ResponseWriter, r *http.Re
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Str("newsletter_jid", newsletterJID).Msg("Failed to unfollow newsletter")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
@@ -352,20 +378,25 @@ func (h *NewsletterHandler) GetMessages(w http.ResponseWriter, r *http.Request) 
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
 		http.Error(w, "Session ID is required", http.StatusBadRequest)
+
 		return
 	}
 
 	if newsletterJID == "" {
 		h.logger.Error().Msg("Newsletter JID is required")
 		http.Error(w, "Newsletter JID is required", http.StatusBadRequest)
+
 		return
 	}
+
 	req := &dto.GetNewsletterMessagesRequest{}
+
 	if countStr := r.URL.Query().Get("count"); countStr != "" {
 		if count, err := strconv.Atoi(countStr); err == nil {
 			req.Count = count
 		}
 	}
+
 	if before := r.URL.Query().Get("before"); before != "" {
 		req.Before = before
 	}
@@ -374,6 +405,7 @@ func (h *NewsletterHandler) GetMessages(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Str("newsletter_jid", newsletterJID).Msg("Failed to get newsletter messages")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+
 		return
 	}
 
@@ -396,6 +428,7 @@ func (h *NewsletterHandler) GetMessages(w http.ResponseWriter, r *http.Request) 
 // @Router /sessions/{sessionId}/newsletters/{newsletterJid}/mark-viewed [post]
 func (h *NewsletterHandler) MarkViewed(w http.ResponseWriter, r *http.Request) {
 	var req dto.NewsletterMarkViewedRequest
+
 	h.handleNewsletterOperation(w, r, "mark_viewed", func(ctx context.Context, sessionID, newsletterJID string, reqData interface{}) error {
 		return h.newsletterService.MarkViewed(ctx, sessionID, newsletterJID, reqData.(*dto.NewsletterMarkViewedRequest))
 	}, &req)
@@ -415,6 +448,7 @@ func (h *NewsletterHandler) MarkViewed(w http.ResponseWriter, r *http.Request) {
 // @Router /sessions/{sessionId}/newsletters/{newsletterJid}/react [post]
 func (h *NewsletterHandler) SendReaction(w http.ResponseWriter, r *http.Request) {
 	var req dto.NewsletterReactionRequest
+
 	h.handleNewsletterOperation(w, r, "send_reaction", func(ctx context.Context, sessionID, newsletterJID string, reqData interface{}) error {
 		return h.newsletterService.SendReaction(ctx, sessionID, newsletterJID, reqData.(*dto.NewsletterReactionRequest))
 	}, &req)
@@ -434,6 +468,7 @@ func (h *NewsletterHandler) SendReaction(w http.ResponseWriter, r *http.Request)
 // @Router /sessions/{sessionId}/newsletters/{newsletterJid}/mute [post]
 func (h *NewsletterHandler) ToggleMute(w http.ResponseWriter, r *http.Request) {
 	var req dto.NewsletterMuteRequest
+
 	h.handleNewsletterOperation(w, r, "toggle_mute", func(ctx context.Context, sessionID, newsletterJID string, reqData interface{}) error {
 		return h.newsletterService.ToggleMute(ctx, sessionID, newsletterJID, reqData.(*dto.NewsletterMuteRequest))
 	}, &req)
@@ -458,12 +493,14 @@ func (h *NewsletterHandler) SendMessage(w http.ResponseWriter, r *http.Request) 
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
 		http.Error(w, "Session ID is required", http.StatusBadRequest)
+
 		return
 	}
 
 	if newsletterJID == "" {
 		h.logger.Error().Msg("Newsletter JID is required")
 		http.Error(w, "Newsletter JID is required", http.StatusBadRequest)
+
 		return
 	}
 
@@ -471,6 +508,7 @@ func (h *NewsletterHandler) SendMessage(w http.ResponseWriter, r *http.Request) 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to decode request body")
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+
 		return
 	}
 

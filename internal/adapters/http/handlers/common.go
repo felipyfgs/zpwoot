@@ -50,6 +50,7 @@ func createSessionHandler(
 	if !ok {
 		panic("waClient is not a WAClientAdapter")
 	}
+
 	sessionManager := waclient.NewManager(waClientAdapter.GetWAClient())
 
 	return NewSessionHandler(
@@ -132,7 +133,6 @@ func createNewsletterHandler(
 	logger *logger.Logger,
 	waClient output.WhatsAppClient,
 ) *NewsletterHandler {
-
 	waClientAdapter, ok := waClient.(*waclient.WAClientAdapter)
 	if !ok {
 		panic("waClient is not a WAClientAdapter")

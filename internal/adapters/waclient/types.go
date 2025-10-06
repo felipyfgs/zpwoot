@@ -90,10 +90,10 @@ type Client struct {
 }
 
 func (c *Client) IsConnected() bool {
-
 	if c.WAClient == nil {
 		return false
 	}
+
 	return c.WAClient.IsConnected()
 }
 
@@ -105,6 +105,7 @@ func (c *Client) GetDeviceJID() string {
 	if c.IsLoggedIn() {
 		return c.WAClient.Store.ID.String()
 	}
+
 	return ""
 }
 

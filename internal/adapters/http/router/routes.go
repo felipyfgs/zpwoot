@@ -14,6 +14,7 @@ import (
 func NewRouter(c *container.Container) http.Handler {
 	r := chi.NewRouter()
 	middleware.SetupMiddleware(r)
+
 	h := handlers.NewHandlers(
 		c.GetDatabase(),
 		c.GetLogger(),

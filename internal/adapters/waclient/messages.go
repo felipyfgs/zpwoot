@@ -51,7 +51,6 @@ func (ms *Sender) SendTextMessage(ctx context.Context, sessionID string, to stri
 			},
 		}
 	} else {
-
 		message = &waE2E.Message{Conversation: proto.String(text)}
 	}
 
@@ -82,6 +81,7 @@ func (ms *Sender) SendMediaMessage(ctx context.Context, sessionID string, to str
 	}
 
 	var mediaType whatsmeow.MediaType
+
 	mimeType := media.MimeType
 	if mimeType == "" {
 		mimeType = "application/octet-stream"
@@ -104,6 +104,7 @@ func (ms *Sender) SendMediaMessage(ctx context.Context, sessionID string, to str
 	}
 
 	var message *waE2E.Message
+
 	switch mediaType {
 	case whatsmeow.MediaImage:
 		imgMsg := &waE2E.ImageMessage{
@@ -119,6 +120,7 @@ func (ms *Sender) SendMediaMessage(ctx context.Context, sessionID string, to str
 		if media.ViewOnce {
 			imgMsg.ViewOnce = proto.Bool(true)
 		}
+
 		message = &waE2E.Message{
 			ImageMessage: imgMsg,
 		}
@@ -136,11 +138,13 @@ func (ms *Sender) SendMediaMessage(ctx context.Context, sessionID string, to str
 		if media.ViewOnce {
 			vidMsg.ViewOnce = proto.Bool(true)
 		}
+
 		message = &waE2E.Message{
 			VideoMessage: vidMsg,
 		}
 	case whatsmeow.MediaAudio:
 		ptt := true
+
 		audioMsg := &waE2E.AudioMessage{
 			URL:           proto.String(uploaded.URL),
 			DirectPath:    proto.String(uploaded.DirectPath),
@@ -154,6 +158,7 @@ func (ms *Sender) SendMediaMessage(ctx context.Context, sessionID string, to str
 		if media.ViewOnce {
 			audioMsg.ViewOnce = proto.Bool(true)
 		}
+
 		message = &waE2E.Message{
 			AudioMessage: audioMsg,
 		}
@@ -162,6 +167,7 @@ func (ms *Sender) SendMediaMessage(ctx context.Context, sessionID string, to str
 		if fileName == "" {
 			fileName = "document"
 		}
+
 		message = &waE2E.Message{
 			DocumentMessage: &waE2E.DocumentMessage{
 				URL:           proto.String(uploaded.URL),
@@ -303,6 +309,7 @@ func normalizePhoneNumber(phone string) string {
 	phone = strings.ReplaceAll(phone, "(", "")
 	phone = strings.ReplaceAll(phone, ")", "")
 	phone = strings.TrimPrefix(phone, "+")
+
 	return phone
 }
 
@@ -354,6 +361,7 @@ func (ms *Sender) GetContacts(ctx context.Context, sessionID string) ([]*Contact
 	}
 
 	contactList := make([]*ContactInfo, 0, len(contacts))
+
 	for jid, contact := range contacts {
 		contactInfo := &ContactInfo{
 			Phone: jid.User,
@@ -362,6 +370,7 @@ func (ms *Sender) GetContacts(ctx context.Context, sessionID string) ([]*Contact
 		if contact.BusinessName != "" {
 			contactInfo.Name = contact.BusinessName
 		}
+
 		contactList = append(contactList, contactInfo)
 	}
 
@@ -369,12 +378,12 @@ func (ms *Sender) GetContacts(ctx context.Context, sessionID string) ([]*Contact
 }
 
 func (ms *Sender) SendContactMessageFromInput(ctx context.Context, sessionID string, to string, contact *input.ContactInfo) error {
-
 	internalContact := &ContactInfo{
 		Name:  contact.Name,
 		Phone: contact.Phone,
 		VCard: contact.VCard,
 	}
+
 	return ms.SendContactMessage(ctx, sessionID, to, internalContact)
 }
 
@@ -388,7 +397,9 @@ func (ms *Sender) SendContactsArrayMessage(ctx context.Context, sessionID string
 	if err != nil {
 		return ErrInvalidJID
 	}
+
 	contactMessages := make([]*waE2E.ContactMessage, len(contacts))
+
 	for i, contact := range contacts {
 		vcard := contact.VCard
 		if vcard == "" {
@@ -400,6 +411,7 @@ func (ms *Sender) SendContactsArrayMessage(ctx context.Context, sessionID string
 			Vcard:       proto.String(vcard),
 		}
 	}
+
 	message := &waE2E.Message{
 		ContactsArrayMessage: &waE2E.ContactsArrayMessage{
 			DisplayName: proto.String("Contacts"),
@@ -483,6 +495,7 @@ func (w *MessageService) SendTextMessage(ctx context.Context, sessionID string, 
 	if err != nil {
 		return nil, err
 	}
+
 	return &output.MessageResult{
 		MessageID: resp.ID,
 		Status:    "sent",
@@ -491,11 +504,11 @@ func (w *MessageService) SendTextMessage(ctx context.Context, sessionID string, 
 }
 
 func (w *MessageService) SendMediaMessage(ctx context.Context, sessionID string, to string, media *output.MediaData, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
-
 	resp, err := w.Sender.SendMediaMessage(ctx, sessionID, to, media)
 	if err != nil {
 		return nil, err
 	}
+
 	return &output.MessageResult{
 		MessageID: resp.ID,
 		Status:    "sent",
@@ -504,11 +517,11 @@ func (w *MessageService) SendMediaMessage(ctx context.Context, sessionID string,
 }
 
 func (w *MessageService) SendLocationMessage(ctx context.Context, sessionID, to string, latitude, longitude float64, name string, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
-
 	err := w.Sender.SendLocationMessage(ctx, sessionID, to, latitude, longitude, name)
 	if err != nil {
 		return nil, err
 	}
+
 	return &output.MessageResult{
 		MessageID: fallbackID(),
 		Status:    "sent",
@@ -517,11 +530,11 @@ func (w *MessageService) SendLocationMessage(ctx context.Context, sessionID, to 
 }
 
 func (w *MessageService) SendContactMessage(ctx context.Context, sessionID string, to string, contact *input.ContactInfo, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
-
 	err := w.SendContactMessageFromInput(ctx, sessionID, to, contact)
 	if err != nil {
 		return nil, err
 	}
+
 	return &output.MessageResult{
 		MessageID: fallbackID(),
 		Status:    "sent",
@@ -534,6 +547,7 @@ func (w *MessageService) SendContactsArrayMessage(ctx context.Context, sessionID
 	if err != nil {
 		return nil, err
 	}
+
 	return &output.MessageResult{
 		MessageID: fallbackID(),
 		Status:    "sent",
@@ -546,6 +560,7 @@ func (w *MessageService) SendReactionMessage(ctx context.Context, sessionID, to,
 	if err != nil {
 		return nil, err
 	}
+
 	return &output.MessageResult{
 		MessageID: fallbackID(),
 		Status:    "sent",
@@ -558,6 +573,7 @@ func (w *MessageService) SendPollMessage(ctx context.Context, sessionID, to, nam
 	if err != nil {
 		return nil, err
 	}
+
 	return &output.MessageResult{
 		MessageID: fallbackID(),
 		Status:    "sent",
@@ -566,7 +582,6 @@ func (w *MessageService) SendPollMessage(ctx context.Context, sessionID, to, nam
 }
 
 func (w *MessageService) SendButtonsMessage(ctx context.Context, sessionID, to, text string, buttons []input.ButtonInfo) (*output.MessageResult, error) {
-
 	waButtons := make([]ButtonInfo, 0, len(buttons))
 	for _, btn := range buttons {
 		waButtons = append(waButtons, ButtonInfo{
@@ -574,10 +589,12 @@ func (w *MessageService) SendButtonsMessage(ctx context.Context, sessionID, to, 
 			Text: btn.Text,
 		})
 	}
+
 	err := w.Sender.SendButtonsMessage(ctx, sessionID, to, text, waButtons)
 	if err != nil {
 		return nil, err
 	}
+
 	return &output.MessageResult{
 		MessageID: fallbackID(),
 		Status:    "sent",
@@ -586,8 +603,8 @@ func (w *MessageService) SendButtonsMessage(ctx context.Context, sessionID, to, 
 }
 
 func (w *MessageService) SendListMessage(ctx context.Context, sessionID, to, text, title string, sections []input.ListSectionInfo) (*output.MessageResult, error) {
-
 	waSections := make([]ListSection, 0, len(sections))
+
 	for _, section := range sections {
 		rows := make([]ListRow, 0, len(section.Rows))
 		for _, row := range section.Rows {
@@ -597,15 +614,18 @@ func (w *MessageService) SendListMessage(ctx context.Context, sessionID, to, tex
 				Description: row.Description,
 			})
 		}
+
 		waSections = append(waSections, ListSection{
 			Title: section.Title,
 			Rows:  rows,
 		})
 	}
+
 	err := w.Sender.SendListMessage(ctx, sessionID, to, text, title, "", waSections)
 	if err != nil {
 		return nil, err
 	}
+
 	return &output.MessageResult{
 		MessageID: fallbackID(),
 		Status:    "sent",
@@ -618,10 +638,12 @@ func (w *MessageService) SendTemplateMessage(ctx context.Context, sessionID, to 
 		Content: template.Content,
 		Footer:  template.Footer,
 	}
+
 	err := w.Sender.SendTemplateMessage(ctx, sessionID, to, waTemplate)
 	if err != nil {
 		return nil, err
 	}
+
 	return &output.MessageResult{
 		MessageID: fallbackID(),
 		Status:    "sent",
@@ -678,6 +700,7 @@ func (ms *Sender) SendReactionMessage(ctx context.Context, sessionID string, to 
 	if err != nil {
 		return ErrInvalidJID
 	}
+
 	if reaction == "remove" {
 		reaction = ""
 	}
@@ -773,6 +796,7 @@ func (ms *Sender) SendListMessage(ctx context.Context, sessionID string, to stri
 	}
 
 	var waSections []*waE2E.ListMessage_Section
+
 	for _, section := range sections {
 		var rows []*waE2E.ListMessage_Row
 		for _, row := range section.Rows {
@@ -782,6 +806,7 @@ func (ms *Sender) SendListMessage(ctx context.Context, sessionID string, to stri
 				Description: proto.String(row.Description),
 			})
 		}
+
 		waSections = append(waSections, &waE2E.ListMessage_Section{
 			Title: proto.String(section.Title),
 			Rows:  rows,
@@ -858,9 +883,9 @@ type TemplateInfo struct {
 func fallbackID() string {
 	bytes := make([]byte, 16)
 	if _, err := rand.Read(bytes); err != nil {
-
 		return strings.ToUpper(hex.EncodeToString([]byte(fmt.Sprintf("%d", time.Now().UnixNano()))))
 	}
+
 	return strings.ToUpper(hex.EncodeToString(bytes))
 }
 
@@ -891,6 +916,7 @@ func (ms *Sender) DeleteMessage(ctx context.Context, sessionID string, phone str
 	if err != nil {
 		return ErrInvalidJID
 	}
+
 	_, err = client.WAClient.RevokeMessage(recipientJID, messageID)
 	if err != nil {
 		return fmt.Errorf("failed to delete message: %w", err)
@@ -908,6 +934,7 @@ func (ms *Sender) EditMessage(ctx context.Context, sessionID string, phone strin
 	if err != nil {
 		return ErrInvalidJID
 	}
+
 	_, err = client.WAClient.SendMessage(ctx, recipientJID, &waE2E.Message{
 		EditedMessage: &waE2E.FutureProofMessage{
 			Message: &waE2E.Message{
@@ -940,6 +967,7 @@ func (ms *Sender) MarkRead(ctx context.Context, sessionID string, phone string, 
 	if err != nil {
 		return ErrInvalidJID
 	}
+
 	err = client.WAClient.MarkRead(messageIDs, time.Now(), recipientJID, recipientJID)
 	if err != nil {
 		return fmt.Errorf("failed to mark as read: %w", err)

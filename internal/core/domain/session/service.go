@@ -36,10 +36,10 @@ func (s *Service) Create(ctx context.Context, name string) (*Session, error) {
 	session := NewSession(name)
 
 	if err := s.repo.Create(ctx, session); err != nil {
-
 		if isUniqueConstraintError(err) {
 			return nil, shared.ErrSessionAlreadyExists
 		}
+
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
@@ -51,6 +51,7 @@ func (s *Service) Get(ctx context.Context, id string) (*Session, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)
 	}
+
 	return session, nil
 }
 
@@ -79,6 +80,7 @@ func (s *Service) List(ctx context.Context, limit, offset int) ([]*Session, erro
 	if err != nil {
 		return nil, fmt.Errorf("failed to list sessions: %w", err)
 	}
+
 	return sessions, nil
 }
 
@@ -86,6 +88,7 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	if err := s.repo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("failed to delete session: %w", err)
 	}
+
 	return nil
 }
 
@@ -93,7 +96,9 @@ func isUniqueConstraintError(err error) bool {
 	if err == nil {
 		return false
 	}
+
 	errStr := strings.ToLower(err.Error())
+
 	return strings.Contains(errStr, "duplicate key") ||
 		strings.Contains(errStr, "unique constraint") ||
 		strings.Contains(errStr, "violates unique")

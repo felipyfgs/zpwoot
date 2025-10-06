@@ -73,6 +73,7 @@ func (h *SessionHandler) Create(w http.ResponseWriter, r *http.Request) {
 		}
 
 		h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to create session")
+
 		return
 	}
 
@@ -105,6 +106,7 @@ func (h *SessionHandler) Get(w http.ResponseWriter, r *http.Request) {
 		} else {
 			h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "failed to get session")
 		}
+
 		return
 	}
 
@@ -121,7 +123,6 @@ func (h *SessionHandler) Get(w http.ResponseWriter, r *http.Request) {
 // @Security		ApiKeyAuth
 // @Router			/sessions [get]
 func (h *SessionHandler) List(w http.ResponseWriter, r *http.Request) {
-
 	pagination := &dto.PaginationRequest{
 		Limit:  100,
 		Offset: 0,
@@ -133,6 +134,7 @@ func (h *SessionHandler) List(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Msg("Failed to list sessions")
 		h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "failed to list sessions")
+
 		return
 	}
 
@@ -164,11 +166,13 @@ func (h *SessionHandler) Connect(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("session_id", sessionID).
 			Msg("Failed to connect session")
+
 		if errors.Is(err, dto.ErrSessionNotFound) {
 			h.writeErrorResponse(w, http.StatusNotFound, dto.ErrorCodeNotFound, "session not found")
 		} else {
 			h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "failed to connect session")
 		}
+
 		return
 	}
 
@@ -200,11 +204,13 @@ func (h *SessionHandler) Disconnect(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("session_id", sessionID).
 			Msg("Failed to disconnect session")
+
 		if errors.Is(err, dto.ErrSessionNotFound) {
 			h.writeErrorResponse(w, http.StatusNotFound, dto.ErrorCodeNotFound, "session not found")
 		} else {
 			h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "failed to disconnect session")
 		}
+
 		return
 	}
 
@@ -236,6 +242,7 @@ func (h *SessionHandler) Logout(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("session_id", sessionID).
 			Msg("Failed to logout session")
+
 		if errors.Is(err, dto.ErrSessionNotFound) {
 			h.writeErrorResponse(w, http.StatusNotFound, dto.ErrorCodeNotFound, "Session not found")
 		} else if err.Error() == "session is already logged out" {
@@ -243,6 +250,7 @@ func (h *SessionHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		} else {
 			h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to logout session")
 		}
+
 		return
 	}
 
@@ -281,11 +289,13 @@ func (h *SessionHandler) Delete(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("session_id", sessionID).
 			Msg("Failed to delete session")
+
 		if errors.Is(err, dto.ErrSessionNotFound) {
 			h.writeErrorResponse(w, http.StatusNotFound, dto.ErrorCodeNotFound, "session not found")
 		} else {
 			h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "failed to delete session")
 		}
+
 		return
 	}
 
@@ -333,6 +343,7 @@ func (h *SessionHandler) QRCode(w http.ResponseWriter, r *http.Request) {
 		} else {
 			h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "failed to get QR code")
 		}
+
 		return
 	}
 
@@ -342,6 +353,7 @@ func (h *SessionHandler) QRCode(w http.ResponseWriter, r *http.Request) {
 func (h *SessionHandler) writeSuccessResponse(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+
 	response := dto.NewSuccessResponse(data)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to encode success response")
@@ -351,6 +363,7 @@ func (h *SessionHandler) writeSuccessResponse(w http.ResponseWriter, status int,
 func (h *SessionHandler) writeErrorResponse(w http.ResponseWriter, status int, code, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
+
 	response := dto.NewErrorResponse(code, message)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to encode error response")
@@ -412,6 +425,7 @@ func (h *SessionHandler) PairPhone(w http.ResponseWriter, r *http.Request) {
 		}
 
 		h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to pair phone")
+
 		return
 	}
 

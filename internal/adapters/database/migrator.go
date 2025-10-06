@@ -53,11 +53,13 @@ func (m *Migrator) RunMigrations() error {
 	}
 
 	pendingCount := 0
+
 	for _, migration := range migrations {
 		if !m.isMigrationApplied(migration.Version, appliedMigrations) {
 			if err := m.executeMigration(migration); err != nil {
 				return fmt.Errorf("failed to execute migration %d: %w", migration.Version, err)
 			}
+
 			pendingCount++
 		}
 	}
@@ -65,6 +67,7 @@ func (m *Migrator) RunMigrations() error {
 	m.logger.Info().
 		Int("count", pendingCount).
 		Msg("Applied migrations successfully")
+
 	return nil
 }
 
@@ -116,6 +119,7 @@ func (m *Migrator) readMigrationDirectory() ([]fs.DirEntry, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read migrations directory: %w", err)
 	}
+
 	return entries, nil
 }
 
@@ -133,6 +137,7 @@ func (m *Migrator) processMigrationFiles(entries []fs.DirEntry) (map[int]map[str
 				Str("file", entry.Name()).
 				Err(err).
 				Msg("Skipping invalid migration file")
+
 			continue
 		}
 
@@ -170,12 +175,14 @@ func (m *Migrator) readMigrationFile(filename string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to read migration file %s: %w", filename, err)
 	}
+
 	return string(content), nil
 }
 
 func (m *Migrator) categorizeMigrationFile(filename, content string, files map[string]string) {
 	if strings.Contains(filename, ".up.sql") {
 		files["up"] = content
+
 		nameParts := strings.Split(filename, "_")
 		if len(nameParts) > 1 {
 			name := strings.Join(nameParts[1:], "_")
@@ -202,6 +209,7 @@ func (m *Migrator) buildMigrationObjects(migrationFiles map[int]map[string]strin
 			m.logger.Warn().
 				Int("version", version).
 				Msg("Migration missing up.sql file")
+
 			continue
 		}
 
@@ -218,6 +226,7 @@ func (m *Migrator) getAppliedMigrations() (map[int]bool, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to query applied migrations: %w", err)
 	}
+
 	defer func() {
 		if err := rows.Close(); err != nil {
 			m.logger.Error().
@@ -227,11 +236,13 @@ func (m *Migrator) getAppliedMigrations() (map[int]bool, error) {
 	}()
 
 	applied := make(map[int]bool)
+
 	for rows.Next() {
 		var version int
 		if err := rows.Scan(&version); err != nil {
 			return nil, fmt.Errorf("failed to scan migration version: %w", err)
 		}
+
 		applied[version] = true
 	}
 
@@ -279,11 +290,13 @@ func (m *Migrator) executeMigration(migration *Migration) error {
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit migration: %w", err)
 	}
+
 	committed = true
 
 	m.logger.Info().
 		Int("version", migration.Version).
 		Msg("Migration applied successfully")
+
 	return nil
 }
 
@@ -312,12 +325,15 @@ func (m *Migrator) getLastMigration() (int, string, error) {
 	query := `SELECT "version", "name" FROM "zpMigrations" ORDER BY "version" DESC LIMIT 1`
 
 	var version int
+
 	var name string
+
 	err := m.db.QueryRow(query).Scan(&version, &name)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, "", nil
 		}
+
 		return 0, "", fmt.Errorf("failed to get last migration: %w", err)
 	}
 
@@ -335,6 +351,7 @@ func (m *Migrator) findTargetMigration(version int) (*Migration, error) {
 			if migration.DownSQL == "" {
 				return nil, fmt.Errorf("migration %d has no down SQL", version)
 			}
+
 			return migration, nil
 		}
 	}
@@ -376,11 +393,13 @@ func (m *Migrator) executeRollback(targetMigration *Migration, version int, name
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit rollback: %w", err)
 	}
+
 	committed = true
 
 	m.logger.Info().
 		Int("version", version).
 		Msg("Migration rolled back successfully")
+
 	return nil
 }
 
