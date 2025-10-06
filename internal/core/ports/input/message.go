@@ -48,6 +48,10 @@ type MessageService interface {
 	SendButtonsMessage(ctx context.Context, sessionID, to, text string, buttons []ButtonInfo) (*output.MessageResult, error)
 	SendListMessage(ctx context.Context, sessionID, to, text, title string, sections []ListSectionInfo) (*output.MessageResult, error)
 	SendTemplateMessage(ctx context.Context, sessionID, to string, template TemplateInfo) (*output.MessageResult, error)
+	DeleteMessage(ctx context.Context, sessionID, phone, messageID string) error
+	EditMessage(ctx context.Context, sessionID, phone, messageID, text string) error
+	MarkRead(ctx context.Context, sessionID, phone string, messageIDs []string) error
+	RequestHistorySync(ctx context.Context, sessionID string, count int) error
 	GetChatInfo(ctx context.Context, sessionID, chatJID string) (*ChatInfo, error)
 	GetContacts(ctx context.Context, sessionID string) ([]*ContactInfo, error)
 	GetChats(ctx context.Context, sessionID string) ([]*ChatInfo, error)

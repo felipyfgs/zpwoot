@@ -70,30 +70,30 @@ func setupSessionRoutes(r chi.Router, h *handlers.Handlers) {
 }
 
 func setupMessageRoutes(r chi.Router, h *handlers.Handlers) {
+	// Envio de mensagens
 	r.Route("/sessions/{sessionId}/send/message", func(r chi.Router) {
-		// Mensagens de texto
 		r.Post("/text", h.Message.SendText)
-
-		// Mensagens de mídia
 		r.Post("/image", h.Message.SendImage)
 		r.Post("/audio", h.Message.SendAudio)
 		r.Post("/video", h.Message.SendVideo)
 		r.Post("/document", h.Message.SendDocument)
 		r.Post("/sticker", h.Message.SendSticker)
-
-		// Mensagens especiais
 		r.Post("/location", h.Message.SendLocation)
 		r.Post("/contact", h.Message.SendContact)
 		r.Post("/contacts", h.Message.SendContactsArray)
 		r.Post("/reaction", h.Message.SendReaction)
-
-		// Mensagens interativas
+		r.Post("/poll", h.Message.SendPoll)
 		r.Post("/buttons", h.Message.SendButtons)
 		r.Post("/list", h.Message.SendList)
-		r.Post("/poll", h.Message.SendPoll)
-
-		// Templates
 		r.Post("/template", h.Message.SendTemplate)
+	})
+
+	// Operações de mensagens (não envio)
+	r.Route("/sessions/{sessionId}/message", func(r chi.Router) {
+		r.Post("/delete", h.Message.DeleteMessage)
+		r.Post("/edit", h.Message.EditMessage)
+		r.Post("/markread", h.Message.MarkRead)
+		r.Post("/historysync", h.Message.RequestHistorySync)
 	})
 }
 

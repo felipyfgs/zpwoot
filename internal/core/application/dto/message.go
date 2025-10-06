@@ -399,3 +399,52 @@ type SendTemplateMessageRequest struct {
 	Phone    string           `json:"phone" validate:"required" example:"5511999999999"`
 	Template *TemplateMessage `json:"template" validate:"required"`
 } //@name SendTemplateMessageRequest
+
+// DeleteMessageRequest representa a requisição de deleção de mensagem
+type DeleteMessageRequest struct {
+	Phone     string `json:"phone" validate:"required" example:"5511999999999"`
+	MessageID string `json:"messageId" validate:"required" example:"3EB0C767D0D1A2B5F8"`
+} //@name DeleteMessageRequest
+
+// DeleteMessageResponse representa a resposta de deleção de mensagem
+type DeleteMessageResponse struct {
+	Success   bool   `json:"success" example:"true"`
+	MessageID string `json:"messageId" example:"3EB0C767D0D1A2B5F8"`
+	Timestamp int64  `json:"timestamp" example:"1696570882"`
+} //@name DeleteMessageResponse
+
+// EditMessageRequest representa a requisição de edição de mensagem
+type EditMessageRequest struct {
+	Phone     string `json:"phone" validate:"required" example:"5511999999999"`
+	MessageID string `json:"messageId" validate:"required" example:"3EB0C767D0D1A2B5F8"`
+	Text      string `json:"text" validate:"required" example:"Edited message text"`
+} //@name EditMessageRequest
+
+// EditMessageResponse representa a resposta de edição de mensagem
+type EditMessageResponse struct {
+	Success   bool   `json:"success" example:"true"`
+	MessageID string `json:"messageId" example:"3EB0C767D0D1A2B5F8"`
+	Timestamp int64  `json:"timestamp" example:"1696570882"`
+} //@name EditMessageResponse
+
+// MarkReadRequest representa a requisição de marcar como lida
+type MarkReadRequest struct {
+	Phone      string   `json:"phone" validate:"required" example:"5511999999999"`
+	MessageIDs []string `json:"messageIds" validate:"required,min=1" example:"3EB0C767D0D1A2B5F8,3EB0C767D0D1A2B5F9"`
+} //@name MarkReadRequest
+
+// MarkReadResponse representa a resposta de marcar como lida
+type MarkReadResponse struct {
+	Success bool `json:"success" example:"true"`
+} //@name MarkReadResponse
+
+// RequestHistorySyncRequest representa a requisição de sincronização de histórico
+type RequestHistorySyncRequest struct {
+	Count int `json:"count,omitempty" example:"50" description:"Number of messages to sync (default: 50)"`
+} //@name RequestHistorySyncRequest
+
+// RequestHistorySyncResponse representa a resposta de sincronização de histórico
+type RequestHistorySyncResponse struct {
+	Success   bool  `json:"success" example:"true"`
+	Timestamp int64 `json:"timestamp" example:"1696570882"`
+} //@name RequestHistorySyncResponse

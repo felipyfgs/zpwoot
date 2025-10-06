@@ -645,6 +645,22 @@ func (w *MessageService) GetChats(ctx context.Context, sessionID string) ([]*inp
 	return w.GetChatsAsInput(ctx, sessionID)
 }
 
+func (w *MessageService) DeleteMessage(ctx context.Context, sessionID, phone, messageID string) error {
+	return w.Sender.DeleteMessage(ctx, sessionID, phone, messageID)
+}
+
+func (w *MessageService) EditMessage(ctx context.Context, sessionID, phone, messageID, text string) error {
+	return w.Sender.EditMessage(ctx, sessionID, phone, messageID, text)
+}
+
+func (w *MessageService) MarkRead(ctx context.Context, sessionID, phone string, messageIDs []string) error {
+	return w.Sender.MarkRead(ctx, sessionID, phone, messageIDs)
+}
+
+func (w *MessageService) RequestHistorySync(ctx context.Context, sessionID string, count int) error {
+	return w.Sender.RequestHistorySync(ctx, sessionID, count)
+}
+
 func (ms *Sender) GetChats(ctx context.Context, sessionID string) ([]*ChatInfo, error) {
 	_, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
@@ -869,4 +885,109 @@ func buildContextInfo(contextInfo *output.MessageContextInfo) *waE2E.ContextInfo
 	}
 
 	return ctx
+}
+
+// DeleteMessage deleta uma mensagem enviada
+func (ms *Sender) DeleteMessage(ctx context.Context, sessionID string, phone string, messageID string) error {
+	client, err := ms.getConnectedClient(ctx, sessionID)
+	if err != nil {
+		return err
+	}
+
+	recipientJID, err := parseJID(phone)
+	if err != nil {
+		return ErrInvalidJID
+	}
+
+	// Parsear o messageID
+	_, err = client.WAClient.RevokeMessage(recipientJID, messageID)
+	if err != nil {
+		return fmt.Errorf("failed to delete message: %w", err)
+	}
+
+	return nil
+}
+
+// EditMessage edita uma mensagem enviada
+func (ms *Sender) EditMessage(ctx context.Context, sessionID string, phone string, messageID string, text string) error {
+	client, err := ms.getConnectedClient(ctx, sessionID)
+	if err != nil {
+		return err
+	}
+
+	recipientJID, err := parseJID(phone)
+	if err != nil {
+		return ErrInvalidJID
+	}
+
+	// Criar mensagem de edição
+	_, err = client.WAClient.SendMessage(ctx, recipientJID, &waE2E.Message{
+		EditedMessage: &waE2E.FutureProofMessage{
+			Message: &waE2E.Message{
+				Conversation: proto.String(text),
+			},
+		},
+		ProtocolMessage: &waE2E.ProtocolMessage{
+			Key: &waCommon.MessageKey{
+				ID:        proto.String(messageID),
+				RemoteJID: proto.String(recipientJID.String()),
+			},
+			Type:          waE2E.ProtocolMessage_MESSAGE_EDIT.Enum(),
+			EditedMessage: &waE2E.Message{Conversation: proto.String(text)},
+		},
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to edit message: %w", err)
+	}
+
+	return nil
+}
+
+// MarkRead marca mensagens como lidas
+func (ms *Sender) MarkRead(ctx context.Context, sessionID string, phone string, messageIDs []string) error {
+	client, err := ms.getConnectedClient(ctx, sessionID)
+	if err != nil {
+		return err
+	}
+
+	recipientJID, err := parseJID(phone)
+	if err != nil {
+		return ErrInvalidJID
+	}
+
+	// Marcar como lida
+	err = client.WAClient.MarkRead(messageIDs, time.Now(), recipientJID, recipientJID)
+	if err != nil {
+		return fmt.Errorf("failed to mark as read: %w", err)
+	}
+
+	return nil
+}
+
+// RequestHistorySync solicita sincronização de histórico
+func (ms *Sender) RequestHistorySync(ctx context.Context, sessionID string, count int) error {
+	client, err := ms.getConnectedClient(ctx, sessionID)
+	if err != nil {
+		return err
+	}
+
+	if count <= 0 {
+		count = 50
+	}
+
+	// Construir requisição de histórico
+	// Usando MessageInfo vazio para pegar as últimas mensagens
+	historyMsg := client.WAClient.BuildHistorySyncRequest(nil, count)
+	if historyMsg == nil {
+		return fmt.Errorf("failed to build history sync request")
+	}
+
+	// Enviar para o próprio JID
+	_, err = client.WAClient.SendMessage(ctx, client.WAClient.Store.ID.ToNonAD(), historyMsg, whatsmeow.SendRequestExtra{Peer: true})
+	if err != nil {
+		return fmt.Errorf("failed to send history sync request: %w", err)
+	}
+
+	return nil
 }

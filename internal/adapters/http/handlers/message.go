@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"zpwoot/internal/core/application/dto"
 	"zpwoot/internal/core/application/utils"
@@ -288,6 +289,15 @@ func (h *MessageHandler) writeError(w http.ResponseWriter, status int, code, mes
 		"message": message,
 	}); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to encode error response")
+	}
+}
+
+func (h *MessageHandler) writeSuccessResponse(w http.ResponseWriter, status int, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	response := dto.NewSuccessResponse(data)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode success response")
 	}
 }
 
@@ -868,4 +878,235 @@ func (h *MessageHandler) SendButtons(w http.ResponseWriter, r *http.Request) {
 // SendList sends a list message
 func (h *MessageHandler) SendList(w http.ResponseWriter, r *http.Request) {
 	h.writeError(w, http.StatusNotImplemented, "not_implemented", "List messages not yet implemented")
+}
+
+// DeleteMessage godoc
+// @Summary      Delete message
+// @Description  Delete a sent message
+// @Tags         Messages
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        sessionId   path      string                       true  "Session ID"
+// @Param        request     body      dto.DeleteMessageRequest     true  "Delete message request"
+// @Success      200  {object}  dto.DeleteMessageResponse
+// @Failure      400  {object}  dto.ErrorResponse
+// @Failure      404  {object}  dto.ErrorResponse
+// @Failure      500  {object}  dto.ErrorResponse
+// @Router       /sessions/{sessionId}/message/delete [post]
+func (h *MessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
+	sessionID := chi.URLParam(r, "sessionId")
+	if sessionID == "" {
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeValidation, "sessionId is required")
+		return
+	}
+
+	var req dto.DeleteMessageRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeBadRequest, "Invalid JSON body")
+		return
+	}
+
+	if req.Phone == "" {
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeValidation, "phone is required")
+		return
+	}
+
+	if req.MessageID == "" {
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeValidation, "messageId is required")
+		return
+	}
+
+	err := h.messageService.DeleteMessage(r.Context(), sessionID, req.Phone, req.MessageID)
+	if err != nil {
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Str("phone", req.Phone).
+			Str("message_id", req.MessageID).
+			Msg("Failed to delete message")
+
+		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to delete message")
+		return
+	}
+
+	response := &dto.DeleteMessageResponse{
+		Success:   true,
+		MessageID: req.MessageID,
+		Timestamp: 0, // TODO: Get actual timestamp from response
+	}
+
+	h.writeSuccessResponse(w, http.StatusOK, response)
+}
+
+// EditMessage godoc
+// @Summary      Edit message
+// @Description  Edit a sent message
+// @Tags         Messages
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        sessionId   path      string                    true  "Session ID"
+// @Param        request     body      dto.EditMessageRequest    true  "Edit message request"
+// @Success      200  {object}  dto.EditMessageResponse
+// @Failure      400  {object}  dto.ErrorResponse
+// @Failure      404  {object}  dto.ErrorResponse
+// @Failure      500  {object}  dto.ErrorResponse
+// @Router       /sessions/{sessionId}/message/edit [post]
+func (h *MessageHandler) EditMessage(w http.ResponseWriter, r *http.Request) {
+	sessionID := chi.URLParam(r, "sessionId")
+	if sessionID == "" {
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeValidation, "sessionId is required")
+		return
+	}
+
+	var req dto.EditMessageRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeBadRequest, "Invalid JSON body")
+		return
+	}
+
+	if req.Phone == "" {
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeValidation, "phone is required")
+		return
+	}
+
+	if req.MessageID == "" {
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeValidation, "messageId is required")
+		return
+	}
+
+	if req.Text == "" {
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeValidation, "text is required")
+		return
+	}
+
+	err := h.messageService.EditMessage(r.Context(), sessionID, req.Phone, req.MessageID, req.Text)
+	if err != nil {
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Str("phone", req.Phone).
+			Str("message_id", req.MessageID).
+			Msg("Failed to edit message")
+
+		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to edit message")
+		return
+	}
+
+	response := &dto.EditMessageResponse{
+		Success:   true,
+		MessageID: req.MessageID,
+		Timestamp: 0, // TODO: Get actual timestamp from response
+	}
+
+	h.writeSuccessResponse(w, http.StatusOK, response)
+}
+
+// MarkRead godoc
+// @Summary      Mark messages as read
+// @Description  Mark one or more messages as read
+// @Tags         Messages
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        sessionId   path      string                 true  "Session ID"
+// @Param        request     body      dto.MarkReadRequest    true  "Mark read request"
+// @Success      200  {object}  dto.MarkReadResponse
+// @Failure      400  {object}  dto.ErrorResponse
+// @Failure      404  {object}  dto.ErrorResponse
+// @Failure      500  {object}  dto.ErrorResponse
+// @Router       /sessions/{sessionId}/message/markread [post]
+func (h *MessageHandler) MarkRead(w http.ResponseWriter, r *http.Request) {
+	sessionID := chi.URLParam(r, "sessionId")
+	if sessionID == "" {
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeValidation, "sessionId is required")
+		return
+	}
+
+	var req dto.MarkReadRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeBadRequest, "Invalid JSON body")
+		return
+	}
+
+	if req.Phone == "" {
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeValidation, "phone is required")
+		return
+	}
+
+	if len(req.MessageIDs) == 0 {
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeValidation, "messageIds is required")
+		return
+	}
+
+	err := h.messageService.MarkRead(r.Context(), sessionID, req.Phone, req.MessageIDs)
+	if err != nil {
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Str("phone", req.Phone).
+			Msg("Failed to mark messages as read")
+
+		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to mark messages as read")
+		return
+	}
+
+	response := &dto.MarkReadResponse{
+		Success: true,
+	}
+
+	h.writeSuccessResponse(w, http.StatusOK, response)
+}
+
+// RequestHistorySync godoc
+// @Summary      Request history sync
+// @Description  Request synchronization of message history
+// @Tags         Messages
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        sessionId   path      string                           true  "Session ID"
+// @Param        request     body      dto.RequestHistorySyncRequest    false "History sync request"
+// @Success      200  {object}  dto.RequestHistorySyncResponse
+// @Failure      400  {object}  dto.ErrorResponse
+// @Failure      404  {object}  dto.ErrorResponse
+// @Failure      500  {object}  dto.ErrorResponse
+// @Router       /sessions/{sessionId}/message/historysync [post]
+func (h *MessageHandler) RequestHistorySync(w http.ResponseWriter, r *http.Request) {
+	sessionID := chi.URLParam(r, "sessionId")
+	if sessionID == "" {
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeValidation, "sessionId is required")
+		return
+	}
+
+	var req dto.RequestHistorySyncRequest
+	// Body é opcional, usar defaults se não fornecido
+	if r.Body != nil {
+		json.NewDecoder(r.Body).Decode(&req)
+	}
+
+	count := req.Count
+	if count <= 0 {
+		count = 50 // Default
+	}
+
+	err := h.messageService.RequestHistorySync(r.Context(), sessionID, count)
+	if err != nil {
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Int("count", count).
+			Msg("Failed to request history sync")
+
+		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to request history sync")
+		return
+	}
+
+	response := &dto.RequestHistorySyncResponse{
+		Success:   true,
+		Timestamp: time.Now().Unix(),
+	}
+
+	h.writeSuccessResponse(w, http.StatusOK, response)
 }
