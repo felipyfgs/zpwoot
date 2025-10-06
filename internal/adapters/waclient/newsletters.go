@@ -289,7 +289,7 @@ func (ns *NewsletterService) MarkViewed(ctx context.Context, sessionID string, n
 	for i, serverIDStr := range req.ServerIDs {
 		// Converter string para int
 		if serverID, err := strconv.Atoi(serverIDStr); err == nil {
-			serverIDs[i] = serverID
+			serverIDs[i] = types.MessageServerID(serverID)
 		}
 	}
 
@@ -322,8 +322,8 @@ func (ns *NewsletterService) SendReaction(ctx context.Context, sessionID string,
 	if err != nil {
 		return fmt.Errorf("invalid server ID: %w", err)
 	}
-	serverID := serverIDInt
-	messageID := req.MessageID
+	serverID := types.MessageServerID(serverIDInt)
+	messageID := types.MessageID(req.MessageID)
 
 	err = client.WAClient.NewsletterSendReaction(jid, serverID, req.Reaction, messageID)
 	if err != nil {
