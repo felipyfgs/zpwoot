@@ -1337,83 +1337,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/sessions/{sessionId}/send/message/viewonce": {
-            "post": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "DEPRECATED: Use /image, /video, or /audio endpoints with viewOnce=true instead. This endpoint sends a view once message (image or video) that disappears after being viewed once. Supports Base64, URL, or file path. Only images and videos are supported (documents not supported).",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Messages"
-                ],
-                "summary": "Send view once message (DEPRECATED)",
-                "deprecated": true,
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Session ID",
-                        "name": "sessionId",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "View once message data",
-                        "name": "message",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/SendViewOnceMessageRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "View once message sent successfully",
-                        "schema": {
-                            "$ref": "#/definitions/SendMessageResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request, media processing error, or unsupported media type",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Session not found",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    },
-                    "412": {
-                        "description": "Session not connected",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/ErrorResponse"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -1984,37 +1907,6 @@ const docTemplate = `{
                 "viewOnce": {
                     "type": "boolean",
                     "example": false
-                }
-            }
-        },
-        "SendViewOnceMessageRequest": {
-            "type": "object",
-            "required": [
-                "file",
-                "phone"
-            ],
-            "properties": {
-                "caption": {
-                    "type": "string",
-                    "example": "This message will disappear after viewing"
-                },
-                "file": {
-                    "description": "Supports Base64, URL, or file path",
-                    "type": "string",
-                    "example": "https://example.com/image.jpg"
-                },
-                "fileName": {
-                    "type": "string",
-                    "example": "image.jpg"
-                },
-                "mimeType": {
-                    "description": "Auto-detected if not provided",
-                    "type": "string",
-                    "example": "image/jpeg"
-                },
-                "phone": {
-                    "type": "string",
-                    "example": "5511999999999"
                 }
             }
         },

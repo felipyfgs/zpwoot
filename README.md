@@ -46,6 +46,8 @@ zpwoot follows Clean Architecture principles with clear separation of concerns:
 
 ## 🚀 Quick Start
 
+**[📖 View Complete Quick Start Guide →](docs/QUICK_START.md)**
+
 ### Prerequisites
 
 - Go 1.24+
@@ -73,7 +75,7 @@ zpwoot follows Clean Architecture principles with clear separation of concerns:
 
 4. **Run the application**
    ```bash
-   go run cmd/zpwoot/main.go
+   make run
    ```
 
 5. **Access the API**
@@ -171,21 +173,51 @@ zpwoot/
 └── docs/                # Documentation
 ```
 
-## 📡 API Endpoints
+## 📡 API Documentation
 
-### Current Endpoints
+### 📚 Complete API Reference
+**[View Full API Documentation →](docs/API.md)**
 
+### Quick Overview
+
+#### Health & Info
 - `GET /` - API information
-- `GET /health` - Health check with database verification
+- `GET /health` - Health check
+- `GET /swagger/*` - Swagger UI
 
-### Planned Endpoints
+#### Sessions
+- `POST /sessions/create` - Create session
+- `GET /sessions/list` - List all sessions
+- `GET /sessions/{id}/info` - Get session info
+- `DELETE /sessions/{id}/delete` - Delete session
+- `POST /sessions/{id}/connect` - Connect session
+- `POST /sessions/{id}/disconnect` - Disconnect session
+- `POST /sessions/{id}/logout` - Logout session
+- `GET /sessions/{id}/qr` - Get QR code
 
-- `POST /api/v1/sessions` - Create WhatsApp session
-- `GET /api/v1/sessions` - List sessions
-- `POST /api/v1/messages` - Send message
-- `GET /api/v1/messages` - Get messages
-- `POST /api/v1/webhooks` - Configure webhooks
-- `POST /api/v1/chatwoot` - Setup Chatwoot integration
+#### Messages
+- `POST /sessions/{id}/send/message/text` - Send text
+- `POST /sessions/{id}/send/message/image` - Send image
+- `POST /sessions/{id}/send/message/video` - Send video
+- `POST /sessions/{id}/send/message/audio` - Send audio
+- `POST /sessions/{id}/send/message/document` - Send document
+- `POST /sessions/{id}/send/message/sticker` - Send sticker
+- `POST /sessions/{id}/send/message/location` - Send location
+- `POST /sessions/{id}/send/message/contact` - Send contact
+- `POST /sessions/{id}/send/message/contacts` - Send contacts
+- `POST /sessions/{id}/send/message/reaction` - Send reaction
+- `POST /sessions/{id}/send/message/poll` - Send poll
+- `POST /sessions/{id}/send/message/buttons` - Send buttons
+- `POST /sessions/{id}/send/message/list` - Send list
+
+### 🔑 Authentication
+All endpoints (except `/`, `/health`, `/swagger/*`) require API Key:
+```bash
+Authorization: YOUR_API_KEY
+```
+
+### 📖 Interactive Documentation
+Access Swagger UI at: `http://localhost:8080/swagger/index.html`
 
 ## 🔌 Integrations
 

@@ -419,29 +419,6 @@ definitions:
     - file
     - phone
     type: object
-  SendViewOnceMessageRequest:
-    properties:
-      caption:
-        example: This message will disappear after viewing
-        type: string
-      file:
-        description: Supports Base64, URL, or file path
-        example: https://example.com/image.jpg
-        type: string
-      fileName:
-        example: image.jpg
-        type: string
-      mimeType:
-        description: Auto-detected if not provided
-        example: image/jpeg
-        type: string
-      phone:
-        example: "5511999999999"
-        type: string
-    required:
-    - file
-    - phone
-    type: object
   SessionListInfo:
     properties:
       connected:
@@ -1380,60 +1357,6 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Send video message
-      tags:
-      - Messages
-  /sessions/{sessionId}/send/message/viewonce:
-    post:
-      consumes:
-      - application/json
-      deprecated: true
-      description: 'DEPRECATED: Use /image, /video, or /audio endpoints with viewOnce=true
-        instead. This endpoint sends a view once message (image or video) that disappears
-        after being viewed once. Supports Base64, URL, or file path. Only images and
-        videos are supported (documents not supported).'
-      parameters:
-      - description: Session ID
-        in: path
-        name: sessionId
-        required: true
-        type: string
-      - description: View once message data
-        in: body
-        name: message
-        required: true
-        schema:
-          $ref: '#/definitions/SendViewOnceMessageRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: View once message sent successfully
-          schema:
-            $ref: '#/definitions/SendMessageResponse'
-        "400":
-          description: Invalid request, media processing error, or unsupported media
-            type
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "404":
-          description: Session not found
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "412":
-          description: Session not connected
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Send view once message (DEPRECATED)
       tags:
       - Messages
   /sessions/create:

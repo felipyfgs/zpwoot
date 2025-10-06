@@ -96,18 +96,7 @@ curl -X POST "${API_URL}/sessions/${SESSION_ID}/send/message/image" \
   }'
 echo -e "\n"
 
-# Example 7: DEPRECATED endpoint (still works but not recommended)
-echo -e "${YELLOW}Example 7: DEPRECATED /viewonce endpoint (not recommended)${NC}"
-curl -X POST "${API_URL}/sessions/${SESSION_ID}/send/message/viewonce" \
-  -H "Authorization: ${API_KEY}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "phone": "'"${PHONE}"'",
-    "file": "https://picsum.photos/800/600",
-    "caption": "Usando endpoint deprecated"
-  }'
-echo -e "\n"
-
 echo -e "${BLUE}=== Examples completed ===${NC}"
 echo -e "${YELLOW}Note: Replace API_KEY, SESSION_ID, and PHONE with your actual values${NC}"
+echo -e "${GREEN}All examples use the new viewOnce parameter approach!${NC}"
 
