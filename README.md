@@ -46,8 +46,6 @@ zpwoot follows Clean Architecture principles with clear separation of concerns:
 
 ## 🚀 Quick Start
 
-**[📖 View Complete Quick Start Guide →](docs/QUICK_START.md)**
-
 ### Prerequisites
 
 - Go 1.24+
