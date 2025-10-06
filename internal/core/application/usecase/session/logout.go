@@ -31,7 +31,7 @@ func (uc *LogoutUseCase) Execute(ctx context.Context, sessionID string) error {
 		return fmt.Errorf("session ID is required")
 	}
 
-	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
+	domainSession, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
 		if err == shared.ErrSessionNotFound {
 			return dto.ErrSessionNotFound
@@ -66,7 +66,7 @@ func (uc *LogoutUseCase) Execute(ctx context.Context, sessionID string) error {
 	domainSession.QRCode = ""
 	domainSession.QRCodeExpiresAt = nil
 
-	err = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusDisconnected)
+	err = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
 	if err != nil {
 
 	}

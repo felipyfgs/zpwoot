@@ -32,7 +32,7 @@ func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.Sessi
 		return nil, fmt.Errorf("session ID is required")
 	}
 
-	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
+	domainSession, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
 		if errors.Is(err, shared.ErrSessionNotFound) {
 			return nil, dto.ErrSessionNotFound
@@ -44,10 +44,10 @@ func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.Sessi
 	if err != nil {
 
 		if waErr, ok := err.(*output.WhatsAppError); ok && waErr.Code == "SESSION_NOT_FOUND" {
-			return dto.SessionToDetailResponse(domainSession), nil
+			return dto.ToDetailResponse(domainSession), nil
 		}
 
-		return dto.SessionToDetailResponse(domainSession), nil
+		return dto.ToDetailResponse(domainSession), nil
 	}
 
 	if waStatus != nil {
@@ -70,14 +70,14 @@ func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.Sessi
 
 			bgCtx := context.Background()
 			if waStatus.Connected {
-				_ = uc.sessionService.UpdateSessionStatus(bgCtx, sessionID, session.StatusConnected)
+				_ = uc.sessionService.UpdateStatus(bgCtx, sessionID, session.StatusConnected)
 			} else {
-				_ = uc.sessionService.UpdateSessionStatus(bgCtx, sessionID, session.StatusDisconnected)
+				_ = uc.sessionService.UpdateStatus(bgCtx, sessionID, session.StatusDisconnected)
 			}
 		}()
 	}
 
-	response := dto.SessionToDetailResponse(domainSession)
+	response := dto.ToDetailResponse(domainSession)
 
 	return response, nil
 }

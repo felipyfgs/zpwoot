@@ -31,7 +31,7 @@ func (uc *DisconnectUseCase) Execute(ctx context.Context, sessionID string) (*dt
 		return nil, fmt.Errorf("session ID is required")
 	}
 
-	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
+	domainSession, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
 		if err == shared.ErrSessionNotFound {
 			return nil, dto.ErrSessionNotFound
@@ -55,7 +55,7 @@ func (uc *DisconnectUseCase) Execute(ctx context.Context, sessionID string) (*dt
 			case "SESSION_NOT_FOUND":
 
 				domainSession.SetDisconnected()
-				_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusDisconnected)
+				_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
 				return &dto.SessionStatusResponse{
 					ID:        sessionID,
 					Status:    string(session.StatusDisconnected),
@@ -64,7 +64,7 @@ func (uc *DisconnectUseCase) Execute(ctx context.Context, sessionID string) (*dt
 			case "ALREADY_DISCONNECTED":
 
 				domainSession.SetDisconnected()
-				_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusDisconnected)
+				_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
 				return &dto.SessionStatusResponse{
 					ID:        sessionID,
 					Status:    string(session.StatusDisconnected),
@@ -78,7 +78,7 @@ func (uc *DisconnectUseCase) Execute(ctx context.Context, sessionID string) (*dt
 	}
 
 	domainSession.SetDisconnected()
-	err = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusDisconnected)
+	err = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
 	if err != nil {
 
 	}
@@ -96,7 +96,7 @@ func (uc *DisconnectUseCase) ExecuteForce(ctx context.Context, sessionID string)
 		return nil, fmt.Errorf("session ID is required")
 	}
 
-	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
+	domainSession, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
 		if err == shared.ErrSessionNotFound {
 			return nil, dto.ErrSessionNotFound
@@ -107,7 +107,7 @@ func (uc *DisconnectUseCase) ExecuteForce(ctx context.Context, sessionID string)
 	_ = uc.whatsappClient.DisconnectSession(ctx, sessionID)
 
 	domainSession.SetDisconnected()
-	_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusDisconnected)
+	_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
 
 	return &dto.SessionStatusResponse{
 		ID:        sessionID,

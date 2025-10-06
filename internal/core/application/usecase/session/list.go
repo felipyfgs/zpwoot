@@ -31,7 +31,7 @@ func (uc *ListUseCase) Execute(ctx context.Context, pagination *dto.PaginationRe
 	}
 	pagination.Validate()
 
-	domainSessions, err := uc.sessionService.ListSessions(ctx, pagination.Limit, pagination.Offset)
+	domainSessions, err := uc.sessionService.List(ctx, pagination.Limit, pagination.Offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list sessions from domain: %w", err)
 	}
@@ -39,7 +39,7 @@ func (uc *ListUseCase) Execute(ctx context.Context, pagination *dto.PaginationRe
 	sessionResponses := make([]dto.SessionListInfo, len(domainSessions))
 	for i, domainSession := range domainSessions {
 
-		sessionResponse := dto.SessionToListInfo(domainSession)
+		sessionResponse := dto.ToListInfo(domainSession)
 
 		if uc.whatsappClient != nil {
 			waStatus, err := uc.whatsappClient.GetSessionStatus(ctx, domainSession.ID)

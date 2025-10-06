@@ -85,7 +85,7 @@ func (c *Container) initWAClient() {
 }
 
 func (c *Container) Start(ctx context.Context) error {
-	return c.Initialize()
+	return c.Init()
 }
 
 func (c *Container) Stop(ctx context.Context) error {

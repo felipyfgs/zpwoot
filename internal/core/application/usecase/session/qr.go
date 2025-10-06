@@ -32,7 +32,7 @@ func (uc *QRUseCase) GetQRCode(ctx context.Context, sessionID string) (*dto.QRCo
 		return nil, fmt.Errorf("session ID is required")
 	}
 
-	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
+	domainSession, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
 		if err == shared.ErrSessionNotFound {
 			return nil, dto.ErrSessionNotFound
@@ -64,10 +64,10 @@ func (uc *QRUseCase) GetQRCode(ctx context.Context, sessionID string) (*dto.QRCo
 
 	if qrInfo.Code != "" {
 		domainSession.SetQRCode(qrInfo.Code, qrInfo.ExpiresAt)
-		_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusQRCode)
+		_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusQRCode)
 	}
 
-	return dto.NewQRCodeResponse(
+	return dto.NewQRResponse(
 		qrInfo.Base64,
 		qrInfo.ExpiresAt,
 		string(domainSession.GetStatus()),
@@ -80,7 +80,7 @@ func (uc *QRUseCase) RefreshQRCode(ctx context.Context, sessionID string) (*dto.
 		return nil, fmt.Errorf("session ID is required")
 	}
 
-	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
+	domainSession, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
 		if err == shared.ErrSessionNotFound {
 			return nil, dto.ErrSessionNotFound
@@ -109,11 +109,11 @@ func (uc *QRUseCase) RefreshQRCode(ctx context.Context, sessionID string) (*dto.
 
 	if qrInfo.Code != "" {
 		domainSession.SetQRCode(qrInfo.Code, qrInfo.ExpiresAt)
-		_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusQRCode)
+		_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusQRCode)
 
 	}
 
-	return dto.NewQRCodeResponse(
+	return dto.NewQRResponse(
 		qrInfo.Base64,
 		qrInfo.ExpiresAt,
 		string(domainSession.GetStatus()),
@@ -126,7 +126,7 @@ func (uc *QRUseCase) CheckQRCodeStatus(ctx context.Context, sessionID string) (*
 		return nil, fmt.Errorf("session ID is required")
 	}
 
-	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
+	domainSession, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
 		if err == shared.ErrSessionNotFound {
 			return nil, dto.ErrSessionNotFound
@@ -135,7 +135,7 @@ func (uc *QRUseCase) CheckQRCodeStatus(ctx context.Context, sessionID string) (*
 	}
 
 	if domainSession.IsConnected {
-		return dto.NewQRCodeResponse(
+		return dto.NewQRResponse(
 			"",
 			time.Time{},
 			string(session.StatusConnected),
@@ -143,7 +143,7 @@ func (uc *QRUseCase) CheckQRCodeStatus(ctx context.Context, sessionID string) (*
 	}
 
 	if domainSession.QRCode == "" {
-		return dto.NewQRCodeResponse(
+		return dto.NewQRResponse(
 			"",
 			time.Time{},
 			string(session.StatusDisconnected),
@@ -153,9 +153,9 @@ func (uc *QRUseCase) CheckQRCodeStatus(ctx context.Context, sessionID string) (*
 	if domainSession.QRCodeExpiresAt != nil && time.Now().After(*domainSession.QRCodeExpiresAt) {
 
 		domainSession.ClearQRCode()
-		_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusDisconnected)
+		_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
 
-		return dto.NewQRCodeResponse(
+		return dto.NewQRResponse(
 			"",
 			time.Time{},
 			string(session.StatusDisconnected),
@@ -167,7 +167,7 @@ func (uc *QRUseCase) CheckQRCodeStatus(ctx context.Context, sessionID string) (*
 		expiresAt = *domainSession.QRCodeExpiresAt
 	}
 
-	return dto.NewQRCodeResponse(
+	return dto.NewQRResponse(
 		domainSession.QRCode,
 		expiresAt,
 		string(domainSession.GetStatus()),

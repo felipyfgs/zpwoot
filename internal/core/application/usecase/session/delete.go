@@ -32,7 +32,7 @@ func (uc *DeleteUseCase) Execute(ctx context.Context, sessionID string) error {
 		return fmt.Errorf("session ID is required")
 	}
 
-	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
+	domainSession, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
 		if errors.Is(err, shared.ErrSessionNotFound) {
 			return dto.ErrSessionNotFound
@@ -60,7 +60,7 @@ func (uc *DeleteUseCase) Execute(ctx context.Context, sessionID string) error {
 
 	}
 
-	err = uc.sessionService.DeleteSession(ctx, sessionID)
+	err = uc.sessionService.Delete(ctx, sessionID)
 	if err != nil {
 		if err == shared.ErrSessionNotFound {
 			return dto.ErrSessionNotFound
@@ -80,7 +80,7 @@ func (uc *DeleteUseCase) ExecuteForce(ctx context.Context, sessionID string) err
 	_ = uc.whatsappClient.DisconnectSession(ctx, sessionID)
 	_ = uc.whatsappClient.DeleteSession(ctx, sessionID)
 
-	err := uc.sessionService.DeleteSession(ctx, sessionID)
+	err := uc.sessionService.Delete(ctx, sessionID)
 	if err != nil && err != shared.ErrSessionNotFound {
 		return fmt.Errorf("failed to delete session from domain: %w", err)
 	}
@@ -94,7 +94,7 @@ func (uc *DeleteUseCase) ExecuteWithValidation(ctx context.Context, sessionID st
 		return fmt.Errorf("session ID is required")
 	}
 
-	_, err := uc.sessionService.GetSession(ctx, sessionID)
+	_, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
 		if err == shared.ErrSessionNotFound {
 			return dto.ErrSessionNotFound

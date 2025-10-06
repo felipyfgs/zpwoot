@@ -9,7 +9,7 @@ import (
 )
 
 type SessionCreator interface {
-	Execute(ctx context.Context, req *dto.CreateSessionRequest) (*dto.CreateSessionResponse, error)
+	Execute(ctx context.Context, req *dto.CreateRequest) (*dto.CreateSessionResponse, error)
 }
 
 type SessionConnector interface {
@@ -42,7 +42,7 @@ type QRCodeManager interface {
 }
 
 type SessionUseCases interface {
-	CreateSession(ctx context.Context, req *dto.CreateSessionRequest) (*dto.CreateSessionResponse, error)
+	CreateSession(ctx context.Context, req *dto.CreateRequest) (*dto.CreateSessionResponse, error)
 	ConnectSession(ctx context.Context, sessionID string) (*dto.SessionStatusResponse, error)
 	DisconnectSession(ctx context.Context, sessionID string) (*dto.SessionStatusResponse, error)
 	LogoutSession(ctx context.Context, sessionID string) error

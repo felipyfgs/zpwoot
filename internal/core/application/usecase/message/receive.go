@@ -32,7 +32,7 @@ func (uc *ReceiveUseCase) ProcessIncomingMessage(ctx context.Context, req *dto.R
 		return fmt.Errorf("message ID is required")
 	}
 
-	_, err := uc.sessionService.GetSession(ctx, req.SessionID)
+	_, err := uc.sessionService.Get(ctx, req.SessionID)
 	if err != nil {
 		if err == shared.ErrSessionNotFound {
 			return dto.ErrSessionNotFound
@@ -42,7 +42,7 @@ func (uc *ReceiveUseCase) ProcessIncomingMessage(ctx context.Context, req *dto.R
 
 	go func() {
 
-		_ = uc.sessionService.UpdateSessionStatus(context.Background(), req.SessionID, session.StatusConnected)
+		_ = uc.sessionService.UpdateStatus(context.Background(), req.SessionID, session.StatusConnected)
 	}()
 
 	return nil
@@ -58,7 +58,7 @@ func (uc *ReceiveUseCase) ProcessIncomingMessageBatch(ctx context.Context, sessi
 		return nil
 	}
 
-	_, err := uc.sessionService.GetSession(ctx, sessionID)
+	_, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
 		if err == shared.ErrSessionNotFound {
 			return dto.ErrSessionNotFound
@@ -68,7 +68,7 @@ func (uc *ReceiveUseCase) ProcessIncomingMessageBatch(ctx context.Context, sessi
 
 	go func() {
 
-		_ = uc.sessionService.UpdateSessionStatus(context.Background(), sessionID, session.StatusConnected)
+		_ = uc.sessionService.UpdateStatus(context.Background(), sessionID, session.StatusConnected)
 	}()
 
 	for _, message := range messages {

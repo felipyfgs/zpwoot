@@ -36,7 +36,7 @@ func NewUseCases(
 	}
 }
 
-func (uc *UseCases) CreateSession(ctx context.Context, req *dto.CreateSessionRequest) (*dto.CreateSessionResponse, error) {
+func (uc *UseCases) CreateSession(ctx context.Context, req *dto.CreateRequest) (*dto.CreateSessionResponse, error) {
 	return uc.Create.Execute(ctx, req)
 }
 

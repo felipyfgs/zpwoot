@@ -37,7 +37,7 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
 
-	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
+	domainSession, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
 		if err == shared.ErrSessionNotFound {
 			return nil, dto.ErrSessionNotFound
@@ -83,7 +83,7 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 
 	go func() {
 
-		_ = uc.sessionService.UpdateSessionStatus(context.Background(), sessionID, session.StatusConnected)
+		_ = uc.sessionService.UpdateStatus(context.Background(), sessionID, session.StatusConnected)
 	}()
 
 	finalMessageID := messageID

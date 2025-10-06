@@ -31,7 +31,7 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 		return nil, fmt.Errorf("session ID is required")
 	}
 
-	domainSession, err := uc.sessionService.GetSession(ctx, sessionID)
+	domainSession, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
 		if err == shared.ErrSessionNotFound {
 			return nil, dto.ErrSessionNotFound
@@ -52,7 +52,7 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 	if err != nil {
 
 		domainSession.SetError(err.Error())
-		_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusError)
+		_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusError)
 
 		if waErr, ok := err.(*output.WhatsAppError); ok {
 			switch waErr.Code {
@@ -61,7 +61,7 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 			case "ALREADY_CONNECTED":
 
 				domainSession.SetConnected(domainSession.DeviceJID)
-				_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusConnected)
+				_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnected)
 				return &dto.SessionStatusResponse{
 					ID:        sessionID,
 					Status:    string(session.StatusConnected),
@@ -75,7 +75,7 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 		return nil, fmt.Errorf("failed to connect WhatsApp session: %w", err)
 	}
 
-	err = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusConnecting)
+	err = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnecting)
 	if err != nil {
 
 	}
@@ -92,14 +92,14 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 
 	if waStatus.Connected {
 		domainSession.SetConnected(waStatus.DeviceJID)
-		_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusConnected)
+		_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnected)
 
 	} else if !waStatus.LoggedIn {
 
 		qrInfo, err := uc.whatsappClient.GetQRCode(ctx, sessionID)
 		if err == nil && qrInfo.Code != "" {
 			domainSession.SetQRCode(qrInfo.Code, qrInfo.ExpiresAt)
-			_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusQRCode)
+			_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusQRCode)
 
 		}
 	}
