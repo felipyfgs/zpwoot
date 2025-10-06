@@ -237,7 +237,7 @@ func (ns *NewsletterService) GetMessages(ctx context.Context, sessionID string, 
 	if req.Before != "" {
 		// Converter string para MessageServerID
 		if beforeID, err := strconv.Atoi(req.Before); err == nil {
-			params.Before = beforeID
+			params.Before = types.MessageServerID(beforeID)
 		}
 	}
 
@@ -254,8 +254,8 @@ func (ns *NewsletterService) GetMessages(ctx context.Context, sessionID string, 
 
 	for _, msg := range messages {
 		message := dto.NewsletterMessage{
-			ID:        msg.MessageID,
-			ServerID:  msg.MessageServerID,
+			ID:        string(msg.MessageID),
+			ServerID:  string(msg.MessageServerID),
 			Content:   "", // TODO: Extrair conteúdo baseado no tipo
 			Type:      msg.Type,
 			Timestamp: msg.Timestamp.Unix(),
