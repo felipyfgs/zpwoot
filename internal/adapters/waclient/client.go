@@ -92,7 +92,7 @@ func (w *WAClientAdapter) GetQRCode(ctx context.Context, sessionID string) (*out
 }
 
 func (w *WAClientAdapter) SendTextMessage(ctx context.Context, sessionID, to, text string) (*output.MessageResult, error) {
-	messageSender := NewMessageSender(w.client)
+	messageSender := NewSender(w.client)
 	resp, err := messageSender.SendTextMessage(ctx, sessionID, to, text, nil)
 	if err != nil {
 		return nil, w.convertError(err)
@@ -106,7 +106,7 @@ func (w *WAClientAdapter) SendTextMessage(ctx context.Context, sessionID, to, te
 }
 
 func (w *WAClientAdapter) SendMediaMessage(ctx context.Context, sessionID, to string, media *output.MediaData) (*output.MessageResult, error) {
-	messageSender := NewMessageSender(w.client)
+	messageSender := NewSender(w.client)
 	resp, err := messageSender.SendMediaMessage(ctx, sessionID, to, media)
 	if err != nil {
 		return nil, w.convertError(err)
@@ -120,7 +120,7 @@ func (w *WAClientAdapter) SendMediaMessage(ctx context.Context, sessionID, to st
 }
 
 func (w *WAClientAdapter) SendLocationMessage(ctx context.Context, sessionID, to string, location *output.Location) (*output.MessageResult, error) {
-	messageSender := NewMessageSender(w.client)
+	messageSender := NewSender(w.client)
 	err := messageSender.SendLocationMessage(ctx, sessionID, to, location.Latitude, location.Longitude, location.Name)
 	if err != nil {
 		return nil, w.convertError(err)
@@ -134,7 +134,7 @@ func (w *WAClientAdapter) SendLocationMessage(ctx context.Context, sessionID, to
 }
 
 func (w *WAClientAdapter) SendContactMessage(ctx context.Context, sessionID, to string, contact *output.ContactInfo) (*output.MessageResult, error) {
-	messageSender := NewMessageSender(w.client)
+	messageSender := NewSender(w.client)
 	contactInfo := &ContactInfo{
 		Name:  contact.Name,
 		Phone: contact.PhoneNumber,

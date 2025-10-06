@@ -59,7 +59,7 @@ func createMessageHandler(
 		panic("waClient is not a WAClientAdapter")
 	}
 
-	messageSender := waclient.NewMessageSender(waClientAdapter.GetWAClient())
+	messageSender := waclient.NewSender(waClientAdapter.GetWAClient())
 	messageService := waclient.NewMessageServiceWrapper(messageSender)
 
 	return NewMessageHandler(

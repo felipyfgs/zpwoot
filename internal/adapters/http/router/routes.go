@@ -52,15 +52,15 @@ func setupAPIRoutes(r *chi.Mux, c *container.Container, h *handlers.Handlers) {
 
 func setupSessionRoutes(r chi.Router, h *handlers.Handlers) {
 	r.Route("/sessions", func(r chi.Router) {
-		r.Post("/create", h.Session.CreateSession)
-		r.Get("/list", h.Session.ListSessions)
-		r.Get("/{sessionId}/info", h.Session.GetSession)
-		r.Delete("/{sessionId}/delete", h.Session.DeleteSession)
+		r.Post("/create", h.Session.Create)
+		r.Get("/list", h.Session.List)
+		r.Get("/{sessionId}/info", h.Session.Get)
+		r.Delete("/{sessionId}/delete", h.Session.Delete)
 
-		r.Post("/{sessionId}/connect", h.Session.ConnectSession)
-		r.Post("/{sessionId}/disconnect", h.Session.DisconnectSession)
-		r.Post("/{sessionId}/logout", h.Session.LogoutSession)
-		r.Get("/{sessionId}/qr", h.Session.GetQRCode)
+		r.Post("/{sessionId}/connect", h.Session.Connect)
+		r.Post("/{sessionId}/disconnect", h.Session.Disconnect)
+		r.Post("/{sessionId}/logout", h.Session.Logout)
+		r.Get("/{sessionId}/qr", h.Session.QRCode)
 	})
 
 	setupMessageRoutes(r, h)
@@ -68,7 +68,7 @@ func setupSessionRoutes(r chi.Router, h *handlers.Handlers) {
 
 func setupMessageRoutes(r chi.Router, h *handlers.Handlers) {
 	r.Route("/sessions/{sessionId}/send/message", func(r chi.Router) {
-		r.Post("/text", h.Message.SendTextMessage)
+		r.Post("/text", h.Message.SendText)
 		r.Post("/image", h.Message.SendImage)
 		r.Post("/audio", h.Message.SendAudio)
 		r.Post("/video", h.Message.SendVideo)

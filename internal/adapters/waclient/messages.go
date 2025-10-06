@@ -18,15 +18,15 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type MessageSenderImpl struct {
+type Sender struct {
 	waClient *WAClient
 }
 
-func NewMessageSender(waClient *WAClient) *MessageSenderImpl {
-	return &MessageSenderImpl{waClient: waClient}
+func NewSender(waClient *WAClient) *Sender {
+	return &Sender{waClient: waClient}
 }
 
-func (ms *MessageSenderImpl) SendTextMessage(ctx context.Context, sessionID string, to string, text string, contextInfo *output.MessageContextInfo) (*whatsmeow.SendResponse, error) {
+func (ms *Sender) SendTextMessage(ctx context.Context, sessionID string, to string, text string, contextInfo *output.MessageContextInfo) (*whatsmeow.SendResponse, error) {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func (ms *MessageSenderImpl) SendTextMessage(ctx context.Context, sessionID stri
 	return &resp, nil
 }
 
-func (ms *MessageSenderImpl) SendMediaMessage(ctx context.Context, sessionID string, to string, media *output.MediaData) (*whatsmeow.SendResponse, error) {
+func (ms *Sender) SendMediaMessage(ctx context.Context, sessionID string, to string, media *output.MediaData) (*whatsmeow.SendResponse, error) {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return nil, err
@@ -173,7 +173,7 @@ func (ms *MessageSenderImpl) SendMediaMessage(ctx context.Context, sessionID str
 	return &resp, nil
 }
 
-func (ms *MessageSenderImpl) SendLocationMessage(ctx context.Context, sessionID string, to string, lat, lng float64, name string) error {
+func (ms *Sender) SendLocationMessage(ctx context.Context, sessionID string, to string, lat, lng float64, name string) error {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return err
@@ -200,7 +200,7 @@ func (ms *MessageSenderImpl) SendLocationMessage(ctx context.Context, sessionID 
 	return nil
 }
 
-func (ms *MessageSenderImpl) SendContactMessage(ctx context.Context, sessionID string, to string, contact *ContactInfo) error {
+func (ms *Sender) SendContactMessage(ctx context.Context, sessionID string, to string, contact *ContactInfo) error {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return err
@@ -231,7 +231,7 @@ func (ms *MessageSenderImpl) SendContactMessage(ctx context.Context, sessionID s
 	return nil
 }
 
-func (ms *MessageSenderImpl) getConnectedClient(ctx context.Context, sessionID string) (*Client, error) {
+func (ms *Sender) getConnectedClient(ctx context.Context, sessionID string) (*Client, error) {
 	client, err := ms.waClient.GetSession(ctx, sessionID)
 	if err != nil {
 		return nil, err
@@ -240,7 +240,7 @@ func (ms *MessageSenderImpl) getConnectedClient(ctx context.Context, sessionID s
 	return client, nil
 }
 
-func (ms *MessageSenderImpl) waitForConnection(client *Client, timeout time.Duration) error {
+func (ms *Sender) waitForConnection(client *Client, timeout time.Duration) error {
 	if client.WAClient.IsConnected() {
 		return nil
 	}
@@ -263,7 +263,7 @@ func (ms *MessageSenderImpl) waitForConnection(client *Client, timeout time.Dura
 	}
 }
 
-func (ms *MessageSenderImpl) generateVCard(name, phone string) string {
+func (ms *Sender) generateVCard(name, phone string) string {
 	return fmt.Sprintf("BEGIN:VCARD\nVERSION:3.0\nFN:%s\nTEL:%s\nEND:VCARD", name, phone)
 }
 
@@ -294,7 +294,7 @@ func normalizePhoneNumber(phone string) string {
 	return phone
 }
 
-func (ms *MessageSenderImpl) GetChatInfo(ctx context.Context, sessionID string, chatJID string) (*ChatInfo, error) {
+func (ms *Sender) GetChatInfo(ctx context.Context, sessionID string, chatJID string) (*ChatInfo, error) {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return nil, err
@@ -330,7 +330,7 @@ type ChatInfo struct {
 	ParticipantCount int    `json:"participantCount,omitempty"`
 }
 
-func (ms *MessageSenderImpl) GetContacts(ctx context.Context, sessionID string) ([]*ContactInfo, error) {
+func (ms *Sender) GetContacts(ctx context.Context, sessionID string) ([]*ContactInfo, error) {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return nil, err
@@ -356,7 +356,7 @@ func (ms *MessageSenderImpl) GetContacts(ctx context.Context, sessionID string) 
 	return contactList, nil
 }
 
-func (ms *MessageSenderImpl) SendContactMessageFromInput(ctx context.Context, sessionID string, to string, contact *input.ContactInfo) error {
+func (ms *Sender) SendContactMessageFromInput(ctx context.Context, sessionID string, to string, contact *input.ContactInfo) error {
 
 	internalContact := &ContactInfo{
 		Name:  contact.Name,
@@ -366,7 +366,7 @@ func (ms *MessageSenderImpl) SendContactMessageFromInput(ctx context.Context, se
 	return ms.SendContactMessage(ctx, sessionID, to, internalContact)
 }
 
-func (ms *MessageSenderImpl) GetChatInfoAsInput(ctx context.Context, sessionID, chatJID string) (*input.ChatInfo, error) {
+func (ms *Sender) GetChatInfoAsInput(ctx context.Context, sessionID, chatJID string) (*input.ChatInfo, error) {
 	chatInfo, err := ms.GetChatInfo(ctx, sessionID, chatJID)
 	if err != nil {
 		return nil, err
@@ -381,7 +381,7 @@ func (ms *MessageSenderImpl) GetChatInfoAsInput(ctx context.Context, sessionID, 
 	}, nil
 }
 
-func (ms *MessageSenderImpl) GetContactsAsInput(ctx context.Context, sessionID string) ([]*input.ContactInfo, error) {
+func (ms *Sender) GetContactsAsInput(ctx context.Context, sessionID string) ([]*input.ContactInfo, error) {
 	contacts, err := ms.GetContacts(ctx, sessionID)
 	if err != nil {
 		return nil, err
@@ -399,7 +399,7 @@ func (ms *MessageSenderImpl) GetContactsAsInput(ctx context.Context, sessionID s
 	return inputContacts, nil
 }
 
-func (ms *MessageSenderImpl) GetChatsAsInput(ctx context.Context, sessionID string) ([]*input.ChatInfo, error) {
+func (ms *Sender) GetChatsAsInput(ctx context.Context, sessionID string) ([]*input.ChatInfo, error) {
 	chats, err := ms.GetChats(ctx, sessionID)
 	if err != nil {
 		return nil, err
@@ -420,17 +420,17 @@ func (ms *MessageSenderImpl) GetChatsAsInput(ctx context.Context, sessionID stri
 }
 
 type MessageServiceWrapper struct {
-	*MessageSenderImpl
+	*Sender
 }
 
-func NewMessageServiceWrapper(messageSender *MessageSenderImpl) input.MessageService {
+func NewMessageServiceWrapper(messageSender *Sender) input.MessageService {
 	return &MessageServiceWrapper{
-		MessageSenderImpl: messageSender,
+		Sender: messageSender,
 	}
 }
 
 func (w *MessageServiceWrapper) SendTextMessage(ctx context.Context, sessionID string, to string, text string, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
-	resp, err := w.MessageSenderImpl.SendTextMessage(ctx, sessionID, to, text, contextInfo)
+	resp, err := w.Sender.SendTextMessage(ctx, sessionID, to, text, contextInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -443,7 +443,7 @@ func (w *MessageServiceWrapper) SendTextMessage(ctx context.Context, sessionID s
 
 func (w *MessageServiceWrapper) SendMediaMessage(ctx context.Context, sessionID string, to string, media *output.MediaData, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
 	// TODO: Implement contextInfo support for media messages
-	resp, err := w.MessageSenderImpl.SendMediaMessage(ctx, sessionID, to, media)
+	resp, err := w.Sender.SendMediaMessage(ctx, sessionID, to, media)
 	if err != nil {
 		return nil, err
 	}
@@ -456,12 +456,12 @@ func (w *MessageServiceWrapper) SendMediaMessage(ctx context.Context, sessionID 
 
 func (w *MessageServiceWrapper) SendLocationMessage(ctx context.Context, sessionID, to string, latitude, longitude float64, name string, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
 	// TODO: Implement contextInfo support for location messages
-	err := w.MessageSenderImpl.SendLocationMessage(ctx, sessionID, to, latitude, longitude, name)
+	err := w.Sender.SendLocationMessage(ctx, sessionID, to, latitude, longitude, name)
 	if err != nil {
 		return nil, err
 	}
 	return &output.MessageResult{
-		MessageID: generateFallbackMessageID(),
+		MessageID: fallbackID(),
 		Status:    "sent",
 		SentAt:    time.Now(),
 	}, nil
@@ -474,31 +474,31 @@ func (w *MessageServiceWrapper) SendContactMessage(ctx context.Context, sessionI
 		return nil, err
 	}
 	return &output.MessageResult{
-		MessageID: generateFallbackMessageID(),
+		MessageID: fallbackID(),
 		Status:    "sent",
 		SentAt:    time.Now(),
 	}, nil
 }
 
 func (w *MessageServiceWrapper) SendReactionMessage(ctx context.Context, sessionID, to, messageID, reaction string, fromMe bool) (*output.MessageResult, error) {
-	err := w.MessageSenderImpl.SendReactionMessage(ctx, sessionID, to, messageID, reaction, fromMe)
+	err := w.Sender.SendReactionMessage(ctx, sessionID, to, messageID, reaction, fromMe)
 	if err != nil {
 		return nil, err
 	}
 	return &output.MessageResult{
-		MessageID: generateFallbackMessageID(),
+		MessageID: fallbackID(),
 		Status:    "sent",
 		SentAt:    time.Now(),
 	}, nil
 }
 
 func (w *MessageServiceWrapper) SendPollMessage(ctx context.Context, sessionID, to, name string, options []string, selectableCount int) (*output.MessageResult, error) {
-	err := w.MessageSenderImpl.SendPollMessage(ctx, sessionID, to, name, options, selectableCount)
+	err := w.Sender.SendPollMessage(ctx, sessionID, to, name, options, selectableCount)
 	if err != nil {
 		return nil, err
 	}
 	return &output.MessageResult{
-		MessageID: generateFallbackMessageID(),
+		MessageID: fallbackID(),
 		Status:    "sent",
 		SentAt:    time.Now(),
 	}, nil
@@ -513,12 +513,12 @@ func (w *MessageServiceWrapper) SendButtonsMessage(ctx context.Context, sessionI
 			Text: btn.Text,
 		})
 	}
-	err := w.MessageSenderImpl.SendButtonsMessage(ctx, sessionID, to, text, waButtons)
+	err := w.Sender.SendButtonsMessage(ctx, sessionID, to, text, waButtons)
 	if err != nil {
 		return nil, err
 	}
 	return &output.MessageResult{
-		MessageID: generateFallbackMessageID(),
+		MessageID: fallbackID(),
 		Status:    "sent",
 		SentAt:    time.Now(),
 	}, nil
@@ -541,12 +541,12 @@ func (w *MessageServiceWrapper) SendListMessage(ctx context.Context, sessionID, 
 			Rows:  rows,
 		})
 	}
-	err := w.MessageSenderImpl.SendListMessage(ctx, sessionID, to, text, title, "", waSections)
+	err := w.Sender.SendListMessage(ctx, sessionID, to, text, title, "", waSections)
 	if err != nil {
 		return nil, err
 	}
 	return &output.MessageResult{
-		MessageID: generateFallbackMessageID(),
+		MessageID: fallbackID(),
 		Status:    "sent",
 		SentAt:    time.Now(),
 	}, nil
@@ -557,24 +557,24 @@ func (w *MessageServiceWrapper) SendTemplateMessage(ctx context.Context, session
 		Content: template.Content,
 		Footer:  template.Footer,
 	}
-	err := w.MessageSenderImpl.SendTemplateMessage(ctx, sessionID, to, waTemplate)
+	err := w.Sender.SendTemplateMessage(ctx, sessionID, to, waTemplate)
 	if err != nil {
 		return nil, err
 	}
 	return &output.MessageResult{
-		MessageID: generateFallbackMessageID(),
+		MessageID: fallbackID(),
 		Status:    "sent",
 		SentAt:    time.Now(),
 	}, nil
 }
 
 func (w *MessageServiceWrapper) SendViewOnceMessage(ctx context.Context, sessionID, to string, media *output.MediaData) (*output.MessageResult, error) {
-	err := w.MessageSenderImpl.SendViewOnceMessage(ctx, sessionID, to, media)
+	err := w.Sender.SendViewOnceMessage(ctx, sessionID, to, media)
 	if err != nil {
 		return nil, err
 	}
 	return &output.MessageResult{
-		MessageID: generateFallbackMessageID(),
+		MessageID: fallbackID(),
 		Status:    "sent",
 		SentAt:    time.Now(),
 	}, nil
@@ -592,7 +592,7 @@ func (w *MessageServiceWrapper) GetChats(ctx context.Context, sessionID string) 
 	return w.GetChatsAsInput(ctx, sessionID)
 }
 
-func (ms *MessageSenderImpl) GetChats(ctx context.Context, sessionID string) ([]*ChatInfo, error) {
+func (ms *Sender) GetChats(ctx context.Context, sessionID string) ([]*ChatInfo, error) {
 	_, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return nil, err
@@ -603,7 +603,7 @@ func (ms *MessageSenderImpl) GetChats(ctx context.Context, sessionID string) ([]
 	return chatList, nil
 }
 
-func (ms *MessageSenderImpl) SendReactionMessage(ctx context.Context, sessionID string, to string, messageID string, reaction string, fromMe bool) error {
+func (ms *Sender) SendReactionMessage(ctx context.Context, sessionID string, to string, messageID string, reaction string, fromMe bool) error {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return err
@@ -642,7 +642,7 @@ func (ms *MessageSenderImpl) SendReactionMessage(ctx context.Context, sessionID 
 	return nil
 }
 
-func (ms *MessageSenderImpl) SendPollMessage(ctx context.Context, sessionID string, to string, name string, options []string, selectableCount int) error {
+func (ms *Sender) SendPollMessage(ctx context.Context, sessionID string, to string, name string, options []string, selectableCount int) error {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return err
@@ -663,7 +663,7 @@ func (ms *MessageSenderImpl) SendPollMessage(ctx context.Context, sessionID stri
 	return nil
 }
 
-func (ms *MessageSenderImpl) SendButtonsMessage(ctx context.Context, sessionID string, to string, text string, buttons []ButtonInfo) error {
+func (ms *Sender) SendButtonsMessage(ctx context.Context, sessionID string, to string, text string, buttons []ButtonInfo) error {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return err
@@ -700,7 +700,7 @@ func (ms *MessageSenderImpl) SendButtonsMessage(ctx context.Context, sessionID s
 	return nil
 }
 
-func (ms *MessageSenderImpl) SendListMessage(ctx context.Context, sessionID string, to string, text string, title string, buttonText string, sections []ListSection) error {
+func (ms *Sender) SendListMessage(ctx context.Context, sessionID string, to string, text string, title string, buttonText string, sections []ListSection) error {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return err
@@ -745,7 +745,7 @@ func (ms *MessageSenderImpl) SendListMessage(ctx context.Context, sessionID stri
 	return nil
 }
 
-func (ms *MessageSenderImpl) SendTemplateMessage(ctx context.Context, sessionID string, to string, template TemplateInfo) error {
+func (ms *Sender) SendTemplateMessage(ctx context.Context, sessionID string, to string, template TemplateInfo) error {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return err
@@ -773,7 +773,7 @@ func (ms *MessageSenderImpl) SendTemplateMessage(ctx context.Context, sessionID 
 	return nil
 }
 
-func (ms *MessageSenderImpl) SendViewOnceMessage(ctx context.Context, sessionID string, to string, media *output.MediaData) error {
+func (ms *Sender) SendViewOnceMessage(ctx context.Context, sessionID string, to string, media *output.MediaData) error {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return err
@@ -872,7 +872,7 @@ type TemplateInfo struct {
 	Footer  string
 }
 
-func generateFallbackMessageID() string {
+func fallbackID() string {
 	bytes := make([]byte, 16)
 	rand.Read(bytes)
 	return strings.ToUpper(hex.EncodeToString(bytes))

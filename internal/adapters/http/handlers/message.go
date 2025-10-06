@@ -63,7 +63,7 @@ func (h *MessageHandler) buildMessageResponse(result *output.MessageResult, to, 
 // @Failure      412         {object}  dto.ErrorResponse             "Session not connected"
 // @Failure      500         {object}  dto.ErrorResponse             "Internal server error"
 // @Router       /sessions/{sessionId}/send/message/text [post]
-func (h *MessageHandler) SendTextMessage(w http.ResponseWriter, r *http.Request) {
+func (h *MessageHandler) SendText(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "sessionId is required")

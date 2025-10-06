@@ -19,7 +19,7 @@ func NewService(repo Repository) *Service {
 	}
 }
 
-func (s *Service) CreateSession(ctx context.Context, name string) (*Session, error) {
+func (s *Service) Create(ctx context.Context, name string) (*Session, error) {
 	if name == "" {
 		return nil, errors.New("session name cannot be empty")
 	}
@@ -46,7 +46,7 @@ func (s *Service) CreateSession(ctx context.Context, name string) (*Session, err
 	return session, nil
 }
 
-func (s *Service) GetSession(ctx context.Context, id string) (*Session, error) {
+func (s *Service) Get(ctx context.Context, id string) (*Session, error) {
 	session, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get session: %w", err)
@@ -54,7 +54,7 @@ func (s *Service) GetSession(ctx context.Context, id string) (*Session, error) {
 	return session, nil
 }
 
-func (s *Service) UpdateSessionStatus(ctx context.Context, id string, status Status) error {
+func (s *Service) UpdateStatus(ctx context.Context, id string, status Status) error {
 	if !status.IsValid() {
 		return shared.ErrInvalidStatus
 	}
@@ -66,7 +66,7 @@ func (s *Service) UpdateSessionStatus(ctx context.Context, id string, status Sta
 	return nil
 }
 
-func (s *Service) UpdateQRCode(ctx context.Context, id string, qrCode string) error {
+func (s *Service) UpdateQR(ctx context.Context, id string, qrCode string) error {
 	if err := s.repo.UpdateQRCode(ctx, id, qrCode); err != nil {
 		return fmt.Errorf("failed to update QR code: %w", err)
 	}
@@ -74,7 +74,7 @@ func (s *Service) UpdateQRCode(ctx context.Context, id string, qrCode string) er
 	return nil
 }
 
-func (s *Service) ListSessions(ctx context.Context, limit, offset int) ([]*Session, error) {
+func (s *Service) List(ctx context.Context, limit, offset int) ([]*Session, error) {
 	sessions, err := s.repo.List(ctx, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list sessions: %w", err)
@@ -82,7 +82,7 @@ func (s *Service) ListSessions(ctx context.Context, limit, offset int) ([]*Sessi
 	return sessions, nil
 }
 
-func (s *Service) DeleteSession(ctx context.Context, id string) error {
+func (s *Service) Delete(ctx context.Context, id string) error {
 	if err := s.repo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("failed to delete session: %w", err)
 	}

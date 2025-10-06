@@ -30,13 +30,13 @@ type SessionSettings struct {
 	Webhook *WebhookSettings `json:"webhook,omitempty" description:"Webhook configuration"`
 } //@name SessionSettings
 
-type CreateSessionRequest struct {
+type CreateRequest struct {
 	Name           string           `json:"name" example:"my-session" validate:"required,min=1,max=100" description:"Session name for identification"`
 	Settings       *SessionSettings `json:"settings,omitempty" description:"Session settings (proxy, webhook)"`
 	GenerateQRCode bool             `json:"qrCode,omitempty" example:"true" description:"Auto-generate QR code after creation (default: false)"`
 } //@name CreateSessionRequest
 
-type UpdateSessionRequest struct {
+type UpdateRequest struct {
 	Name     *string          `json:"name,omitempty" example:"updated-session" validate:"omitempty,min=1,max=100" description:"Session name for identification"`
 	Settings *SessionSettings `json:"settings,omitempty" description:"Session settings (proxy, webhook)"`
 }
@@ -123,7 +123,7 @@ type SessionStatusResponse struct {
 	Message   string `json:"message,omitempty" example:"Session is already connected" description:"Additional status message"`
 } //@name SessionStatusResponse
 
-func (r *CreateSessionRequest) Validate() error {
+func (r *CreateRequest) Validate() error {
 
 	if err := validators.ValidateSessionName(r.Name); err != nil {
 		return NewValidationError("name", err.Error())
@@ -147,11 +147,11 @@ func (r *CreateSessionRequest) Validate() error {
 	return nil
 }
 
-func (r *CreateSessionRequest) ToDomain() *session.Session {
+func (r *CreateRequest) ToDomain() *session.Session {
 	return session.NewSession(r.Name)
 }
 
-func FromDomainSession(s *session.Session) *SessionResponse {
+func FromDomain(s *session.Session) *SessionResponse {
 	response := &SessionResponse{
 		SessionID:   s.ID,
 		Name:        s.Name,
@@ -166,7 +166,7 @@ func FromDomainSession(s *session.Session) *SessionResponse {
 	}
 
 	if s.QRCode != "" {
-		response.QRCodeBase64 = GenerateQRCodeBase64(s.QRCode)
+		response.QRCodeBase64 = QRBase64(s.QRCode)
 		if s.QRCodeExpiresAt != nil {
 			response.QRCodeExpiresAt = s.QRCodeExpiresAt
 		}
@@ -190,7 +190,7 @@ func (s *SessionResponse) ToListInfo() *SessionListInfo {
 	}
 }
 
-func NewQRCodeResponse(qrCode string, expiresAt time.Time, status string) *QRCodeResponse {
+func NewQRResponse(qrCode string, expiresAt time.Time, status string) *QRCodeResponse {
 	expiresAtStr := ""
 	if !expiresAt.IsZero() {
 		expiresAtStr = expiresAt.Format(time.RFC3339)
@@ -198,13 +198,13 @@ func NewQRCodeResponse(qrCode string, expiresAt time.Time, status string) *QRCod
 
 	return &QRCodeResponse{
 		QRCode:       qrCode,
-		QRCodeBase64: GenerateQRCodeBase64(qrCode),
+		QRCodeBase64: QRBase64(qrCode),
 		ExpiresAt:    expiresAtStr,
 		Status:       status,
 	}
 }
 
-func SessionToDetailResponse(s *session.Session) *SessionDetailResponse {
+func ToDetailResponse(s *session.Session) *SessionDetailResponse {
 	return &SessionDetailResponse{
 		ID:              s.ID,
 		Name:            s.Name,
@@ -222,7 +222,7 @@ func SessionToDetailResponse(s *session.Session) *SessionDetailResponse {
 	}
 }
 
-func SessionToCreateResponse(s *session.Session) *CreateSessionResponse {
+func ToCreateResponse(s *session.Session) *CreateSessionResponse {
 	response := &CreateSessionResponse{
 		ID:        s.ID,
 		Name:      s.Name,
@@ -233,7 +233,7 @@ func SessionToCreateResponse(s *session.Session) *CreateSessionResponse {
 
 	if s.QRCode != "" {
 		response.QRCode = s.QRCode
-		response.QRCodeBase64 = GenerateQRCodeBase64(s.QRCode)
+		response.QRCodeBase64 = QRBase64(s.QRCode)
 		if s.QRCodeExpiresAt != nil {
 			response.QRCodeExpiresAt = s.QRCodeExpiresAt
 		}
@@ -242,7 +242,7 @@ func SessionToCreateResponse(s *session.Session) *CreateSessionResponse {
 	return response
 }
 
-func SessionToStatusResponse(s *session.Session) *SessionStatusResponse {
+func ToStatusResponse(s *session.Session) *SessionStatusResponse {
 	return &SessionStatusResponse{
 		ID:        s.ID,
 		Status:    string(s.GetStatus()),
@@ -250,11 +250,11 @@ func SessionToStatusResponse(s *session.Session) *SessionStatusResponse {
 	}
 }
 
-func SessionToListResponse(s *session.Session) *SessionResponse {
-	return FromDomainSession(s)
+func ToListResponse(s *session.Session) *SessionResponse {
+	return FromDomain(s)
 }
 
-func SessionToListInfo(s *session.Session) *SessionListInfo {
+func ToListInfo(s *session.Session) *SessionListInfo {
 	return &SessionListInfo{
 		SessionID:   s.ID,
 		Name:        s.Name,
@@ -268,7 +268,7 @@ func SessionToListInfo(s *session.Session) *SessionListInfo {
 	}
 }
 
-func GenerateQRCodeBase64(qrString string) string {
+func QRBase64(qrString string) string {
 	if qrString == "" {
 		return ""
 	}

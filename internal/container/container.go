@@ -36,7 +36,7 @@ func NewContainer(cfg *config.Config) *Container {
 	}
 }
 
-func (c *Container) Initialize() error {
+func (c *Container) Init() error {
 
 	logger.Init(c.config.LogLevel)
 	c.logger = logger.NewFromAppConfig(c.config)
@@ -62,7 +62,7 @@ func (c *Container) Initialize() error {
 	c.sessionService = domainSession.NewService(sessionRepo)
 
 	c.logger.Info().Msg("Initializing WhatsApp client")
-	c.initializeWhatsAppClient()
+	c.initWAClient()
 
 	c.logger.Info().Msg("Initializing use cases")
 	c.sessionUseCases = session.NewUseCases(c.sessionService, c.whatsappClient)
@@ -72,7 +72,7 @@ func (c *Container) Initialize() error {
 	return nil
 }
 
-func (c *Container) initializeWhatsAppClient() {
+func (c *Container) initWAClient() {
 	sessionRepository := repository.NewSessionRepository(c.database.DB)
 	sessionRepo := repository.NewSessionRepo(sessionRepository)
 	waContainer := waclient.NewWAStoreContainer(

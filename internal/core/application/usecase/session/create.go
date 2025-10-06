@@ -26,13 +26,13 @@ func NewCreateUseCase(
 	}
 }
 
-func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateSessionRequest) (*dto.CreateSessionResponse, error) {
+func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateRequest) (*dto.CreateSessionResponse, error) {
 
 	if err := req.Validate(); err != nil {
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
 
-	domainSession, err := uc.sessionService.CreateSession(ctx, req.Name)
+	domainSession, err := uc.sessionService.Create(ctx, req.Name)
 	if err != nil {
 		if err == shared.ErrSessionAlreadyExists {
 			return nil, dto.ErrSessionAlreadyExists
@@ -45,7 +45,7 @@ func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateSessionRequ
 	err = uc.whatsappClient.CreateSession(ctx, sessionID)
 	if err != nil {
 
-		if rollbackErr := uc.sessionService.DeleteSession(ctx, sessionID); rollbackErr != nil {
+		if rollbackErr := uc.sessionService.Delete(ctx, sessionID); rollbackErr != nil {
 
 		}
 
@@ -72,12 +72,12 @@ func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateSessionRequ
 			qrInfo, qrErr := uc.whatsappClient.GetQRCode(ctx, sessionID)
 			if qrErr == nil && qrInfo.Code != "" {
 				domainSession.SetQRCode(qrInfo.Code, qrInfo.ExpiresAt)
-				_ = uc.sessionService.UpdateSessionStatus(ctx, sessionID, session.StatusQRCode)
+				_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusQRCode)
 			}
 		}
 	}
 
-	response := dto.SessionToCreateResponse(domainSession)
+	response := dto.ToCreateResponse(domainSession)
 
 	return response, nil
 }

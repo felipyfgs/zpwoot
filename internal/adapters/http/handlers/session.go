@@ -37,8 +37,8 @@ func NewSessionHandler(useCases input.SessionUseCases, sessionManager input.Sess
 // @Failure		500		{object}	ErrorResponse			"Internal server error"
 // @Security		ApiKeyAuth
 // @Router			/sessions/create [post]
-func (h *SessionHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
-	var req dto.CreateSessionRequest
+func (h *SessionHandler) Create(w http.ResponseWriter, r *http.Request) {
+	var req dto.CreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.writeErrorResponse(w, http.StatusBadRequest, dto.ErrorCodeBadRequest, "Invalid JSON body")
 		return
@@ -90,7 +90,7 @@ func (h *SessionHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
 // @Failure		500			{object}	dto.ErrorResponse		"Internal server error"
 // @Security		ApiKeyAuth
 // @Router			/sessions/{sessionId}/info [get]
-func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
+func (h *SessionHandler) Get(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
 		h.writeErrorResponse(w, http.StatusBadRequest, dto.ErrorCodeValidation, "sessionId is required")
@@ -119,7 +119,7 @@ func (h *SessionHandler) GetSession(w http.ResponseWriter, r *http.Request) {
 // @Failure		500	{object}	dto.ErrorResponse		"Internal server error"
 // @Security		ApiKeyAuth
 // @Router			/sessions/list [get]
-func (h *SessionHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
+func (h *SessionHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	pagination := &dto.PaginationRequest{
 		Limit:  100,
@@ -150,7 +150,7 @@ func (h *SessionHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
 // @Failure		500			{object}	dto.ErrorResponse			"Connection error"
 // @Security		ApiKeyAuth
 // @Router			/sessions/{sessionId}/connect [post]
-func (h *SessionHandler) ConnectSession(w http.ResponseWriter, r *http.Request) {
+func (h *SessionHandler) Connect(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "sessionId is required")
@@ -186,7 +186,7 @@ func (h *SessionHandler) ConnectSession(w http.ResponseWriter, r *http.Request) 
 // @Failure		500			{object}	dto.ErrorResponse			"Disconnection error"
 // @Security		ApiKeyAuth
 // @Router			/sessions/{sessionId}/disconnect [post]
-func (h *SessionHandler) DisconnectSession(w http.ResponseWriter, r *http.Request) {
+func (h *SessionHandler) Disconnect(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "sessionId is required")
@@ -222,7 +222,7 @@ func (h *SessionHandler) DisconnectSession(w http.ResponseWriter, r *http.Reques
 // @Failure		500			{object}	dto.ErrorResponse		"Logout error"
 // @Security		ApiKeyAuth
 // @Router			/sessions/{sessionId}/logout [post]
-func (h *SessionHandler) LogoutSession(w http.ResponseWriter, r *http.Request) {
+func (h *SessionHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "sessionId is required")
@@ -267,7 +267,7 @@ func (h *SessionHandler) LogoutSession(w http.ResponseWriter, r *http.Request) {
 // @Failure		500			{object}	dto.ErrorResponse		"Deletion error"
 // @Security		ApiKeyAuth
 // @Router			/sessions/{sessionId}/delete [delete]
-func (h *SessionHandler) DeleteSession(w http.ResponseWriter, r *http.Request) {
+func (h *SessionHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "sessionId is required")
@@ -311,7 +311,7 @@ func (h *SessionHandler) DeleteSession(w http.ResponseWriter, r *http.Request) {
 // @Failure		500			{object}	dto.ErrorResponse		"QR code generation error"
 // @Security		ApiKeyAuth
 // @Router			/sessions/{sessionId}/qr [get]
-func (h *SessionHandler) GetQRCode(w http.ResponseWriter, r *http.Request) {
+func (h *SessionHandler) QRCode(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "sessionId is required")

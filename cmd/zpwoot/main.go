@@ -54,7 +54,7 @@ func main() {
 
 	container := container.NewContainer(cfg)
 
-	if err := container.Initialize(); err != nil {
+	if err := container.Init(); err != nil {
 		logger.WithComponent("main").Fatal().
 			Err(err).
 			Msg("Failed to initialize container")
