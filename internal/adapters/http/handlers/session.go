@@ -355,3 +355,67 @@ func (h *SessionHandler) writeErrorResponse(w http.ResponseWriter, status int, c
 func (h *SessionHandler) writeError(w http.ResponseWriter, status int, code, message string) {
 	h.writeErrorResponse(w, status, code, message)
 }
+
+// PairPhone godoc
+// @Summary      Pair phone
+// @Description  Pair a phone number without QR code
+// @Tags         Sessions
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        sessionId   path      string                    true  "Session ID"
+// @Param        request     body      dto.PairPhoneRequest      true  "Phone number"
+// @Success      200  {object}  dto.PairPhoneResponse
+// @Failure      400  {object}  dto.ErrorResponse
+// @Failure      404  {object}  dto.ErrorResponse
+// @Failure      409  {object}  dto.ErrorResponse
+// @Failure      500  {object}  dto.ErrorResponse
+// @Router       /sessions/{sessionId}/pair [post]
+func (h *SessionHandler) PairPhone(w http.ResponseWriter, r *http.Request) {
+	sessionID := chi.URLParam(r, "sessionId")
+	if sessionID == "" {
+		h.writeErrorResponse(w, http.StatusBadRequest, dto.ErrorCodeValidation, "sessionId is required")
+		return
+	}
+
+	var req dto.PairPhoneRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.writeErrorResponse(w, http.StatusBadRequest, dto.ErrorCodeBadRequest, "Invalid JSON body")
+		return
+	}
+
+	if req.Phone == "" {
+		h.writeErrorResponse(w, http.StatusBadRequest, dto.ErrorCodeValidation, "phone is required")
+		return
+	}
+
+	response, err := h.useCases.PairPhone(r.Context(), sessionID, req.Phone)
+	if err != nil {
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Str("phone", req.Phone).
+			Msg("Failed to pair phone")
+
+		if err.Error() == "session not found" {
+			h.writeErrorResponse(w, http.StatusNotFound, dto.ErrorCodeNotFound, "Session not found")
+			return
+		}
+
+		if err.Error() == "session is already paired" {
+			h.writeErrorResponse(w, http.StatusConflict, "ALREADY_PAIRED", "Session is already paired")
+			return
+		}
+
+		h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to pair phone")
+		return
+	}
+
+	h.logger.Info().
+		Str("session_id", sessionID).
+		Str("phone", req.Phone).
+		Str("linking_code", response.LinkingCode).
+		Msg("Phone paired successfully")
+
+	h.writeSuccessResponse(w, http.StatusOK, response)
+}

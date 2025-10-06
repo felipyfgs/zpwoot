@@ -18,6 +18,7 @@ type UseCases struct {
 	List       *ListUseCase
 	Delete     *DeleteUseCase
 	QR         *QRUseCase
+	Pair       *PairUseCase
 }
 
 func NewUseCases(
@@ -33,6 +34,7 @@ func NewUseCases(
 		List:       NewListUseCase(sessionService, whatsappClient),
 		Delete:     NewDeleteUseCase(sessionService, whatsappClient),
 		QR:         NewQRUseCase(sessionService, whatsappClient),
+		Pair:       NewPairUseCase(whatsappClient),
 	}
 }
 
@@ -70,6 +72,10 @@ func (uc *UseCases) GetQRCode(ctx context.Context, sessionID string) (*dto.QRCod
 
 func (uc *UseCases) RefreshQRCode(ctx context.Context, sessionID string) (*dto.QRCodeResponse, error) {
 	return uc.QR.RefreshQRCode(ctx, sessionID)
+}
+
+func (uc *UseCases) PairPhone(ctx context.Context, sessionID string, phone string) (*dto.PairPhoneResponse, error) {
+	return uc.Pair.Execute(ctx, sessionID, phone)
 }
 
 var _ input.SessionUseCases = (*UseCases)(nil)

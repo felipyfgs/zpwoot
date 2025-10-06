@@ -65,6 +65,7 @@ func setupSessionRoutes(r chi.Router, h *handlers.Handlers) {
 		r.Post("/{sessionId}/disconnect", h.Session.Disconnect)
 		r.Post("/{sessionId}/logout", h.Session.Logout)
 		r.Get("/{sessionId}/qr", h.Session.QRCode)
+		r.Post("/{sessionId}/pair", h.Session.PairPhone)
 	})
 }
 

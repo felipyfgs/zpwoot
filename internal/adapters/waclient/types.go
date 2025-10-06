@@ -162,4 +162,5 @@ var (
 	ErrConnectionFailed = output.ErrConnectionFailed
 	ErrInvalidMedia     = &output.WhatsAppError{Code: "INVALID_MEDIA", Message: "invalid media data"}
 	ErrWebhookFailed    = &output.WhatsAppError{Code: "WEBHOOK_FAILED", Message: "failed to send webhook"}
+	ErrAlreadyPaired    = &output.WhatsAppError{Code: "ALREADY_PAIRED", Message: "session is already paired"}
 )

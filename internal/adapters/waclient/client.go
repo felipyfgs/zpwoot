@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"time"
 
+	"go.mau.fi/whatsmeow"
 	"zpwoot/internal/core/ports/output"
 )
 
@@ -89,6 +90,24 @@ func (w *WAClientAdapter) GetQRCode(ctx context.Context, sessionID string) (*out
 		Base64:    qrEvent.Base64,
 		ExpiresAt: qrEvent.ExpiresAt,
 	}, nil
+}
+
+func (w *WAClientAdapter) PairPhone(ctx context.Context, sessionID string, phone string) (string, error) {
+	client, err := w.client.GetSession(ctx, sessionID)
+	if err != nil {
+		return "", w.convertError(err)
+	}
+
+	if client.IsLoggedIn() {
+		return "", ErrAlreadyPaired
+	}
+
+	linkingCode, err := client.WAClient.PairPhone(ctx, phone, true, whatsmeow.PairClientChrome, "Chrome (Linux)")
+	if err != nil {
+		return "", w.convertError(err)
+	}
+
+	return linkingCode, nil
 }
 
 func (w *WAClientAdapter) SendTextMessage(ctx context.Context, sessionID, to, text string) (*output.MessageResult, error) {
