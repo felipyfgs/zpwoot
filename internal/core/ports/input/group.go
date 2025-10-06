@@ -9,15 +9,15 @@ import (
 type GroupService interface {
 	// Informações
 	ListGroups(ctx context.Context, sessionID string) (*dto.ListGroupsResponse, error)
-	GetGroupInfo(ctx context.Context, sessionID string, groupJID string) (*dto.GroupInfo, error)
-	GetGroupInviteInfo(ctx context.Context, sessionID string, code string) (*dto.GroupInfo, error)
+	GetGroupInfo(ctx context.Context, sessionID string, groupJID string) (*dto.WhatsAppGroupInfo, error)
+	GetGroupInviteInfo(ctx context.Context, sessionID string, code string) (*dto.WhatsAppGroupInfo, error)
 
 	// Convites
 	GetGroupInviteLink(ctx context.Context, sessionID string, groupJID string, reset bool) (string, error)
 	JoinGroup(ctx context.Context, sessionID string, code string) error
 
 	// Gerenciamento
-	CreateGroup(ctx context.Context, sessionID string, name string, participants []string) (*dto.GroupInfo, error)
+	CreateGroup(ctx context.Context, sessionID string, name string, participants []string) (*dto.WhatsAppGroupInfo, error)
 	LeaveGroup(ctx context.Context, sessionID string, groupJID string) error
 	UpdateGroupParticipants(ctx context.Context, sessionID string, groupJID string, participants []string, action string) error
 

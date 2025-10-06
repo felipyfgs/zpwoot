@@ -38,11 +38,11 @@ func (gs *GroupService) ListGroups(ctx context.Context, sessionID string) (*dto.
 	}
 
 	response := &dto.ListGroupsResponse{
-		Groups: make([]dto.GroupInfo, 0, len(groups)),
+		Groups: make([]dto.WhatsAppGroupInfo, 0, len(groups)),
 	}
 
 	for _, group := range groups {
-		response.Groups = append(response.Groups, dto.GroupInfo{
+		response.Groups = append(response.Groups, dto.WhatsAppGroupInfo{
 			JID:        group.JID.String(),
 			Name:       group.Name,
 			Topic:      group.Topic,
@@ -55,7 +55,7 @@ func (gs *GroupService) ListGroups(ctx context.Context, sessionID string) (*dto.
 }
 
 // GetGroupInfo obtém informações detalhadas de um grupo
-func (gs *GroupService) GetGroupInfo(ctx context.Context, sessionID string, groupJID string) (*dto.GroupInfo, error) {
+func (gs *GroupService) GetGroupInfo(ctx context.Context, sessionID string, groupJID string) (*dto.WhatsAppGroupInfo, error) {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("session not found: %w", err)
@@ -76,7 +76,7 @@ func (gs *GroupService) GetGroupInfo(ctx context.Context, sessionID string, grou
 		participants = append(participants, p.JID.String())
 	}
 
-	return &dto.GroupInfo{
+	return &dto.WhatsAppGroupInfo{
 		JID:          group.JID.String(),
 		Name:         group.Name,
 		Topic:        group.Topic,
@@ -153,7 +153,7 @@ func (gs *GroupService) JoinGroup(ctx context.Context, sessionID string, code st
 }
 
 // CreateGroup cria um novo grupo
-func (gs *GroupService) CreateGroup(ctx context.Context, sessionID string, name string, participants []string) (*dto.GroupInfo, error) {
+func (gs *GroupService) CreateGroup(ctx context.Context, sessionID string, name string, participants []string) (*dto.WhatsAppGroupInfo, error) {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("session not found: %w", err)

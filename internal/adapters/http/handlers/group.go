@@ -76,7 +76,7 @@ func (h *GroupHandler) ListGroups(w http.ResponseWriter, r *http.Request) {
 // @Security     ApiKeyAuth
 // @Param        sessionId   path      string  true  "Session ID"
 // @Param        groupJid    query     string  true  "Group JID"
-// @Success      200  {object}  dto.GroupInfo
+// @Success      200  {object}  dto.WhatsAppGroupInfo
 // @Failure      400  {object}  dto.ErrorResponse
 // @Failure      404  {object}  dto.ErrorResponse
 // @Failure      500  {object}  dto.ErrorResponse
@@ -277,7 +277,7 @@ func (h *GroupHandler) JoinGroup(w http.ResponseWriter, r *http.Request) {
 // @Security     ApiKeyAuth
 // @Param        sessionId   path      string                     true  "Session ID"
 // @Param        request     body      dto.CreateGroupRequest     true  "Group data"
-// @Success      200  {object}  dto.GroupInfo
+// @Success      200  {object}  dto.WhatsAppGroupInfo
 // @Failure      400  {object}  dto.ErrorResponse
 // @Failure      500  {object}  dto.ErrorResponse
 // @Router       /sessions/{sessionId}/groups/create [post]
