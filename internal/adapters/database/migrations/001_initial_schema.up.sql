@@ -83,6 +83,9 @@ CREATE INDEX IF NOT EXISTS "idx_zp_webhooks_session_id" ON "zpWebhooks" ("sessio
 CREATE INDEX IF NOT EXISTS "idx_zp_webhooks_enabled" ON "zpWebhooks" ("enabled");
 CREATE INDEX IF NOT EXISTS "idx_zp_webhooks_created_at" ON "zpWebhooks" ("createdAt");
 
+-- Unique constraint: one webhook per session
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_zp_webhooks_unique_session" ON "zpWebhooks" ("sessionId");
+
 -- Webhooks trigger
 CREATE TRIGGER update_zp_webhooks_updated_at
     BEFORE UPDATE ON "zpWebhooks"
