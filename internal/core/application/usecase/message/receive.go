@@ -40,10 +40,13 @@ func (uc *ReceiveUseCase) ProcessIncomingMessage(ctx context.Context, req *dto.R
 		return fmt.Errorf("failed to get session: %w", err)
 	}
 
-	go func() {
+	go func(ctx context.Context) {
 
-		_ = uc.sessionService.UpdateStatus(context.Background(), req.SessionID, session.StatusConnected)
-	}()
+		if err := uc.sessionService.UpdateStatus(ctx, req.SessionID, session.StatusConnected); err != nil {
+
+			fmt.Printf("Failed to update session status: %v\n", err)
+		}
+	}(ctx)
 
 	return nil
 }
@@ -66,10 +69,13 @@ func (uc *ReceiveUseCase) ProcessIncomingMessageBatch(ctx context.Context, sessi
 		return fmt.Errorf("failed to get session: %w", err)
 	}
 
-	go func() {
+	go func(ctx context.Context) {
 
-		_ = uc.sessionService.UpdateStatus(context.Background(), sessionID, session.StatusConnected)
-	}()
+		if err := uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnected); err != nil {
+
+			fmt.Printf("Failed to update session status: %v\n", err)
+		}
+	}(ctx)
 
 	for _, message := range messages {
 		req := &dto.ReceiveMessageRequest{
@@ -77,10 +83,13 @@ func (uc *ReceiveUseCase) ProcessIncomingMessageBatch(ctx context.Context, sessi
 			Message:   message,
 		}
 
-		go func(msgReq *dto.ReceiveMessageRequest) {
+		go func(ctx context.Context, msgReq *dto.ReceiveMessageRequest) {
 
-			_ = uc.ProcessIncomingMessage(context.Background(), msgReq)
-		}(req)
+			if err := uc.ProcessIncomingMessage(ctx, msgReq); err != nil {
+
+				fmt.Printf("Failed to process incoming message: %v\n", err)
+			}
+		}(ctx, req)
 	}
 
 	return nil

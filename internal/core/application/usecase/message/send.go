@@ -81,10 +81,13 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 		return nil, fmt.Errorf("failed to send message: %w", err)
 	}
 
-	go func() {
+	go func(ctx context.Context) {
 
-		_ = uc.sessionService.UpdateStatus(context.Background(), sessionID, session.StatusConnected)
-	}()
+		if err := uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnected); err != nil {
+
+			fmt.Printf("Failed to update session status: %v\n", err)
+		}
+	}(ctx)
 
 	finalMessageID := messageID
 	if messageResult.MessageID != "" {

@@ -23,7 +23,7 @@ func NewContactHandler(contactService input.ContactService, logger output.Logger
 	}
 }
 
-// CheckUser godoc
+
 // @Summary      Check if users are on WhatsApp
 // @Description  Verify if phone numbers are registered on WhatsApp
 // @Tags         Contacts
@@ -83,7 +83,7 @@ func (h *ContactHandler) CheckUser(w http.ResponseWriter, r *http.Request) {
 	h.writeSuccessResponse(w, http.StatusOK, response)
 }
 
-// GetUser godoc
+
 // @Summary      Get user information
 // @Description  Get detailed information about a WhatsApp user
 // @Tags         Contacts
@@ -137,7 +137,7 @@ func (h *ContactHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	h.writeSuccessResponse(w, http.StatusOK, response)
 }
 
-// GetAvatar godoc
+
 // @Summary      Get user avatar
 // @Description  Get profile picture of a WhatsApp user
 // @Tags         Contacts
@@ -191,7 +191,7 @@ func (h *ContactHandler) GetAvatar(w http.ResponseWriter, r *http.Request) {
 	h.writeSuccessResponse(w, http.StatusOK, response)
 }
 
-// GetContacts godoc
+
 // @Summary      Get all contacts
 // @Description  List all contacts from the WhatsApp account
 // @Tags         Contacts
@@ -240,7 +240,7 @@ func (h *ContactHandler) GetContacts(w http.ResponseWriter, r *http.Request) {
 	h.writeSuccessResponse(w, http.StatusOK, response)
 }
 
-// SendPresence godoc
+
 // @Summary      Send presence
 // @Description  Send general presence status (available/unavailable)
 // @Tags         Presence
@@ -291,7 +291,7 @@ func (h *ContactHandler) SendPresence(w http.ResponseWriter, r *http.Request) {
 	h.writeSuccessResponse(w, http.StatusOK, response)
 }
 
-// ChatPresence godoc
+
 // @Summary      Send chat presence
 // @Description  Send presence in specific chat (typing/recording)
 // @Tags         Presence

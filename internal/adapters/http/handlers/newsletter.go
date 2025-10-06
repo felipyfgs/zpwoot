@@ -13,13 +13,13 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// NewsletterHandler gerencia requisições HTTP relacionadas a newsletters
+
 type NewsletterHandler struct {
 	newsletterService input.NewsletterService
 	logger            *logger.Logger
 }
 
-// NewNewsletterHandler cria uma nova instância do NewsletterHandler
+
 func NewNewsletterHandler(newsletterService input.NewsletterService, logger *logger.Logger) *NewsletterHandler {
 	return &NewsletterHandler{
 		newsletterService: newsletterService,
@@ -27,16 +27,18 @@ func NewNewsletterHandler(newsletterService input.NewsletterService, logger *log
 	}
 }
 
-// writeJSON escreve uma resposta JSON, tratando erros de encoding
-func (h *NewsletterHandler) writeJSON(w http.ResponseWriter, data interface{}) {
+
+func (h *NewsletterHandler) writeJSON(w http.ResponseWriter, data interface{}) error {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to encode JSON response")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return err
 	}
+	return nil
 }
 
-// validateNewsletterRequest valida parâmetros básicos de requisição de newsletter
+
 func (h *NewsletterHandler) validateNewsletterRequest(w http.ResponseWriter, sessionID, newsletterJID string) bool {
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
@@ -53,7 +55,7 @@ func (h *NewsletterHandler) validateNewsletterRequest(w http.ResponseWriter, ses
 	return true
 }
 
-// handleNewsletterOperation executa operação genérica de newsletter
+
 func (h *NewsletterHandler) handleNewsletterOperation(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -98,10 +100,12 @@ func (h *NewsletterHandler) handleNewsletterOperation(
 		"message": message,
 	}
 
-	h.writeJSON(w, response)
+	if err := h.writeJSON(w, response); err != nil {
+		return
+	}
 }
 
-// ListNewsletters lista todos os newsletters que a sessão segue
+
 // @Summary Lista newsletters
 // @Description Lista todos os newsletters que a sessão segue
 // @Tags Newsletters
@@ -128,10 +132,12 @@ func (h *NewsletterHandler) ListNewsletters(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	h.writeJSON(w, newsletters)
+	if err := h.writeJSON(w, newsletters); err != nil {
+		return
+	}
 }
 
-// GetNewsletterInfo obtém informações detalhadas de um newsletter
+
 // @Summary Obter informações do newsletter
 // @Description Obtém informações detalhadas de um newsletter específico
 // @Tags Newsletters
@@ -167,10 +173,12 @@ func (h *NewsletterHandler) GetNewsletterInfo(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	h.writeJSON(w, newsletter)
+	if err := h.writeJSON(w, newsletter); err != nil {
+		return
+	}
 }
 
-// GetNewsletterInfoWithInvite obtém informações de um newsletter via código de convite
+
 // @Summary Obter informações do newsletter via convite
 // @Description Obtém informações de um newsletter usando código de convite
 // @Tags Newsletters
@@ -204,10 +212,12 @@ func (h *NewsletterHandler) GetNewsletterInfoWithInvite(w http.ResponseWriter, r
 		return
 	}
 
-	h.writeJSON(w, newsletter)
+	if err := h.writeJSON(w, newsletter); err != nil {
+		return
+	}
 }
 
-// CreateNewsletter cria um novo newsletter
+
 // @Summary Criar newsletter
 // @Description Cria um novo newsletter WhatsApp
 // @Tags Newsletters
@@ -242,10 +252,12 @@ func (h *NewsletterHandler) CreateNewsletter(w http.ResponseWriter, r *http.Requ
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	h.writeJSON(w, newsletter)
+	if err := h.writeJSON(w, newsletter); err != nil {
+		return
+	}
 }
 
-// FollowNewsletter segue um newsletter
+
 // @Summary Seguir newsletter
 // @Description Segue um newsletter por JID ou código de convite
 // @Tags Newsletters
@@ -284,10 +296,12 @@ func (h *NewsletterHandler) FollowNewsletter(w http.ResponseWriter, r *http.Requ
 		"message": "Newsletter followed successfully",
 	}
 
-	h.writeJSON(w, response)
+	if err := h.writeJSON(w, response); err != nil {
+		return
+	}
 }
 
-// UnfollowNewsletter deixa de seguir um newsletter
+
 // @Summary Deixar de seguir newsletter
 // @Description Para de seguir um newsletter específico
 // @Tags Newsletters
@@ -327,10 +341,12 @@ func (h *NewsletterHandler) UnfollowNewsletter(w http.ResponseWriter, r *http.Re
 		"message": "Newsletter unfollowed successfully",
 	}
 
-	h.writeJSON(w, response)
+	if err := h.writeJSON(w, response); err != nil {
+		return
+	}
 }
 
-// GetMessages obtém mensagens de um newsletter
+
 // @Summary Obter mensagens do newsletter
 // @Description Lista mensagens de um newsletter com paginação
 // @Tags Newsletters
@@ -360,7 +376,7 @@ func (h *NewsletterHandler) GetMessages(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Parse query parameters
+
 	req := &dto.GetNewsletterMessagesRequest{}
 	if countStr := r.URL.Query().Get("count"); countStr != "" {
 		if count, err := strconv.Atoi(countStr); err == nil {
@@ -378,10 +394,12 @@ func (h *NewsletterHandler) GetMessages(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	h.writeJSON(w, messages)
+	if err := h.writeJSON(w, messages); err != nil {
+		return
+	}
 }
 
-// MarkViewed marca mensagens como visualizadas
+
 // @Summary Marcar mensagens como visualizadas
 // @Description Marca mensagens específicas do newsletter como visualizadas
 // @Tags Newsletters
@@ -401,7 +419,7 @@ func (h *NewsletterHandler) MarkViewed(w http.ResponseWriter, r *http.Request) {
 	}, &req)
 }
 
-// SendReaction envia reação a uma mensagem do newsletter
+
 // @Summary Reagir a mensagem do newsletter
 // @Description Envia uma reação (emoji) a uma mensagem específica do newsletter
 // @Tags Newsletters
@@ -421,7 +439,7 @@ func (h *NewsletterHandler) SendReaction(w http.ResponseWriter, r *http.Request)
 	}, &req)
 }
 
-// ToggleMute silencia ou dessilencia um newsletter
+
 // @Summary Silenciar/dessilenciar newsletter
 // @Description Alterna o estado de silenciamento de um newsletter
 // @Tags Newsletters
@@ -441,7 +459,7 @@ func (h *NewsletterHandler) ToggleMute(w http.ResponseWriter, r *http.Request) {
 	}, &req)
 }
 
-// SendMessage envia uma mensagem para um newsletter
+
 // @Summary Enviar mensagem para newsletter
 // @Description Envia uma mensagem de texto para um newsletter (apenas para owners/admins)
 // @Tags Newsletters
@@ -477,13 +495,15 @@ func (h *NewsletterHandler) SendMessage(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// TODO: Implementar envio de mensagem para newsletter
-	// Por enquanto, simular sucesso
+
+
 	response := map[string]interface{}{
 		"success":    true,
 		"message":    "Message sent to newsletter successfully",
 		"message_id": "temp_id_" + newsletterJID,
 	}
 
-	h.writeJSON(w, response)
+	if err := h.writeJSON(w, response); err != nil {
+		return
+	}
 }

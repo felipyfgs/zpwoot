@@ -42,7 +42,7 @@ type PostgresConfig struct {
 func Load() *Config {
 
 	if err := godotenv.Load(); err != nil {
-		// .env file is optional, so we just log the error
+
 		log.Printf("Warning: .env file not found or could not be loaded: %v", err)
 	}
 

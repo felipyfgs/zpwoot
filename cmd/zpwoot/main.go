@@ -52,7 +52,7 @@ import (
 	"zpwoot/internal/config"
 	"zpwoot/internal/container"
 
-	_ "zpwoot/docs/swagger" // Import swagger docs
+	_ "zpwoot/docs/swagger"
 )
 
 func main() {

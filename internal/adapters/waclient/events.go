@@ -177,18 +177,18 @@ func (eh *DefaultEventHandler) logUnhandledEvent(event interface{}) {
 }
 
 func (eh *DefaultEventHandler) sendWebhookIfEnabled(client *Client, eventType EventType, eventData interface{}) error {
-	// Carregar configuração de webhook do banco de dados
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	webhookConfig, err := eh.webhookRepo.GetBySessionID(ctx, client.SessionID)
 	if err != nil {
-		// Se não encontrar webhook configurado, não é erro
+
 		if err.Error() == "webhook not found" {
 			return nil
 		}
 		eh.logger.Error().Err(err).Str("session_id", client.SessionID).Msg("Failed to load webhook config")
-		return nil // Não falhar o processamento do evento por causa do webhook
+		return nil
 	}
 
 	if !eh.shouldSendWebhook(webhookConfig, eventType) {
@@ -203,12 +203,12 @@ func (eh *DefaultEventHandler) shouldSendWebhook(webhookConfig *webhook.Webhook,
 		return false
 	}
 
-	// Se não especificou eventos, aceita todos
+
 	if len(webhookConfig.Events) == 0 {
 		return true
 	}
 
-	// Verificar se o evento está na lista configurada
+
 	eventTypeStr := string(eventType)
 	for _, subscribedEvent := range webhookConfig.Events {
 		if subscribedEvent == eventTypeStr {
@@ -220,14 +220,14 @@ func (eh *DefaultEventHandler) shouldSendWebhook(webhookConfig *webhook.Webhook,
 }
 
 func (eh *DefaultEventHandler) sendWebhook(webhookConfig *webhook.Webhook, eventType EventType, eventData interface{}, sessionID string) error {
-	// Converter eventData para map[string]interface{}
+
 	var data map[string]interface{}
 
-	// Se eventData já é um map, usar diretamente
+
 	if mapData, ok := eventData.(map[string]interface{}); ok {
 		data = mapData
 	} else {
-		// Serializar para JSON e deserializar para map
+
 		jsonData, err := json.Marshal(eventData)
 		if err != nil {
 			eh.logger.Error().Err(err).Msg("Failed to marshal event data")
@@ -240,7 +240,7 @@ func (eh *DefaultEventHandler) sendWebhook(webhookConfig *webhook.Webhook, event
 		}
 	}
 
-	// Criar evento usando nossa interface padrão
+
 	webhookEvent := &output.WebhookEvent{
 		ID:        uuid.New().String(),
 		Type:      string(eventType),

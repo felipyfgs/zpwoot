@@ -35,7 +35,7 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 				w.WriteHeader(http.StatusUnauthorized)
 				errorMsg := `{"error":"unauthorized","message":"invalid or missing API key. Use 'Authorization: YOUR_API_KEY' or 'X-API-Key: YOUR_API_KEY' header"}`
 				if _, err := w.Write([]byte(errorMsg)); err != nil {
-					// Log error but don't return error since response is already being written
+
 					log.Printf("Failed to write unauthorized response: %v", err)
 				}
 				return

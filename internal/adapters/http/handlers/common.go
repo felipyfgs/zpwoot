@@ -46,7 +46,6 @@ func createSessionHandler(
 	sessionUseCases input.SessionUseCases,
 	waClient output.WhatsAppClient,
 ) *SessionHandler {
-
 	waClientAdapter, ok := waClient.(*waclient.WAClientAdapter)
 	if !ok {
 		panic("waClient is not a WAClientAdapter")
@@ -64,7 +63,6 @@ func createMessageHandler(
 	logger *logger.Logger,
 	waClient output.WhatsAppClient,
 ) *MessageHandler {
-
 	waClientAdapter, ok := waClient.(*waclient.WAClientAdapter)
 	if !ok {
 		panic("waClient is not a WAClientAdapter")
@@ -83,7 +81,6 @@ func createGroupHandler(
 	logger *logger.Logger,
 	waClient output.WhatsAppClient,
 ) *GroupHandler {
-
 	waClientAdapter, ok := waClient.(*waclient.WAClientAdapter)
 	if !ok {
 		panic("waClient is not a WAClientAdapter")
@@ -101,7 +98,6 @@ func createContactHandler(
 	logger *logger.Logger,
 	waClient output.WhatsAppClient,
 ) *ContactHandler {
-
 	waClientAdapter, ok := waClient.(*waclient.WAClientAdapter)
 	if !ok {
 		panic("waClient is not a WAClientAdapter")

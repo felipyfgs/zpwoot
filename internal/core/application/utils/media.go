@@ -14,12 +14,12 @@ import (
 	"zpwoot/internal/core/ports/output"
 )
 
-// MediaProcessor handles different types of media input (URL, file path, base64)
+
 type MediaProcessor struct {
 	httpClient *http.Client
 }
 
-// NewMediaProcessor creates a new media processor
+
 func NewMediaProcessor() *MediaProcessor {
 	return &MediaProcessor{
 		httpClient: &http.Client{
@@ -28,15 +28,15 @@ func NewMediaProcessor() *MediaProcessor {
 	}
 }
 
-// ProcessMedia processes a file input and returns MediaData
-// file can be: URL, local file path, or base64 string
+
+
 func (mp *MediaProcessor) ProcessMedia(file, mimeType, fileName string) (*output.MediaData, error) {
 	var data []byte
 	var err error
 	var detectedMimeType string
 	var detectedFileName string
 
-	// Determine the type of input and process accordingly
+
 	if mp.isURL(file) {
 		data, detectedMimeType, detectedFileName, err = mp.downloadFromURL(file)
 		if err != nil {
@@ -56,7 +56,7 @@ func (mp *MediaProcessor) ProcessMedia(file, mimeType, fileName string) (*output
 		return nil, fmt.Errorf("invalid file input: must be URL, file path, or base64")
 	}
 
-	// Use provided mimeType if available, otherwise use detected
+
 	finalMimeType := mimeType
 	if finalMimeType == "" {
 		finalMimeType = detectedMimeType
@@ -65,7 +65,7 @@ func (mp *MediaProcessor) ProcessMedia(file, mimeType, fileName string) (*output
 		finalMimeType = "application/octet-stream"
 	}
 
-	// Use provided fileName if available, otherwise use detected
+
 	finalFileName := fileName
 	if finalFileName == "" {
 		finalFileName = detectedFileName
@@ -78,14 +78,14 @@ func (mp *MediaProcessor) ProcessMedia(file, mimeType, fileName string) (*output
 	}, nil
 }
 
-// isURL checks if the input is a URL
+
 func (mp *MediaProcessor) isURL(input string) bool {
 	return strings.HasPrefix(input, "http://") || strings.HasPrefix(input, "https://")
 }
 
-// isFilePath checks if the input is a file path
+
 func (mp *MediaProcessor) isFilePath(input string) bool {
-	// Check if it's a valid file path and the file exists
+
 	if strings.Contains(input, "/") || strings.Contains(input, "\\") {
 		if _, err := os.Stat(input); err == nil {
 			return true
@@ -94,9 +94,9 @@ func (mp *MediaProcessor) isFilePath(input string) bool {
 	return false
 }
 
-// isBase64 checks if the input is base64 encoded
+
 func (mp *MediaProcessor) isBase64(input string) bool {
-	// Remove data URL prefix if present
+
 	if strings.Contains(input, ",") {
 		parts := strings.Split(input, ",")
 		if len(parts) > 1 {
@@ -104,12 +104,12 @@ func (mp *MediaProcessor) isBase64(input string) bool {
 		}
 	}
 
-	// Try to decode as base64
+
 	_, err := base64.StdEncoding.DecodeString(input)
-	return err == nil && len(input) > 10 // Minimum reasonable base64 length
+	return err == nil && len(input) > 10
 }
 
-// downloadFromURL downloads content from a URL
+
 func (mp *MediaProcessor) downloadFromURL(url string) ([]byte, string, string, error) {
 	resp, err := mp.httpClient.Get(url)
 	if err != nil {
@@ -126,17 +126,17 @@ func (mp *MediaProcessor) downloadFromURL(url string) ([]byte, string, string, e
 		return nil, "", "", err
 	}
 
-	// Get MIME type from Content-Type header
+
 	mimeType := resp.Header.Get("Content-Type")
 	if mimeType != "" {
-		// Remove charset and other parameters
+
 		if idx := strings.Index(mimeType, ";"); idx != -1 {
 			mimeType = mimeType[:idx]
 		}
 		mimeType = strings.TrimSpace(mimeType)
 	}
 
-	// Extract filename from URL
+
 	fileName := filepath.Base(url)
 	if strings.Contains(fileName, "?") {
 		fileName = strings.Split(fileName, "?")[0]
@@ -145,25 +145,25 @@ func (mp *MediaProcessor) downloadFromURL(url string) ([]byte, string, string, e
 	return data, mimeType, fileName, nil
 }
 
-// readFromFile reads content from a local file
+
 func (mp *MediaProcessor) readFromFile(filePath string) ([]byte, string, string, error) {
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, "", "", err
 	}
 
-	// Detect MIME type from file extension
+
 	mimeType := mime.TypeByExtension(filepath.Ext(filePath))
 
-	// Get filename
+
 	fileName := filepath.Base(filePath)
 
 	return data, mimeType, fileName, nil
 }
 
-// decodeBase64 decodes base64 content
+
 func (mp *MediaProcessor) decodeBase64(input string) ([]byte, error) {
-	// Remove data URL prefix if present (e.g., "data:image/jpeg;base64,")
+
 	base64Data := input
 	if strings.Contains(base64Data, ",") {
 		parts := strings.Split(base64Data, ",")
@@ -175,7 +175,7 @@ func (mp *MediaProcessor) decodeBase64(input string) ([]byte, error) {
 	return base64.StdEncoding.DecodeString(base64Data)
 }
 
-// DetectMimeTypeFromData detects MIME type from file data
+
 func (mp *MediaProcessor) DetectMimeTypeFromData(data []byte) string {
 	return http.DetectContentType(data)
 }

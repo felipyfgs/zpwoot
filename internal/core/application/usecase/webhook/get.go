@@ -8,19 +8,19 @@ import (
 	"zpwoot/internal/core/domain/webhook"
 )
 
-// GetUseCase implementa o caso de uso de buscar webhook
+
 type GetUseCase struct {
 	webhookRepo webhook.Repository
 }
 
-// NewGetUseCase cria uma nova instância do use case
+
 func NewGetUseCase(webhookRepo webhook.Repository) *GetUseCase {
 	return &GetUseCase{
 		webhookRepo: webhookRepo,
 	}
 }
 
-// Execute executa o caso de uso
+
 func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.WebhookResponse, error) {
 	wh, err := uc.webhookRepo.GetBySessionID(ctx, sessionID)
 	if err != nil {

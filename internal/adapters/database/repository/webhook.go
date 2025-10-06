@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"zpwoot/internal/core/domain/webhook"
@@ -12,19 +13,19 @@ import (
 	"github.com/lib/pq"
 )
 
-// WebhookRepository implementa webhook.Repository usando PostgreSQL
+
 type WebhookRepository struct {
 	db *sqlx.DB
 }
 
-// NewWebhookRepository cria uma nova instância do repositório
+
 func NewWebhookRepository(db *sqlx.DB) *WebhookRepository {
 	return &WebhookRepository{
 		db: db,
 	}
 }
 
-// Create cria um novo webhook
+
 func (r *WebhookRepository) Create(ctx context.Context, wh *webhook.Webhook) error {
 	eventsJSON, err := json.Marshal(wh.Events)
 	if err != nil {
@@ -52,8 +53,9 @@ func (r *WebhookRepository) Create(ctx context.Context, wh *webhook.Webhook) err
 	)
 
 	if err != nil {
-		if pqErr, ok := err.(*pq.Error); ok {
-			if pqErr.Code == "23505" { // unique_violation
+		var pqErr *pq.Error
+		if errors.As(err, &pqErr) {
+			if pqErr.Code == "23505" {
 				return fmt.Errorf("webhook already exists for session")
 			}
 		}
@@ -63,7 +65,7 @@ func (r *WebhookRepository) Create(ctx context.Context, wh *webhook.Webhook) err
 	return nil
 }
 
-// GetByID busca um webhook pelo ID
+
 func (r *WebhookRepository) GetByID(ctx context.Context, id string) (*webhook.Webhook, error) {
 	query := `
 		SELECT "id", "sessionId", "url", "secret", "events", 
@@ -75,7 +77,7 @@ func (r *WebhookRepository) GetByID(ctx context.Context, id string) (*webhook.We
 	var wh webhookDB
 	err := r.db.GetContext(ctx, &wh, query, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("webhook not found")
 		}
 		return nil, fmt.Errorf("failed to get webhook: %w", err)
@@ -84,7 +86,7 @@ func (r *WebhookRepository) GetByID(ctx context.Context, id string) (*webhook.We
 	return wh.toDomain()
 }
 
-// GetBySessionID busca um webhook pela sessão
+
 func (r *WebhookRepository) GetBySessionID(ctx context.Context, sessionID string) (*webhook.Webhook, error) {
 	query := `
 		SELECT "id", "sessionId", "url", "secret", "events", 
@@ -96,7 +98,7 @@ func (r *WebhookRepository) GetBySessionID(ctx context.Context, sessionID string
 	var wh webhookDB
 	err := r.db.GetContext(ctx, &wh, query, sessionID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("webhook not found")
 		}
 		return nil, fmt.Errorf("failed to get webhook: %w", err)
@@ -105,7 +107,7 @@ func (r *WebhookRepository) GetBySessionID(ctx context.Context, sessionID string
 	return wh.toDomain()
 }
 
-// Update atualiza um webhook existente
+
 func (r *WebhookRepository) Update(ctx context.Context, wh *webhook.Webhook) error {
 	eventsJSON, err := json.Marshal(wh.Events)
 	if err != nil {
@@ -147,7 +149,7 @@ func (r *WebhookRepository) Update(ctx context.Context, wh *webhook.Webhook) err
 	return nil
 }
 
-// Delete remove um webhook pelo ID
+
 func (r *WebhookRepository) Delete(ctx context.Context, id string) error {
 	query := `DELETE FROM "zpWebhooks" WHERE "id" = $1`
 
@@ -168,7 +170,7 @@ func (r *WebhookRepository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-// DeleteBySessionID remove um webhook pela sessão
+
 func (r *WebhookRepository) DeleteBySessionID(ctx context.Context, sessionID string) error {
 	query := `DELETE FROM "zpWebhooks" WHERE "sessionId" = $1`
 
@@ -189,7 +191,7 @@ func (r *WebhookRepository) DeleteBySessionID(ctx context.Context, sessionID str
 	return nil
 }
 
-// List lista todos os webhooks
+
 func (r *WebhookRepository) List(ctx context.Context, limit, offset int) ([]*webhook.Webhook, error) {
 	query := `
 		SELECT "id", "sessionId", "url", "secret", "events", 
@@ -217,7 +219,7 @@ func (r *WebhookRepository) List(ctx context.Context, limit, offset int) ([]*web
 	return webhooks, nil
 }
 
-// webhookDB representa a estrutura do webhook no banco de dados
+
 type webhookDB struct {
 	ID        string       `db:"id"`
 	SessionID string       `db:"sessionId"`
@@ -229,7 +231,7 @@ type webhookDB struct {
 	UpdatedAt sql.NullTime `db:"updatedAt"`
 }
 
-// toDomain converte webhookDB para webhook.Webhook
+
 func (wh *webhookDB) toDomain() (*webhook.Webhook, error) {
 	var events []string
 	if len(wh.Events) > 0 {

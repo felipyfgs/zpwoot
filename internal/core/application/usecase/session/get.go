@@ -66,15 +66,14 @@ func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.Sessi
 			domainSession.UpdateLastSeen()
 		}
 
-		go func() {
+		go func(ctx context.Context) {
 
-			bgCtx := context.Background()
 			if waStatus.Connected {
-				_ = uc.sessionService.UpdateStatus(bgCtx, sessionID, session.StatusConnected)
+				_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnected)
 			} else {
-				_ = uc.sessionService.UpdateStatus(bgCtx, sessionID, session.StatusDisconnected)
+				_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
 			}
-		}()
+		}(ctx)
 	}
 
 	response := dto.ToDetailResponse(domainSession)

@@ -59,7 +59,7 @@ func NewWAClient(container *sqlstore.Container, logger *logger.Logger, sessionRe
 		sessionRepo: sessionRepo,
 	}
 
-	// Configurar EventHandler com webhook
+
 	if webhookSender != nil && webhookRepo != nil {
 		eventHandler := NewDefaultEventHandler(logger, webhookSender, webhookRepo)
 		wac.SetEventHandler(eventHandler)
@@ -422,9 +422,9 @@ func (wac *WAClient) handleConnected(client *Client, evt *events.Connected) {
 		wac.logger.Info().Str("session_id", client.SessionID).Msg("Connected")
 	}
 
-	go func() {
-		wac.updateSessionStatus(context.Background(), client)
-	}()
+	go func(ctx context.Context) {
+		wac.updateSessionStatus(ctx, client)
+	}(client.ctx)
 	wac.sendWebhook(client, EventConnected, evt)
 }
 

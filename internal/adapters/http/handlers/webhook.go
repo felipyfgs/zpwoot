@@ -11,13 +11,13 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// WebhookHandler gerencia as requisições HTTP relacionadas a webhooks
+
 type WebhookHandler struct {
 	webhookUseCases input.WebhookUseCases
 	logger          *logger.Logger
 }
 
-// NewWebhookHandler cria uma nova instância do handler
+
 func NewWebhookHandler(webhookUseCases input.WebhookUseCases, logger *logger.Logger) *WebhookHandler {
 	return &WebhookHandler{
 		webhookUseCases: webhookUseCases,
@@ -25,7 +25,7 @@ func NewWebhookHandler(webhookUseCases input.WebhookUseCases, logger *logger.Log
 	}
 }
 
-// SetWebhook configura ou atualiza um webhook para uma sessão
+
 // @Summary		Configure Webhook
 // @Description	Configure or update webhook for a session
 // @Tags			Webhooks
@@ -52,7 +52,7 @@ func (h *WebhookHandler) SetWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Usar Upsert para criar ou atualizar
+
 	response, err := h.webhookUseCases.Upsert(r.Context(), sessionID, &req)
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to set webhook")
@@ -68,7 +68,7 @@ func (h *WebhookHandler) SetWebhook(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusOK, response)
 }
 
-// GetWebhook busca a configuração de webhook de uma sessão
+
 // @Summary		Get Webhook Configuration
 // @Description	Get webhook configuration for a session
 // @Tags			Webhooks
@@ -100,7 +100,7 @@ func (h *WebhookHandler) GetWebhook(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusOK, response)
 }
 
-// DeleteWebhook remove a configuração de webhook de uma sessão
+
 // @Summary		Delete Webhook Configuration
 // @Description	Delete webhook configuration for a session
 // @Tags			Webhooks
@@ -137,7 +137,7 @@ func (h *WebhookHandler) DeleteWebhook(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// ListEvents lista todos os eventos disponíveis para webhook
+
 // @Summary		List Available Events
 // @Description	List all available webhook event types
 // @Tags			Webhooks
@@ -157,7 +157,7 @@ func (h *WebhookHandler) ListEvents(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusOK, response)
 }
 
-// writeJSON escreve uma resposta JSON
+
 func (h *WebhookHandler) writeJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
@@ -166,7 +166,7 @@ func (h *WebhookHandler) writeJSON(w http.ResponseWriter, statusCode int, data i
 	}
 }
 
-// writeError escreve uma resposta de erro
+
 func (h *WebhookHandler) writeError(w http.ResponseWriter, statusCode int, errorCode, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)

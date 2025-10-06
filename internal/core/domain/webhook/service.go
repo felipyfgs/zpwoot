@@ -6,16 +6,16 @@ import (
 	"strings"
 )
 
-// Service contém a lógica de negócio relacionada a webhooks
-// REGRA: Apenas stdlib, sem dependências externas
+
+
 type Service struct{}
 
-// NewService cria uma nova instância do serviço de webhook
+
 func NewService() *Service {
 	return &Service{}
 }
 
-// ValidateURL valida se a URL do webhook é válida
+
 func (s *Service) ValidateURL(webhookURL string) error {
 	if webhookURL == "" {
 		return fmt.Errorf("webhook URL cannot be empty")
@@ -26,29 +26,29 @@ func (s *Service) ValidateURL(webhookURL string) error {
 		return fmt.Errorf("invalid webhook URL: %w", err)
 	}
 
-	// Deve ser HTTP ou HTTPS
+
 	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
 		return fmt.Errorf("webhook URL must use http or https scheme")
 	}
 
-	// Deve ter um host
+
 	if parsedURL.Host == "" {
 		return fmt.Errorf("webhook URL must have a valid host")
 	}
 
-	// Não permitir localhost em produção (opcional, pode ser configurável)
+
 	if strings.Contains(parsedURL.Host, "localhost") || strings.Contains(parsedURL.Host, "127.0.0.1") {
-		// Você pode querer permitir isso em desenvolvimento
-		// return fmt.Errorf("webhook URL cannot point to localhost")
+
+
 	}
 
 	return nil
 }
 
-// ValidateEvents valida se os eventos fornecidos são válidos
+
 func (s *Service) ValidateEvents(events []string) error {
 	if len(events) == 0 {
-		// Vazio significa "todos os eventos"
+
 		return nil
 	}
 
@@ -67,7 +67,7 @@ func (s *Service) ValidateEvents(events []string) error {
 	return nil
 }
 
-// GetValidEventTypes retorna a lista de tipos de eventos válidos
+
 func (s *Service) GetValidEventTypes() []string {
 	return []string{
 		"Message",
@@ -109,7 +109,7 @@ func (s *Service) GetValidEventTypes() []string {
 	}
 }
 
-// GetEventCategories retorna os eventos agrupados por categoria
+
 func (s *Service) GetEventCategories() map[string][]string {
 	return map[string][]string{
 		"Messages": {
@@ -167,7 +167,7 @@ func (s *Service) GetEventCategories() map[string][]string {
 	}
 }
 
-// ValidateSecret valida se o secret fornecido é adequado
+
 func (s *Service) ValidateSecret(secret string) error {
 	if secret == "" {
 		return fmt.Errorf("webhook secret cannot be empty")

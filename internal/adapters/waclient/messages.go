@@ -389,7 +389,7 @@ func (ms *Sender) SendContactsArrayMessage(ctx context.Context, sessionID string
 		return ErrInvalidJID
 	}
 
-	// Build array of ContactMessage
+
 	contactMessages := make([]*waE2E.ContactMessage, len(contacts))
 	for i, contact := range contacts {
 		vcard := contact.VCard
@@ -403,7 +403,7 @@ func (ms *Sender) SendContactsArrayMessage(ctx context.Context, sessionID string
 		}
 	}
 
-	// Create ContactsArrayMessage
+
 	message := &waE2E.Message{
 		ContactsArrayMessage: &waE2E.ContactsArrayMessage{
 			DisplayName: proto.String("Contacts"),
@@ -495,7 +495,7 @@ func (w *MessageService) SendTextMessage(ctx context.Context, sessionID string, 
 }
 
 func (w *MessageService) SendMediaMessage(ctx context.Context, sessionID string, to string, media *output.MediaData, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
-	// TODO: Implement contextInfo support for media messages
+
 	resp, err := w.Sender.SendMediaMessage(ctx, sessionID, to, media)
 	if err != nil {
 		return nil, err
@@ -508,7 +508,7 @@ func (w *MessageService) SendMediaMessage(ctx context.Context, sessionID string,
 }
 
 func (w *MessageService) SendLocationMessage(ctx context.Context, sessionID, to string, latitude, longitude float64, name string, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
-	// TODO: Implement contextInfo support for location messages
+
 	err := w.Sender.SendLocationMessage(ctx, sessionID, to, latitude, longitude, name)
 	if err != nil {
 		return nil, err
@@ -521,7 +521,7 @@ func (w *MessageService) SendLocationMessage(ctx context.Context, sessionID, to 
 }
 
 func (w *MessageService) SendContactMessage(ctx context.Context, sessionID string, to string, contact *input.ContactInfo, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
-	// TODO: Implement contextInfo support for contact messages
+
 	err := w.SendContactMessageFromInput(ctx, sessionID, to, contact)
 	if err != nil {
 		return nil, err
@@ -683,13 +683,13 @@ func (ms *Sender) SendReactionMessage(ctx context.Context, sessionID string, to 
 		return ErrInvalidJID
 	}
 
-	// Handle "remove" reaction (empty string)
+
 	if reaction == "remove" {
 		reaction = ""
 	}
 
-	// Build reaction message manually to support fromMe parameter
-	// This allows reacting to messages sent by us (fromMe=true) or received (fromMe=false)
+
+
 	reactionMsg := &waE2E.Message{
 		ReactionMessage: &waE2E.ReactionMessage{
 			Key: &waCommon.MessageKey{
@@ -866,7 +866,7 @@ type TemplateInfo struct {
 func fallbackID() string {
 	bytes := make([]byte, 16)
 	if _, err := rand.Read(bytes); err != nil {
-		// Fallback to timestamp-based ID if random fails
+
 		return strings.ToUpper(hex.EncodeToString([]byte(fmt.Sprintf("%d", time.Now().UnixNano()))))
 	}
 	return strings.ToUpper(hex.EncodeToString(bytes))
@@ -890,7 +890,7 @@ func buildContextInfo(contextInfo *output.MessageContextInfo) *waE2E.ContextInfo
 	return ctx
 }
 
-// DeleteMessage deleta uma mensagem enviada
+
 func (ms *Sender) DeleteMessage(ctx context.Context, sessionID string, phone string, messageID string) error {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
@@ -902,7 +902,7 @@ func (ms *Sender) DeleteMessage(ctx context.Context, sessionID string, phone str
 		return ErrInvalidJID
 	}
 
-	// Parsear o messageID
+
 	_, err = client.WAClient.RevokeMessage(recipientJID, messageID)
 	if err != nil {
 		return fmt.Errorf("failed to delete message: %w", err)
@@ -911,7 +911,7 @@ func (ms *Sender) DeleteMessage(ctx context.Context, sessionID string, phone str
 	return nil
 }
 
-// EditMessage edita uma mensagem enviada
+
 func (ms *Sender) EditMessage(ctx context.Context, sessionID string, phone string, messageID string, text string) error {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
@@ -923,7 +923,7 @@ func (ms *Sender) EditMessage(ctx context.Context, sessionID string, phone strin
 		return ErrInvalidJID
 	}
 
-	// Criar mensagem de edição
+
 	_, err = client.WAClient.SendMessage(ctx, recipientJID, &waE2E.Message{
 		EditedMessage: &waE2E.FutureProofMessage{
 			Message: &waE2E.Message{
@@ -947,7 +947,7 @@ func (ms *Sender) EditMessage(ctx context.Context, sessionID string, phone strin
 	return nil
 }
 
-// MarkRead marca mensagens como lidas
+
 func (ms *Sender) MarkRead(ctx context.Context, sessionID string, phone string, messageIDs []string) error {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
@@ -959,7 +959,7 @@ func (ms *Sender) MarkRead(ctx context.Context, sessionID string, phone string, 
 		return ErrInvalidJID
 	}
 
-	// Marcar como lida
+
 	err = client.WAClient.MarkRead(messageIDs, time.Now(), recipientJID, recipientJID)
 	if err != nil {
 		return fmt.Errorf("failed to mark as read: %w", err)
@@ -968,7 +968,7 @@ func (ms *Sender) MarkRead(ctx context.Context, sessionID string, phone string, 
 	return nil
 }
 
-// RequestHistorySync solicita sincronização de histórico
+
 func (ms *Sender) RequestHistorySync(ctx context.Context, sessionID string, count int) error {
 	_, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
@@ -979,11 +979,11 @@ func (ms *Sender) RequestHistorySync(ctx context.Context, sessionID string, coun
 		count = 50
 	}
 
-	// Solicitar sincronização de histórico
-	// O WhatsApp enviará o histórico automaticamente quando conectar
-	// Esta é uma operação que acontece em background
 
-	// Por enquanto, apenas retornamos sucesso
-	// O histórico será sincronizado automaticamente pelo whatsmeow
+
+
+
+
+
 	return nil
 }

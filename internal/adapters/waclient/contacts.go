@@ -20,7 +20,7 @@ func NewContactService(waClient *WAClient) input.ContactService {
 	}
 }
 
-// CheckUser verifica se números estão no WhatsApp
+
 func (cs *ContactService) CheckUser(ctx context.Context, sessionID string, phones []string) ([]input.UserCheckResult, error) {
 	client, err := cs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -31,7 +31,7 @@ func (cs *ContactService) CheckUser(ctx context.Context, sessionID string, phone
 		return nil, ErrNotConnected
 	}
 
-	// Verificar usuários
+
 	resp, err := client.WAClient.IsOnWhatsApp(phones)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check users: %w", err)
@@ -55,7 +55,7 @@ func (cs *ContactService) CheckUser(ctx context.Context, sessionID string, phone
 	return results, nil
 }
 
-// GetUser obtém informações de um usuário
+
 func (cs *ContactService) GetUser(ctx context.Context, sessionID string, phone string) (*input.UserDetail, error) {
 	client, err := cs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -71,7 +71,7 @@ func (cs *ContactService) GetUser(ctx context.Context, sessionID string, phone s
 		return nil, ErrInvalidJID
 	}
 
-	// Obter informações do usuário
+
 	info, err := client.WAClient.GetUserInfo([]types.JID{jid})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user info: %w", err)
@@ -96,7 +96,7 @@ func (cs *ContactService) GetUser(ctx context.Context, sessionID string, phone s
 	return detail, nil
 }
 
-// GetAvatar obtém foto de perfil de um usuário
+
 func (cs *ContactService) GetAvatar(ctx context.Context, sessionID string, phone string, preview bool) (*input.AvatarInfo, error) {
 	client, err := cs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -112,7 +112,7 @@ func (cs *ContactService) GetAvatar(ctx context.Context, sessionID string, phone
 		return nil, ErrInvalidJID
 	}
 
-	// Obter foto de perfil
+
 	pic, err := client.WAClient.GetProfilePictureInfo(jid, &whatsmeow.GetProfilePictureParams{
 		Preview: preview,
 	})
@@ -134,7 +134,7 @@ func (cs *ContactService) GetAvatar(ctx context.Context, sessionID string, phone
 	return avatarInfo, nil
 }
 
-// GetContacts lista todos os contatos
+
 func (cs *ContactService) GetContacts(ctx context.Context, sessionID string) ([]input.Contact, error) {
 	client, err := cs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -145,7 +145,7 @@ func (cs *ContactService) GetContacts(ctx context.Context, sessionID string) ([]
 		return nil, ErrNotConnected
 	}
 
-	// Obter contatos do store
+
 	contacts, err := client.WAClient.Store.Contacts.GetAllContacts(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get contacts: %w", err)
@@ -169,7 +169,7 @@ func (cs *ContactService) GetContacts(ctx context.Context, sessionID string) ([]
 	return results, nil
 }
 
-// SendPresence envia presença geral (available/unavailable)
+
 func (cs *ContactService) SendPresence(ctx context.Context, sessionID string, presence string) error {
 	client, err := cs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -198,7 +198,7 @@ func (cs *ContactService) SendPresence(ctx context.Context, sessionID string, pr
 	return nil
 }
 
-// ChatPresence envia presença em chat específico (typing/recording)
+
 func (cs *ContactService) ChatPresence(ctx context.Context, sessionID string, phone string, presence string, media string) error {
 	client, err := cs.waClient.GetSession(ctx, sessionID)
 	if err != nil {

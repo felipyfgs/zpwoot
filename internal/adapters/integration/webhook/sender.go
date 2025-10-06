@@ -13,14 +13,14 @@ import (
 	"zpwoot/internal/core/ports/output"
 )
 
-// HTTPWebhookSender implementa a interface WebhookSender para envio HTTP
-// REGRA: Implementa ports/output/WebhookSender
+
+
 type HTTPWebhookSender struct {
 	httpClient *http.Client
 	logger     *logger.Logger
 }
 
-// NewHTTPWebhookSender cria uma nova instância do sender
+
 func NewHTTPWebhookSender(httpClient *http.Client, logger *logger.Logger) output.WebhookSender {
 	if httpClient == nil {
 		httpClient = &http.Client{
@@ -34,9 +34,9 @@ func NewHTTPWebhookSender(httpClient *http.Client, logger *logger.Logger) output
 	}
 }
 
-// SendWebhook envia um evento para o webhook configurado
+
 func (s *HTTPWebhookSender) SendWebhook(ctx context.Context, url string, secret *string, event *output.WebhookEvent) error {
-	// Validar parâmetros
+
 	if url == "" {
 		return fmt.Errorf("webhook URL cannot be empty")
 	}
@@ -44,58 +44,58 @@ func (s *HTTPWebhookSender) SendWebhook(ctx context.Context, url string, secret 
 		return fmt.Errorf("webhook event cannot be nil")
 	}
 
-	// Serializar evento para JSON
+
 	payload, err := json.Marshal(event)
 	if err != nil {
 		return fmt.Errorf("failed to marshal webhook event: %w", err)
 	}
 
-	// Criar request
+
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(payload))
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 
-	// Configurar headers
+
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "zpwoot-webhook/1.0")
 	req.Header.Set("X-Webhook-Event", event.Type)
 	req.Header.Set("X-Session-ID", event.SessionID)
 	req.Header.Set("X-Webhook-Timestamp", strconv.FormatInt(event.Timestamp.Unix(), 10))
 
-	// Gerar assinatura HMAC se secret fornecido
+
 	if secret != nil && *secret != "" {
 		signature := GenerateSignature(payload, *secret)
 		req.Header.Set("X-Webhook-Signature", signature)
 	}
 
-	// Enviar com retry
+
 	return s.sendWithRetry(ctx, req, url, event.Type)
 }
 
-// sendWithRetry envia a requisição com estratégia de retry
+
 func (s *HTTPWebhookSender) sendWithRetry(ctx context.Context, req *http.Request, url, eventType string) error {
 	maxRetries := 3
 	retryDelays := []time.Duration{
-		0,                // Tentativa 1: imediato
-		5 * time.Second,  // Tentativa 2: após 5 segundos
-		15 * time.Second, // Tentativa 3: após 15 segundos
+		0,
+		5 * time.Second,
+		15 * time.Second,
 	}
 
 	var lastErr error
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
-		// Aguardar delay se não for a primeira tentativa
+
 		if attempt > 0 {
 			select {
 			case <-ctx.Done():
 				return ctx.Err()
 			case <-time.After(retryDelays[attempt]):
-				// Continue
+
 			}
 		}
 
-		// Log da tentativa
+
 		s.logger.Debug().
 			Str("url", url).
 			Str("event_type", eventType).
@@ -103,7 +103,7 @@ func (s *HTTPWebhookSender) sendWithRetry(ctx context.Context, req *http.Request
 			Int("max_retries", maxRetries).
 			Msg("Sending webhook")
 
-		// Fazer a requisição
+
 		resp, err := s.httpClient.Do(req)
 		if err != nil {
 			lastErr = fmt.Errorf("HTTP request failed (attempt %d/%d): %w", attempt+1, maxRetries, err)
@@ -116,9 +116,9 @@ func (s *HTTPWebhookSender) sendWithRetry(ctx context.Context, req *http.Request
 			continue
 		}
 
-		// Verificar status code
+
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			// Sucesso
+
 			resp.Body.Close()
 			s.logger.Info().
 				Str("url", url).
@@ -129,7 +129,7 @@ func (s *HTTPWebhookSender) sendWithRetry(ctx context.Context, req *http.Request
 			return nil
 		}
 
-		// Status code de erro
+
 		resp.Body.Close()
 		lastErr = fmt.Errorf("webhook returned status %d (attempt %d/%d)", resp.StatusCode, attempt+1, maxRetries)
 		s.logger.Warn().
@@ -139,7 +139,7 @@ func (s *HTTPWebhookSender) sendWithRetry(ctx context.Context, req *http.Request
 			Int("attempt", attempt+1).
 			Msg("Webhook returned error status")
 
-		// Se for 4xx (erro do cliente), não fazer retry
+
 		if resp.StatusCode >= 400 && resp.StatusCode < 500 {
 			s.logger.Error().
 				Str("url", url).
@@ -150,7 +150,7 @@ func (s *HTTPWebhookSender) sendWithRetry(ctx context.Context, req *http.Request
 		}
 	}
 
-	// Todas as tentativas falharam
+
 	s.logger.Error().
 		Err(lastErr).
 		Str("url", url).

@@ -8,13 +8,13 @@ import (
 	"zpwoot/internal/core/domain/webhook"
 )
 
-// UpsertUseCase implementa o caso de uso de criar ou atualizar webhook (upsert)
+
 type UpsertUseCase struct {
 	webhookRepo    webhook.Repository
 	webhookService *webhook.Service
 }
 
-// NewUpsertUseCase cria uma nova instância do use case
+
 func NewUpsertUseCase(
 	webhookRepo webhook.Repository,
 	webhookService *webhook.Service,
@@ -25,30 +25,30 @@ func NewUpsertUseCase(
 	}
 }
 
-// Execute executa o caso de uso (cria se não existe, atualiza se existe)
+
 func (uc *UpsertUseCase) Execute(
 	ctx context.Context,
 	sessionID string,
 	request *dto.CreateWebhookRequest,
 ) (*dto.WebhookResponse, error) {
-	// Validar URL
+
 	if err := uc.webhookService.ValidateURL(request.URL); err != nil {
 		return nil, fmt.Errorf("invalid webhook URL: %w", err)
 	}
 
-	// Validar eventos
+
 	if err := uc.webhookService.ValidateEvents(request.Events); err != nil {
 		return nil, fmt.Errorf("invalid events: %w", err)
 	}
 
-	// Validar secret se fornecido
+
 	if request.Secret != nil && *request.Secret != "" {
 		if err := uc.webhookService.ValidateSecret(*request.Secret); err != nil {
 			return nil, fmt.Errorf("invalid secret: %w", err)
 		}
 	}
 
-	// Verificar se já existe webhook para esta sessão
+
 	existingWebhook, err := uc.webhookRepo.GetBySessionID(ctx, sessionID)
 	if err != nil && err.Error() != "webhook not found" {
 		return nil, fmt.Errorf("failed to check existing webhook: %w", err)
@@ -57,7 +57,7 @@ func (uc *UpsertUseCase) Execute(
 	var wh *webhook.Webhook
 
 	if existingWebhook != nil {
-		// Update
+
 		existingWebhook.UpdateURL(request.URL)
 		existingWebhook.UpdateEvents(request.Events)
 
@@ -70,10 +70,10 @@ func (uc *UpsertUseCase) Execute(
 		}
 		wh = existingWebhook
 	} else {
-		// Create
+
 		wh = webhook.NewWebhook(sessionID, request.URL, request.Events)
 
-		// Gerar secret se não fornecido
+
 		secret := request.Secret
 		if secret == nil || *secret == "" {
 			generated, err := generateSecretKey()
@@ -89,7 +89,7 @@ func (uc *UpsertUseCase) Execute(
 		}
 	}
 
-	// Converter para DTO
+
 	return &dto.WebhookResponse{
 		ID:        wh.ID,
 		SessionID: wh.SessionID,

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"zpwoot/internal/core/application/dto"
@@ -66,7 +67,7 @@ func (h *SessionHandler) Create(w http.ResponseWriter, r *http.Request) {
 			Str("name", req.Name).
 			Msg("Failed to create session")
 
-		if err == dto.ErrSessionAlreadyExists {
+		if errors.Is(err, dto.ErrSessionAlreadyExists) {
 			h.writeErrorResponse(w, http.StatusConflict, dto.ErrorCodeConflict, "A session with this name already exists")
 			return
 		}
@@ -99,7 +100,7 @@ func (h *SessionHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	response, err := h.useCases.GetSession(r.Context(), sessionID)
 	if err != nil {
-		if err == dto.ErrSessionNotFound {
+		if errors.Is(err, dto.ErrSessionNotFound) {
 			h.writeErrorResponse(w, http.StatusNotFound, dto.ErrorCodeNotFound, "session not found")
 		} else {
 			h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "failed to get session")
@@ -163,7 +164,7 @@ func (h *SessionHandler) Connect(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("session_id", sessionID).
 			Msg("Failed to connect session")
-		if err == dto.ErrSessionNotFound {
+		if errors.Is(err, dto.ErrSessionNotFound) {
 			h.writeErrorResponse(w, http.StatusNotFound, dto.ErrorCodeNotFound, "session not found")
 		} else {
 			h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "failed to connect session")
@@ -199,7 +200,7 @@ func (h *SessionHandler) Disconnect(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("session_id", sessionID).
 			Msg("Failed to disconnect session")
-		if err == dto.ErrSessionNotFound {
+		if errors.Is(err, dto.ErrSessionNotFound) {
 			h.writeErrorResponse(w, http.StatusNotFound, dto.ErrorCodeNotFound, "session not found")
 		} else {
 			h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "failed to disconnect session")
@@ -235,7 +236,7 @@ func (h *SessionHandler) Logout(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("session_id", sessionID).
 			Msg("Failed to logout session")
-		if err == dto.ErrSessionNotFound {
+		if errors.Is(err, dto.ErrSessionNotFound) {
 			h.writeErrorResponse(w, http.StatusNotFound, dto.ErrorCodeNotFound, "Session not found")
 		} else if err.Error() == "session is already logged out" {
 			h.writeErrorResponse(w, http.StatusConflict, dto.ErrorCodeConflict, "Session is already logged out")
@@ -280,7 +281,7 @@ func (h *SessionHandler) Delete(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("session_id", sessionID).
 			Msg("Failed to delete session")
-		if err == dto.ErrSessionNotFound {
+		if errors.Is(err, dto.ErrSessionNotFound) {
 			h.writeErrorResponse(w, http.StatusNotFound, dto.ErrorCodeNotFound, "session not found")
 		} else {
 			h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "failed to delete session")
@@ -325,7 +326,7 @@ func (h *SessionHandler) QRCode(w http.ResponseWriter, r *http.Request) {
 			Str("session_id", sessionID).
 			Msg("Failed to get QR code")
 
-		if err == dto.ErrSessionNotFound {
+		if errors.Is(err, dto.ErrSessionNotFound) {
 			h.writeErrorResponse(w, http.StatusNotFound, dto.ErrorCodeNotFound, "session not found")
 		} else if err.Error() == "session is already connected" {
 			h.writeErrorResponse(w, http.StatusConflict, dto.ErrorCodeConflict, "session is already connected")
@@ -360,7 +361,7 @@ func (h *SessionHandler) writeError(w http.ResponseWriter, status int, code, mes
 	h.writeErrorResponse(w, status, code, message)
 }
 
-// PairPhone godoc
+
 // @Summary      Pair phone
 // @Description  Pair a phone number without QR code
 // @Tags         Sessions

@@ -28,7 +28,7 @@ func NewMessageHandler(messageService input.MessageService, logger output.Logger
 	}
 }
 
-// buildMessageResponse creates a standardized message response
+
 func (h *MessageHandler) buildMessageResponse(result *output.MessageResult, to, messageType, content string) *dto.SendMessageResponse {
 	response := &dto.SendMessageResponse{
 		Success:   true,
@@ -89,7 +89,7 @@ func (h *MessageHandler) SendText(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert DTO ContextInfo to output ContextInfo
+
 	var contextInfo *output.MessageContextInfo
 	if req.ContextInfo != nil {
 		contextInfo = &output.MessageContextInfo{
@@ -156,7 +156,7 @@ func (h *MessageHandler) SendImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert DTO ContextInfo to output ContextInfo
+
 	var contextInfo *output.MessageContextInfo
 	if req.ContextInfo != nil {
 		contextInfo = &output.MessageContextInfo{
@@ -165,7 +165,7 @@ func (h *MessageHandler) SendImage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Process media using the new media processor
+
 	mediaProcessor := utils.NewMediaProcessor()
 	media, err := mediaProcessor.ProcessMedia(req.File, req.MimeType, req.FileName)
 	if err != nil {
@@ -234,7 +234,7 @@ func (h *MessageHandler) SendAudio(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert DTO ContextInfo to output ContextInfo
+
 	var contextInfo *output.MessageContextInfo
 	if req.ContextInfo != nil {
 		contextInfo = &output.MessageContextInfo{
@@ -243,7 +243,7 @@ func (h *MessageHandler) SendAudio(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Process media using the new media processor
+
 	mediaProcessor := utils.NewMediaProcessor()
 	media, err := mediaProcessor.ProcessMedia(req.File, req.MimeType, req.FileName)
 	if err != nil {
@@ -365,7 +365,7 @@ func (h *MessageHandler) SendVideo(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Process media using the new media processor
+
 	mediaProcessor := utils.NewMediaProcessor()
 	media, err := mediaProcessor.ProcessMedia(req.File, req.MimeType, req.FileName)
 	if err != nil {
@@ -442,7 +442,7 @@ func (h *MessageHandler) SendDocument(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Process media using the new media processor
+
 	mediaProcessor := utils.NewMediaProcessor()
 	media, err := mediaProcessor.ProcessMedia(req.File, req.MimeType, req.FileName)
 	if err != nil {
@@ -633,8 +633,8 @@ func (h *MessageHandler) SendReaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Process "me:" prefix in messageID (WuzAPI compatibility)
-	// Example: "me:3EB0C767D0D1A6F4FD29" means fromMe=true
+
+
 	messageID := req.MessageID
 	fromMe := false
 
@@ -643,7 +643,7 @@ func (h *MessageHandler) SendReaction(w http.ResponseWriter, r *http.Request) {
 		messageID = messageID[len("me:"):]
 	}
 
-	// Allow explicit fromMe field to override prefix detection
+
 	if req.FromMe != nil {
 		fromMe = *req.FromMe
 	}
@@ -765,7 +765,7 @@ func (h *MessageHandler) SendSticker(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert DTO ContextInfo to output ContextInfo
+
 	var contextInfo *output.MessageContextInfo
 	if req.ContextInfo != nil {
 		contextInfo = &output.MessageContextInfo{
@@ -774,7 +774,7 @@ func (h *MessageHandler) SendSticker(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Process media using the new media processor
+
 	mediaProcessor := utils.NewMediaProcessor()
 	media, err := mediaProcessor.ProcessMedia(req.File, req.MimeType, req.FileName)
 	if err != nil {
@@ -840,7 +840,7 @@ func (h *MessageHandler) SendContactsArray(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Convert contacts to input format
+
 	contacts := make([]*input.ContactInfo, len(req.Contacts))
 	for i, contact := range req.Contacts {
 		contacts[i] = &input.ContactInfo{
@@ -904,7 +904,7 @@ func (h *MessageHandler) SendList(w http.ResponseWriter, r *http.Request) {
 	h.writeError(w, http.StatusNotImplemented, "not_implemented", "List messages not yet implemented")
 }
 
-// DeleteMessage godoc
+
 // @Summary      Delete message
 // @Description  Delete a sent message
 // @Tags         Messages
@@ -957,13 +957,13 @@ func (h *MessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 	response := &dto.DeleteMessageResponse{
 		Success:   true,
 		MessageID: req.MessageID,
-		Timestamp: 0, // TODO: Get actual timestamp from response
+		Timestamp: 0,
 	}
 
 	h.writeSuccessResponse(w, http.StatusOK, response)
 }
 
-// EditMessage godoc
+
 // @Summary      Edit message
 // @Description  Edit a sent message
 // @Tags         Messages
@@ -1021,13 +1021,13 @@ func (h *MessageHandler) EditMessage(w http.ResponseWriter, r *http.Request) {
 	response := &dto.EditMessageResponse{
 		Success:   true,
 		MessageID: req.MessageID,
-		Timestamp: 0, // TODO: Get actual timestamp from response
+		Timestamp: 0,
 	}
 
 	h.writeSuccessResponse(w, http.StatusOK, response)
 }
 
-// MarkRead godoc
+
 // @Summary      Mark messages as read
 // @Description  Mark one or more messages as read
 // @Tags         Messages
@@ -1083,7 +1083,7 @@ func (h *MessageHandler) MarkRead(w http.ResponseWriter, r *http.Request) {
 	h.writeSuccessResponse(w, http.StatusOK, response)
 }
 
-// RequestHistorySync godoc
+
 // @Summary      Request history sync
 // @Description  Request synchronization of message history
 // @Tags         Messages
@@ -1105,17 +1105,17 @@ func (h *MessageHandler) RequestHistorySync(w http.ResponseWriter, r *http.Reque
 	}
 
 	var req dto.HistorySyncRequest
-	// Body é opcional, usar defaults se não fornecido
+
 	if r.Body != nil {
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			h.logger.Error().Err(err).Msg("Failed to decode request body")
-			// Continue with defaults since body is optional
+
 		}
 	}
 
 	count := req.Count
 	if count <= 0 {
-		count = 50 // Default
+		count = 50
 	}
 
 	err := h.messageService.RequestHistorySync(r.Context(), sessionID, count)

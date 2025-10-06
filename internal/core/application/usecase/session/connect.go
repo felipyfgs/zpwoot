@@ -52,7 +52,10 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 	if err != nil {
 
 		domainSession.SetError(err.Error())
-		_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusError)
+		if updateErr := uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusError); updateErr != nil {
+			// Log error but don't fail the main operation
+			fmt.Printf("Failed to update session status: %v\n", updateErr)
+		}
 
 		if waErr, ok := err.(*output.WhatsAppError); ok {
 			switch waErr.Code {

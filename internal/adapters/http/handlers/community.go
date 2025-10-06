@@ -12,13 +12,13 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// CommunityHandler gerencia requisições HTTP relacionadas a comunidades
+
 type CommunityHandler struct {
 	communityService input.CommunityService
 	logger           *logger.Logger
 }
 
-// NewCommunityHandler cria uma nova instância do CommunityHandler
+
 func NewCommunityHandler(communityService input.CommunityService, logger *logger.Logger) *CommunityHandler {
 	return &CommunityHandler{
 		communityService: communityService,
@@ -26,16 +26,18 @@ func NewCommunityHandler(communityService input.CommunityService, logger *logger
 	}
 }
 
-// writeJSON escreve uma resposta JSON, tratando erros de encoding
-func (h *CommunityHandler) writeJSON(w http.ResponseWriter, data interface{}) {
+
+func (h *CommunityHandler) writeJSON(w http.ResponseWriter, data interface{}) error {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to encode JSON response")
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return err
 	}
+	return nil
 }
 
-// validateCommunityRequest valida parâmetros básicos de requisição de comunidade
+
 func (h *CommunityHandler) validateCommunityRequest(w http.ResponseWriter, sessionID, communityJID string) bool {
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
@@ -52,7 +54,7 @@ func (h *CommunityHandler) validateCommunityRequest(w http.ResponseWriter, sessi
 	return true
 }
 
-// handleGroupLinkOperation executa operação de link/unlink de grupo
+
 func (h *CommunityHandler) handleGroupLinkOperation(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -109,10 +111,12 @@ func (h *CommunityHandler) handleGroupLinkOperation(
 		"message": message,
 	}
 
-	h.writeJSON(w, response)
+	if err := h.writeJSON(w, response); err != nil {
+		return
+	}
 }
 
-// ListCommunities lista todas as comunidades que a sessão participa
+
 // @Summary Lista comunidades
 // @Description Lista todas as comunidades que a sessão participa
 // @Tags Comunidades
@@ -139,10 +143,12 @@ func (h *CommunityHandler) ListCommunities(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	h.writeJSON(w, communities)
+	if err := h.writeJSON(w, communities); err != nil {
+		return
+	}
 }
 
-// GetCommunityInfo obtém informações detalhadas de uma comunidade
+
 // @Summary Obter informações da comunidade
 // @Description Obtém informações detalhadas de uma comunidade específica
 // @Tags Comunidades
@@ -178,10 +184,12 @@ func (h *CommunityHandler) GetCommunityInfo(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	h.writeJSON(w, community)
+	if err := h.writeJSON(w, community); err != nil {
+		return
+	}
 }
 
-// CreateCommunity cria uma nova comunidade
+
 // @Summary Criar comunidade
 // @Description Cria uma nova comunidade WhatsApp
 // @Tags Comunidades
@@ -216,10 +224,12 @@ func (h *CommunityHandler) CreateCommunity(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	h.writeJSON(w, community)
+	if err := h.writeJSON(w, community); err != nil {
+		return
+	}
 }
 
-// LinkGroup vincula um grupo a uma comunidade
+
 // @Summary Vincular grupo à comunidade
 // @Description Vincula um grupo existente a uma comunidade
 // @Tags Comunidades
@@ -238,7 +248,7 @@ func (h *CommunityHandler) LinkGroup(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// UnlinkGroup desvincula um grupo de uma comunidade
+
 // @Summary Desvincular grupo da comunidade
 // @Description Desvincula um grupo de uma comunidade
 // @Tags Comunidades
@@ -257,7 +267,7 @@ func (h *CommunityHandler) UnlinkGroup(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetSubGroups obtém todos os subgrupos de uma comunidade
+
 // @Summary Listar subgrupos da comunidade
 // @Description Lista todos os subgrupos vinculados a uma comunidade
 // @Tags Comunidades
@@ -292,12 +302,14 @@ func (h *CommunityHandler) GetSubGroups(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	h.writeJSON(w, subGroups)
+	if err := h.writeJSON(w, subGroups); err != nil {
+		return
+	}
 }
 
-// GetParticipants obtém todos os participantes de uma comunidade
-// @Summary Listar participantes da comunidade
-// @Description Lista todos os participantes de uma comunidade (de todos os grupos vinculados)
+
+// @Summary Listar participants da comunidade
+// @Description Lista todos os participants de uma comunidade (de todos os grupos vinculados)
 // @Tags Comunidades
 // @Accept json
 // @Produce json
@@ -330,5 +342,7 @@ func (h *CommunityHandler) GetParticipants(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	h.writeJSON(w, participants)
+	if err := h.writeJSON(w, participants); err != nil {
+		return
+	}
 }

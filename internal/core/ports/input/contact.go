@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-// ContactService define operações de contatos e presença
+
 type ContactService interface {
 	CheckUser(ctx context.Context, sessionID string, phones []string) ([]UserCheckResult, error)
 	GetUser(ctx context.Context, sessionID string, phone string) (*UserDetail, error)
@@ -14,7 +14,7 @@ type ContactService interface {
 	ChatPresence(ctx context.Context, sessionID string, phone string, presence string, media string) error
 }
 
-// UserCheckResult representa o resultado da verificação de usuário
+
 type UserCheckResult struct {
 	Query        string
 	IsInWhatsApp bool
@@ -22,7 +22,7 @@ type UserCheckResult struct {
 	VerifiedName string
 }
 
-// UserDetail representa detalhes de um usuário
+
 type UserDetail struct {
 	JID          string
 	VerifiedName string
@@ -30,7 +30,7 @@ type UserDetail struct {
 	PictureID    string
 }
 
-// AvatarInfo representa informações de avatar
+
 type AvatarInfo struct {
 	URL       string
 	ID        string
@@ -38,7 +38,7 @@ type AvatarInfo struct {
 	DirectURL string
 }
 
-// Contact representa um contato
+
 type Contact struct {
 	JID          string
 	Name         string

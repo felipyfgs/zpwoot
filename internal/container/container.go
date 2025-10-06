@@ -45,6 +45,10 @@ func NewContainer(cfg *config.Config) *Container {
 }
 
 func (c *Container) Init() error {
+	return c.InitWithContext(context.Background())
+}
+
+func (c *Container) InitWithContext(ctx context.Context) error {
 
 	logger.Init(c.config.LogLevel)
 	c.logger = logger.NewFromAppConfig(c.config)
@@ -100,7 +104,7 @@ func (c *Container) initWAClient() {
 }
 
 func (c *Container) Start(ctx context.Context) error {
-	return c.Init()
+	return c.InitWithContext(ctx)
 }
 
 func (c *Container) Stop(ctx context.Context) error {
