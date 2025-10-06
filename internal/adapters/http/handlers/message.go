@@ -673,4 +673,3 @@ func (h *MessageHandler) SendList(w http.ResponseWriter, r *http.Request) {
 func (h *MessageHandler) SendViewOnce(w http.ResponseWriter, r *http.Request) {
 	h.writeError(w, http.StatusNotImplemented, "not_implemented", "View once messages not yet implemented")
 }
-
