@@ -219,14 +219,14 @@ func (r *WebhookRepository) List(ctx context.Context, limit, offset int) ([]*web
 
 // webhookDB representa a estrutura do webhook no banco de dados
 type webhookDB struct {
-	ID        string         `db:"id"`
-	SessionID string         `db:"sessionId"`
-	URL       string         `db:"url"`
-	Secret    *string        `db:"secret"`
-	Events    []byte         `db:"events"`
-	Enabled   bool           `db:"enabled"`
-	CreatedAt sql.NullTime   `db:"createdAt"`
-	UpdatedAt sql.NullTime   `db:"updatedAt"`
+	ID        string       `db:"id"`
+	SessionID string       `db:"sessionId"`
+	URL       string       `db:"url"`
+	Secret    *string      `db:"secret"`
+	Events    []byte       `db:"events"`
+	Enabled   bool         `db:"enabled"`
+	CreatedAt sql.NullTime `db:"createdAt"`
+	UpdatedAt sql.NullTime `db:"updatedAt"`
 }
 
 // toDomain converte webhookDB para webhook.Webhook
@@ -249,4 +249,3 @@ func (wh *webhookDB) toDomain() (*webhook.Webhook, error) {
 		UpdatedAt: wh.UpdatedAt.Time,
 	}, nil
 }
-

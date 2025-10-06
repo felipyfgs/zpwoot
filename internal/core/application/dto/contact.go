@@ -15,7 +15,7 @@ type WhatsAppUserInfo struct {
 
 // CheckUserResponse representa a resposta de verificação de usuários
 type CheckUserResponse struct {
-	Users []UserInfo `json:"users"`
+	Users []WhatsAppUserInfo `json:"users"`
 } //@name CheckUserResponse
 
 // GetUserRequest representa a requisição de informações do usuário
@@ -80,4 +80,3 @@ type ChatPresenceRequest struct {
 type ChatPresenceResponse struct {
 	Success bool `json:"success" example:"true"`
 } //@name ChatPresenceResponse
-

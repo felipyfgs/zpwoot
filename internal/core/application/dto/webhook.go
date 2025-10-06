@@ -40,4 +40,3 @@ type WebhookEventPayload struct {
 	Timestamp time.Time              `json:"timestamp"`
 	Data      map[string]interface{} `json:"data"`
 }
-

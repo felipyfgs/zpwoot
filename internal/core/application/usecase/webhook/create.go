@@ -94,4 +94,3 @@ func generateSecret() (string, error) {
 	}
 	return hex.EncodeToString(bytes), nil
 }
-

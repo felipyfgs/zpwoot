@@ -170,12 +170,12 @@ func (h *WebhookHandler) writeJSON(w http.ResponseWriter, statusCode int, data i
 func (h *WebhookHandler) writeError(w http.ResponseWriter, statusCode int, errorCode, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	
+
 	errorResponse := dto.ErrorResponse{
 		Error:   errorCode,
 		Message: message,
 	}
-	
+
 	if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to encode error response")
 	}

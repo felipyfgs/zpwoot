@@ -809,7 +809,7 @@ func (h *MessageHandler) SendSticker(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Security     ApiKeyAuth
 // @Param        sessionId   path      string                                true  "Session ID"
-// @Param        message     body      dto.SendContactsArrayMessageRequest   true  "Contacts array message data"
+// @Param        message     body      dto.SendMultipleContactsRequest   true  "Contacts array message data"
 // @Success      200         {object}  dto.SendMessageResponse               "Contacts sent successfully"
 // @Failure      400         {object}  dto.ErrorResponse                     "Invalid request"
 // @Failure      401         {object}  dto.ErrorResponse                     "Unauthorized"
@@ -824,7 +824,7 @@ func (h *MessageHandler) SendContactsArray(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	var req dto.SendContactsArrayMessageRequest
+	var req dto.SendMultipleContactsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.writeError(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
 		return
@@ -1091,8 +1091,8 @@ func (h *MessageHandler) MarkRead(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Security     ApiKeyAuth
 // @Param        sessionId   path      string                           true  "Session ID"
-// @Param        request     body      dto.RequestHistorySyncRequest    false "History sync request"
-// @Success      200  {object}  dto.RequestHistorySyncResponse
+// @Param        request     body      dto.HistorySyncRequest    false "History sync request"
+// @Success      200  {object}  dto.HistorySyncResponse
 // @Failure      400  {object}  dto.ErrorResponse
 // @Failure      404  {object}  dto.ErrorResponse
 // @Failure      500  {object}  dto.ErrorResponse
@@ -1104,7 +1104,7 @@ func (h *MessageHandler) RequestHistorySync(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var req dto.RequestHistorySyncRequest
+	var req dto.HistorySyncRequest
 	// Body é opcional, usar defaults se não fornecido
 	if r.Body != nil {
 		json.NewDecoder(r.Body).Decode(&req)
@@ -1127,7 +1127,7 @@ func (h *MessageHandler) RequestHistorySync(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	response := &dto.RequestHistorySyncResponse{
+	response := &dto.HistorySyncResponse{
 		Success:   true,
 		Timestamp: time.Now().Unix(),
 	}

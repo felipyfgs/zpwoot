@@ -100,4 +100,3 @@ func (uc *UpsertUseCase) Execute(
 		UpdatedAt: wh.UpdatedAt,
 	}, nil
 }
-

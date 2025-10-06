@@ -88,7 +88,7 @@ func (gs *GroupService) GetGroupInfo(ctx context.Context, sessionID string, grou
 }
 
 // GetGroupInviteInfo obtém informações de um grupo via código de convite
-func (gs *GroupService) GetGroupInviteInfo(ctx context.Context, sessionID string, code string) (*dto.GroupInfo, error) {
+func (gs *GroupService) GetGroupInviteInfo(ctx context.Context, sessionID string, code string) (*dto.WhatsAppGroupInfo, error) {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
 		return nil, fmt.Errorf("session not found: %w", err)
@@ -103,7 +103,7 @@ func (gs *GroupService) GetGroupInviteInfo(ctx context.Context, sessionID string
 		return nil, fmt.Errorf("failed to get group info from link: %w", err)
 	}
 
-	return &dto.GroupInfo{
+	return &dto.WhatsAppGroupInfo{
 		JID:        group.JID.String(),
 		Name:       group.Name,
 		Topic:      group.Topic,

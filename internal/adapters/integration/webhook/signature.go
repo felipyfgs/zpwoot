@@ -25,4 +25,3 @@ func ValidateSignature(payload []byte, secret string, signature string) bool {
 	expectedSignature := GenerateSignature(payload, secret)
 	return hmac.Equal([]byte(expectedSignature), []byte(signature))
 }
-

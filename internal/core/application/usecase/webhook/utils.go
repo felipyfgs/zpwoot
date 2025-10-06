@@ -13,4 +13,3 @@ func generateSecretKey() (string, error) {
 	}
 	return hex.EncodeToString(bytes), nil
 }
-

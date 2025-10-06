@@ -8,7 +8,7 @@ import (
 type APIResponse struct {
 	Success   bool        `json:"success" example:"true" description:"Whether the request was successful"`
 	Data      interface{} `json:"data,omitempty" description:"Response data (present on success)"`
-	Error     *ErrorInfo  `json:"error,omitempty" description:"Error information (present on failure)"`
+	Error     *APIErrorInfo  `json:"error,omitempty" description:"Error information (present on failure)"`
 	Timestamp time.Time   `json:"timestamp" example:"2025-01-15T10:30:00Z" description:"Response timestamp"`
 } //@name APIResponse
 
@@ -28,7 +28,7 @@ type ValidationError struct {
 	Message string `json:"message" example:"name is required" description:"Validation error message"`
 }
 
-func (e *ErrorInfo) Error() string {
+func (e *APIErrorInfo) Error() string {
 	return e.Message
 }
 
@@ -67,7 +67,7 @@ func NewSuccessResponse(data interface{}) *APIResponse {
 func NewErrorResponse(code, message string) *APIResponse {
 	return &APIResponse{
 		Success: false,
-		Error: &ErrorInfo{
+		Error: &APIErrorInfo{
 			Code:    code,
 			Message: message,
 		},
@@ -78,7 +78,7 @@ func NewErrorResponse(code, message string) *APIResponse {
 func NewErrorResponseWithDetails(code, message string, details map[string]interface{}) *APIResponse {
 	return &APIResponse{
 		Success: false,
-		Error: &ErrorInfo{
+		Error: &APIErrorInfo{
 			Code:    code,
 			Message: message,
 			Details: details,

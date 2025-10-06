@@ -2,7 +2,7 @@ package dto
 
 // ListGroupsResponse - Lista de grupos
 type ListGroupsResponse struct {
-	Groups []GroupInfo `json:"groups"`
+	Groups []WhatsAppGroupInfo `json:"groups"`
 } //@name ListGroupsResponse
 
 // WhatsAppGroupInfo - Informações do grupo

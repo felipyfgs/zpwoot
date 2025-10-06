@@ -37,4 +37,3 @@ func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.Webho
 		UpdatedAt: wh.UpdatedAt,
 	}, nil
 }
-

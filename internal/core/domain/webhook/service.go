@@ -179,4 +179,3 @@ func (s *Service) ValidateSecret(secret string) error {
 
 	return nil
 }
-

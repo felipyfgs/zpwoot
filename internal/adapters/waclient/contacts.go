@@ -245,4 +245,3 @@ func (cs *ContactService) ChatPresence(ctx context.Context, sessionID string, ph
 
 	return nil
 }
-

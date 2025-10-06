@@ -121,8 +121,8 @@ func (h *GroupHandler) GetGroupInfo(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Security     ApiKeyAuth
 // @Param        sessionId   path      string                           true  "Session ID"
-// @Param        request     body      dto.GetGroupInviteInfoRequest    true  "Invite code"
-// @Success      200  {object}  dto.GroupInfo
+// @Param        request     body      dto.GetInviteInfoRequest    true  "Invite code"
+// @Success      200  {object}  dto.WhatsAppGroupInfo
 // @Failure      400  {object}  dto.ErrorResponse
 // @Failure      500  {object}  dto.ErrorResponse
 // @Router       /sessions/{sessionId}/groups/invite-info [post]
@@ -133,7 +133,7 @@ func (h *GroupHandler) GetGroupInviteInfo(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	var req dto.GetGroupInviteInfoRequest
+	var req dto.GetInviteInfoRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.writeError(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
 		return
@@ -173,7 +173,7 @@ func (h *GroupHandler) GetGroupInviteInfo(w http.ResponseWriter, r *http.Request
 // @Param        sessionId   path      string  true   "Session ID"
 // @Param        groupJid    query     string  true   "Group JID"
 // @Param        reset       query     bool    false  "Reset link"
-// @Success      200  {object}  dto.GetGroupInviteLinkResponse
+// @Success      200  {object}  dto.GetInviteLinkResponse
 // @Failure      400  {object}  dto.ErrorResponse
 // @Failure      500  {object}  dto.ErrorResponse
 // @Router       /sessions/{sessionId}/groups/invite-link [get]
@@ -210,7 +210,7 @@ func (h *GroupHandler) GetGroupInviteLink(w http.ResponseWriter, r *http.Request
 		Bool("reset", reset).
 		Msg("Group invite link retrieved successfully")
 
-	h.writeJSON(w, dto.GetGroupInviteLinkResponse{
+	h.writeJSON(w, dto.GetInviteLinkResponse{
 		InviteLink: link,
 	})
 }
@@ -385,7 +385,7 @@ func (h *GroupHandler) LeaveGroup(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Security     ApiKeyAuth
 // @Param        sessionId   path      string                                true  "Session ID"
-// @Param        request     body      dto.UpdateGroupParticipantsRequest    true  "Participants update"
+// @Param        request     body      dto.UpdateParticipantsRequest    true  "Participants update"
 // @Success      200  {object}  dto.GroupActionResponse
 // @Failure      400  {object}  dto.ErrorResponse
 // @Failure      500  {object}  dto.ErrorResponse
@@ -397,7 +397,7 @@ func (h *GroupHandler) UpdateGroupParticipants(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	var req dto.UpdateGroupParticipantsRequest
+	var req dto.UpdateParticipantsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.writeError(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
 		return
@@ -679,7 +679,7 @@ func (h *GroupHandler) SetGroupAnnounce(w http.ResponseWriter, r *http.Request) 
 // @Produce      json
 // @Security     ApiKeyAuth
 // @Param        sessionId   path      string                             true  "Session ID"
-// @Param        request     body      dto.SetDisappearingTimerRequest    true  "Timer setting"
+// @Param        request     body      dto.SetDisappearingRequest    true  "Timer setting"
 // @Success      200  {object}  dto.GroupActionResponse
 // @Failure      400  {object}  dto.ErrorResponse
 // @Failure      500  {object}  dto.ErrorResponse
@@ -691,7 +691,7 @@ func (h *GroupHandler) SetDisappearingTimer(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var req dto.SetDisappearingTimerRequest
+	var req dto.SetDisappearingRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.writeError(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
 		return

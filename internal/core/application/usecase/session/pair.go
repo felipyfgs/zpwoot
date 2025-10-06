@@ -55,4 +55,3 @@ func (uc *PairUseCase) Execute(ctx context.Context, sessionID string, phone stri
 		LinkingCode: linkingCode,
 	}, nil
 }
-

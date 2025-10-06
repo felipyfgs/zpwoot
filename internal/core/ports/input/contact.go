@@ -46,4 +46,3 @@ type Contact struct {
 	VerifiedName string
 	BusinessName string
 }
-

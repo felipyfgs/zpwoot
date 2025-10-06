@@ -96,4 +96,3 @@ func (w *Webhook) Update(url string, events []string, secret *string) {
 	}
 	w.UpdatedAt = time.Now()
 }
-

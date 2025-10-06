@@ -63,13 +63,13 @@ func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
 // @Description	Get basic information about the service
 // @Tags			Health
 // @Produce		json
-// @Success		200	{object}	InfoResponse	"Service information"
+// @Success		200	{object}	SystemInfoResponse	"Service information"
 // @Router			/ [get]
 func (h *HealthHandler) Info(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	json.NewEncoder(w).Encode(InfoResponse{
+	json.NewEncoder(w).Encode(SystemInfoResponse{
 		Message: "zpwoot WhatsApp API is running",
 		Version: "1.0.0",
 		Service: "zpwoot",

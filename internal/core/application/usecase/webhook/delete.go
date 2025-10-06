@@ -26,4 +26,3 @@ func (uc *DeleteUseCase) Execute(ctx context.Context, sessionID string) error {
 	}
 	return nil
 }
-

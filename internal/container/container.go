@@ -161,5 +161,3 @@ func (c *Container) initWebhookUseCases() input.WebhookUseCases {
 	webhookRepo := repository.NewWebhookRepository(c.database.DB)
 	return webhookUseCase.NewWebhookUseCases(webhookRepo, c.webhookService)
 }
-
-

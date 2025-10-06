@@ -27,4 +27,3 @@ type WebhookUseCases interface {
 	// ListEvents retorna a lista de eventos disponíveis
 	ListEvents(ctx context.Context) (*dto.ListEventsResponse, error)
 }
-

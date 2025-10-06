@@ -77,8 +77,8 @@ func (s *HTTPWebhookSender) SendWebhook(ctx context.Context, url string, secret 
 func (s *HTTPWebhookSender) sendWithRetry(ctx context.Context, req *http.Request, url, eventType string) error {
 	maxRetries := 3
 	retryDelays := []time.Duration{
-		0,               // Tentativa 1: imediato
-		5 * time.Second, // Tentativa 2: após 5 segundos
+		0,                // Tentativa 1: imediato
+		5 * time.Second,  // Tentativa 2: após 5 segundos
 		15 * time.Second, // Tentativa 3: após 15 segundos
 	}
 

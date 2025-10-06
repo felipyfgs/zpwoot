@@ -363,4 +363,3 @@ func (h *ContactHandler) writeError(w http.ResponseWriter, status int, code, mes
 		"message": message,
 	})
 }
-

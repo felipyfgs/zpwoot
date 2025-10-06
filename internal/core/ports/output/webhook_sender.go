@@ -23,4 +23,3 @@ type WebhookSender interface {
 	// event: Evento a ser enviado
 	SendWebhook(ctx context.Context, url string, secret *string, event *WebhookEvent) error
 }
-

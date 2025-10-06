@@ -78,4 +78,3 @@ func (uc *UpdateUseCase) Execute(
 		UpdatedAt: existingWebhook.UpdatedAt,
 	}, nil
 }
-

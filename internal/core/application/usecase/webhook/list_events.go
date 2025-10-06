@@ -37,4 +37,3 @@ func (uc *ListEventsUseCase) Execute(ctx context.Context) (*dto.ListEventsRespon
 		AllEvents:  allEvents,
 	}, nil
 }
-

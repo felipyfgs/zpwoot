@@ -26,4 +26,3 @@ type Repository interface {
 	// List lista todos os webhooks (opcional, para admin)
 	List(ctx context.Context, limit, offset int) ([]*Webhook, error)
 }
-
