@@ -10,19 +10,19 @@ import (
 	"zpwoot/internal/core/ports/output"
 )
 
-type MessageUseCases struct {
+type UseCases struct {
 	send    *SendUseCase
 	receive *ReceiveUseCase
 }
 
-func NewMessageUseCases(sessionService *domainSession.Service, whatsappClient output.WhatsAppClient) input.MessageUseCases {
-	return &MessageUseCases{
+func NewUseCases(sessionService *domainSession.Service, whatsappClient output.WhatsAppClient) input.MessageUseCases {
+	return &UseCases{
 		send:    NewSendUseCase(sessionService, whatsappClient),
 		receive: NewReceiveUseCase(sessionService),
 	}
 }
 
-func (m *MessageUseCases) SendTextMessage(ctx context.Context, sessionID, to, text string) error {
+func (m *UseCases) SendTextMessage(ctx context.Context, sessionID, to, text string) error {
 	req := &dto.SendMessageRequest{
 		To:   to,
 		Type: "text",
@@ -32,7 +32,7 @@ func (m *MessageUseCases) SendTextMessage(ctx context.Context, sessionID, to, te
 	return err
 }
 
-func (m *MessageUseCases) SendMediaMessage(ctx context.Context, sessionID, to string, media *dto.MediaData) error {
+func (m *UseCases) SendMediaMessage(ctx context.Context, sessionID, to string, media *dto.MediaData) error {
 	req := &dto.SendMessageRequest{
 		To:    to,
 		Type:  "media",
@@ -42,7 +42,7 @@ func (m *MessageUseCases) SendMediaMessage(ctx context.Context, sessionID, to st
 	return err
 }
 
-func (m *MessageUseCases) SendLocationMessage(ctx context.Context, sessionID, to string, latitude, longitude float64, name string) error {
+func (m *UseCases) SendLocationMessage(ctx context.Context, sessionID, to string, latitude, longitude float64, name string) error {
 	req := &dto.SendMessageRequest{
 		To:   to,
 		Type: "location",
@@ -56,7 +56,7 @@ func (m *MessageUseCases) SendLocationMessage(ctx context.Context, sessionID, to
 	return err
 }
 
-func (m *MessageUseCases) SendContactMessage(ctx context.Context, sessionID, to string, contact *dto.ContactInfo) error {
+func (m *UseCases) SendContactMessage(ctx context.Context, sessionID, to string, contact *dto.ContactInfo) error {
 	req := &dto.SendMessageRequest{
 		To:      to,
 		Type:    "contact",
@@ -66,18 +66,18 @@ func (m *MessageUseCases) SendContactMessage(ctx context.Context, sessionID, to 
 	return err
 }
 
-func (m *MessageUseCases) Execute(ctx context.Context, req *dto.ReceiveMessageRequest) error {
+func (m *UseCases) Execute(ctx context.Context, req *dto.ReceiveMessageRequest) error {
 	return m.receive.ProcessIncomingMessage(ctx, req)
 }
 
-func (m *MessageUseCases) GetChatInfo(ctx context.Context, sessionID, chatJID string) (interface{}, error) {
+func (m *UseCases) GetChatInfo(ctx context.Context, sessionID, chatJID string) (interface{}, error) {
 	return nil, fmt.Errorf("GetChatInfo not implemented yet")
 }
 
-func (m *MessageUseCases) GetContacts(ctx context.Context, sessionID string) (interface{}, error) {
+func (m *UseCases) GetContacts(ctx context.Context, sessionID string) (interface{}, error) {
 	return nil, fmt.Errorf("GetContacts not implemented yet")
 }
 
-func (m *MessageUseCases) GetChats(ctx context.Context, sessionID string) (interface{}, error) {
+func (m *UseCases) GetChats(ctx context.Context, sessionID string) (interface{}, error) {
 	return nil, fmt.Errorf("GetChats not implemented yet")
 }

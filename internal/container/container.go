@@ -78,7 +78,7 @@ func (c *Container) Init() error {
 
 	c.logger.Info().Msg("Initializing use cases")
 	c.sessionUseCases = session.NewUseCases(c.sessionService, c.whatsappClient)
-	c.messageUseCases = message.NewMessageUseCases(c.sessionService, c.whatsappClient)
+	c.messageUseCases = message.NewUseCases(c.sessionService, c.whatsappClient)
 	c.webhookUseCases = c.initWebhookUseCases()
 
 	c.logger.Info().Msg("Container initialization completed successfully")
