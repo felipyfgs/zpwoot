@@ -48,6 +48,7 @@ func setupAPIRoutes(r *chi.Mux, c *container.Container, h *handlers.Handlers) {
 
 		setupSessionRoutes(r, h)
 		setupMessageRoutes(r, h)
+		setupContactRoutes(r, h)
 		setupGroupRoutes(r, h)
 	})
 }
@@ -94,6 +95,22 @@ func setupMessageRoutes(r chi.Router, h *handlers.Handlers) {
 		r.Post("/edit", h.Message.EditMessage)
 		r.Post("/markread", h.Message.MarkRead)
 		r.Post("/historysync", h.Message.RequestHistorySync)
+	})
+}
+
+func setupContactRoutes(r chi.Router, h *handlers.Handlers) {
+	// Contatos
+	r.Route("/sessions/{sessionId}/contacts", func(r chi.Router) {
+		r.Post("/check", h.Contact.CheckUser)
+		r.Post("/user", h.Contact.GetUser)
+		r.Post("/avatar", h.Contact.GetAvatar)
+		r.Get("/", h.Contact.GetContacts)
+	})
+
+	// Presença
+	r.Route("/sessions/{sessionId}/presence", func(r chi.Router) {
+		r.Post("/", h.Contact.SendPresence)
+		r.Post("/chat", h.Contact.ChatPresence)
 	})
 }
 
