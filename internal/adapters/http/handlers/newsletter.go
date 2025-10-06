@@ -217,8 +217,7 @@ func (h *NewsletterHandler) FollowNewsletter(w http.ResponseWriter, r *http.Requ
 		"message": "Newsletter followed successfully",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	h.writeJSON(w, response)
 }
 
 // UnfollowNewsletter deixa de seguir um newsletter
@@ -261,8 +260,7 @@ func (h *NewsletterHandler) UnfollowNewsletter(w http.ResponseWriter, r *http.Re
 		"message": "Newsletter unfollowed successfully",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	h.writeJSON(w, response)
 }
 
 // GetMessages obtém mensagens de um newsletter

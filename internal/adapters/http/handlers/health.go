@@ -43,20 +43,24 @@ func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
 	if h.database != nil {
 		if err := h.database.Health(); err != nil {
 			w.WriteHeader(http.StatusServiceUnavailable)
-			json.NewEncoder(w).Encode(dto.ErrorResponse{
+			if err := json.NewEncoder(w).Encode(dto.ErrorResponse{
 				Error:   "database_unhealthy",
 				Message: "Database connection is unhealthy",
-			})
+			}); err != nil {
+				h.logger.Error().Err(err).Msg("Failed to encode error response")
+			}
 			return
 		}
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(HealthResponse{
+	if err := json.NewEncoder(w).Encode(HealthResponse{
 		Status:  "ok",
 		Service: "zpwoot",
 		Version: "1.0.0",
-	})
+	}); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode health response")
+	}
 }
 
 // @Summary		Service Information

@@ -856,17 +856,21 @@ func (h *GroupHandler) RemoveGroupPhoto(w http.ResponseWriter, r *http.Request) 
 // writeJSON escreve resposta JSON
 func (h *GroupHandler) writeJSON(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(data)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode response")
+	}
 }
 
 // writeError escreve erro JSON
 func (h *GroupHandler) writeError(w http.ResponseWriter, status int, code string, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(dto.ErrorResponse{
+	if err := json.NewEncoder(w).Encode(dto.ErrorResponse{
 		Error:   code,
 		Message: message,
-	})
+	}); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode error response")
+	}
 }
 
 // handleGroupError trata erros específicos de grupos
