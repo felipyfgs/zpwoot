@@ -17,11 +17,11 @@ type ErrorResponse struct {
 	Message string `json:"message" example:"name is required" description:"Human readable error message"`
 } //@name ErrorResponse
 
-type ErrorInfo struct {
+type APIErrorInfo struct {
 	Code    string                 `json:"code" example:"validation_error" description:"Error code"`
 	Message string                 `json:"message" example:"Validation failed" description:"Human readable error message"`
 	Details map[string]interface{} `json:"details,omitempty" description:"Additional error details"`
-} //@name ErrorInfo
+} //@name APIErrorInfo
 
 type ValidationError struct {
 	Field   string `json:"field" example:"name" description:"Field that failed validation"`

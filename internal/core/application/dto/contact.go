@@ -5,13 +5,13 @@ type CheckUserRequest struct {
 	Phones []string `json:"phones" validate:"required,min=1" example:"5511999999999,5511888888888"`
 } //@name CheckUserRequest
 
-// UserInfo representa informações de um usuário
-type UserInfo struct {
+// WhatsAppUserInfo representa informações de um usuário
+type WhatsAppUserInfo struct {
 	Query        string `json:"query" example:"5511999999999"`
 	IsInWhatsApp bool   `json:"isInWhatsApp" example:"true"`
 	JID          string `json:"jid" example:"5511999999999@s.whatsapp.net"`
 	VerifiedName string `json:"verifiedName,omitempty" example:"John Doe Business"`
-} //@name UserInfo
+} //@name WhatsAppUserInfo
 
 // CheckUserResponse representa a resposta de verificação de usuários
 type CheckUserResponse struct {

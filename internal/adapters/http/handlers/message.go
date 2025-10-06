@@ -65,7 +65,7 @@ func (h *MessageHandler) buildMessageResponse(result *output.MessageResult, to, 
 // @Failure      404         {object}  dto.ErrorResponse             "Session not found"
 // @Failure      412         {object}  dto.ErrorResponse             "Session not connected"
 // @Failure      500         {object}  dto.ErrorResponse             "Internal server error"
-// @Router       /sessions/{sessionId}/send/message/text [post]
+// @Router       /sessions/{sessionId}/messages/send/text [post]
 func (h *MessageHandler) SendText(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -132,7 +132,7 @@ func (h *MessageHandler) SendText(w http.ResponseWriter, r *http.Request) {
 // @Failure      404         {object}  dto.ErrorResponse             "Session not found"
 // @Failure      412         {object}  dto.ErrorResponse             "Session not connected"
 // @Failure      500         {object}  dto.ErrorResponse             "Internal server error"
-// @Router       /sessions/{sessionId}/send/message/image [post]
+// @Router       /sessions/{sessionId}/messages/send/image [post]
 func (h *MessageHandler) SendImage(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -210,7 +210,7 @@ func (h *MessageHandler) SendImage(w http.ResponseWriter, r *http.Request) {
 // @Failure      404         {object}  dto.ErrorResponse             "Session not found"
 // @Failure      412         {object}  dto.ErrorResponse             "Session not connected"
 // @Failure      500         {object}  dto.ErrorResponse             "Internal server error"
-// @Router       /sessions/{sessionId}/send/message/audio [post]
+// @Router       /sessions/{sessionId}/messages/send/audio [post]
 func (h *MessageHandler) SendAudio(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -333,7 +333,7 @@ func (h *MessageHandler) handleMessageError(w http.ResponseWriter, err error) {
 // @Failure      404         {object}  dto.ErrorResponse             "Session not found"
 // @Failure      412         {object}  dto.ErrorResponse             "Session not connected"
 // @Failure      500         {object}  dto.ErrorResponse             "Internal server error"
-// @Router       /sessions/{sessionId}/send/message/video [post]
+// @Router       /sessions/{sessionId}/messages/send/video [post]
 func (h *MessageHandler) SendVideo(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -410,7 +410,7 @@ func (h *MessageHandler) SendVideo(w http.ResponseWriter, r *http.Request) {
 // @Failure      404         {object}  dto.ErrorResponse                "Session not found"
 // @Failure      412         {object}  dto.ErrorResponse                "Session not connected"
 // @Failure      500         {object}  dto.ErrorResponse                "Internal server error"
-// @Router       /sessions/{sessionId}/send/message/document [post]
+// @Router       /sessions/{sessionId}/messages/send/document [post]
 func (h *MessageHandler) SendDocument(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -486,7 +486,7 @@ func (h *MessageHandler) SendDocument(w http.ResponseWriter, r *http.Request) {
 // @Failure      404         {object}  dto.ErrorResponse                "Session not found"
 // @Failure      412         {object}  dto.ErrorResponse                "Session not connected"
 // @Failure      500         {object}  dto.ErrorResponse                "Internal server error"
-// @Router       /sessions/{sessionId}/send/message/location [post]
+// @Router       /sessions/{sessionId}/messages/send/location [post]
 func (h *MessageHandler) SendLocation(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -542,7 +542,7 @@ func (h *MessageHandler) SendLocation(w http.ResponseWriter, r *http.Request) {
 // @Failure      404         {object}  dto.ErrorResponse               "Session not found"
 // @Failure      412         {object}  dto.ErrorResponse               "Session not connected"
 // @Failure      500         {object}  dto.ErrorResponse               "Internal server error"
-// @Router       /sessions/{sessionId}/send/message/contact [post]
+// @Router       /sessions/{sessionId}/messages/send/contact [post]
 func (h *MessageHandler) SendContact(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -609,7 +609,7 @@ func (h *MessageHandler) SendContact(w http.ResponseWriter, r *http.Request) {
 // @Failure      404         {object}  dto.ErrorResponse                "Session not found"
 // @Failure      412         {object}  dto.ErrorResponse                "Session not connected"
 // @Failure      500         {object}  dto.ErrorResponse                "Internal server error"
-// @Router       /sessions/{sessionId}/send/message/reaction [post]
+// @Router       /sessions/{sessionId}/messages/send/reaction [post]
 func (h *MessageHandler) SendReaction(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -683,7 +683,7 @@ func (h *MessageHandler) SendReaction(w http.ResponseWriter, r *http.Request) {
 // @Failure      404         {object}  dto.ErrorResponse            "Session not found"
 // @Failure      412         {object}  dto.ErrorResponse            "Session not connected"
 // @Failure      500         {object}  dto.ErrorResponse            "Internal server error"
-// @Router       /sessions/{sessionId}/send/message/poll [post]
+// @Router       /sessions/{sessionId}/messages/send/poll [post]
 func (h *MessageHandler) SendPoll(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -741,7 +741,7 @@ func (h *MessageHandler) SendPoll(w http.ResponseWriter, r *http.Request) {
 // @Failure      404         {object}  dto.ErrorResponse               "Session not found"
 // @Failure      412         {object}  dto.ErrorResponse               "Session not connected"
 // @Failure      500         {object}  dto.ErrorResponse               "Internal server error"
-// @Router       /sessions/{sessionId}/send/message/sticker [post]
+// @Router       /sessions/{sessionId}/messages/send/sticker [post]
 func (h *MessageHandler) SendSticker(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -816,7 +816,7 @@ func (h *MessageHandler) SendSticker(w http.ResponseWriter, r *http.Request) {
 // @Failure      404         {object}  dto.ErrorResponse                     "Session not found"
 // @Failure      412         {object}  dto.ErrorResponse                     "Session not connected"
 // @Failure      500         {object}  dto.ErrorResponse                     "Internal server error"
-// @Router       /sessions/{sessionId}/send/message/contacts [post]
+// @Router       /sessions/{sessionId}/messages/send/contacts [post]
 func (h *MessageHandler) SendContactsArray(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -865,17 +865,41 @@ func (h *MessageHandler) SendContactsArray(w http.ResponseWriter, r *http.Reques
 	h.writeJSON(w, response)
 }
 
-// SendTemplate sends a template message
+// @Summary      Send template message
+// @Description  Send a template message to a WhatsApp contact (Not yet implemented)
+// @Tags         Messages
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        sessionId   path      string    true  "Session ID"
+// @Success      501  {object}  dto.ErrorResponse  "Not implemented"
+// @Router       /sessions/{sessionId}/messages/send/template [post]
 func (h *MessageHandler) SendTemplate(w http.ResponseWriter, r *http.Request) {
 	h.writeError(w, http.StatusNotImplemented, "not_implemented", "Template messages not yet implemented")
 }
 
-// SendButtons sends a buttons message
+// @Summary      Send buttons message
+// @Description  Send a buttons message to a WhatsApp contact (Not yet implemented)
+// @Tags         Messages
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        sessionId   path      string    true  "Session ID"
+// @Success      501  {object}  dto.ErrorResponse  "Not implemented"
+// @Router       /sessions/{sessionId}/messages/send/buttons [post]
 func (h *MessageHandler) SendButtons(w http.ResponseWriter, r *http.Request) {
 	h.writeError(w, http.StatusNotImplemented, "not_implemented", "Button messages not yet implemented")
 }
 
-// SendList sends a list message
+// @Summary      Send list message
+// @Description  Send a list message to a WhatsApp contact (Not yet implemented)
+// @Tags         Messages
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        sessionId   path      string    true  "Session ID"
+// @Success      501  {object}  dto.ErrorResponse  "Not implemented"
+// @Router       /sessions/{sessionId}/messages/send/list [post]
 func (h *MessageHandler) SendList(w http.ResponseWriter, r *http.Request) {
 	h.writeError(w, http.StatusNotImplemented, "not_implemented", "List messages not yet implemented")
 }
@@ -893,7 +917,7 @@ func (h *MessageHandler) SendList(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  dto.ErrorResponse
 // @Failure      404  {object}  dto.ErrorResponse
 // @Failure      500  {object}  dto.ErrorResponse
-// @Router       /sessions/{sessionId}/message/delete [post]
+// @Router       /sessions/{sessionId}/messages/delete [post]
 func (h *MessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -952,7 +976,7 @@ func (h *MessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  dto.ErrorResponse
 // @Failure      404  {object}  dto.ErrorResponse
 // @Failure      500  {object}  dto.ErrorResponse
-// @Router       /sessions/{sessionId}/message/edit [post]
+// @Router       /sessions/{sessionId}/messages/edit [post]
 func (h *MessageHandler) EditMessage(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -1016,7 +1040,7 @@ func (h *MessageHandler) EditMessage(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  dto.ErrorResponse
 // @Failure      404  {object}  dto.ErrorResponse
 // @Failure      500  {object}  dto.ErrorResponse
-// @Router       /sessions/{sessionId}/message/markread [post]
+// @Router       /sessions/{sessionId}/messages/markread [post]
 func (h *MessageHandler) MarkRead(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -1072,7 +1096,7 @@ func (h *MessageHandler) MarkRead(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  dto.ErrorResponse
 // @Failure      404  {object}  dto.ErrorResponse
 // @Failure      500  {object}  dto.ErrorResponse
-// @Router       /sessions/{sessionId}/message/historysync [post]
+// @Router       /sessions/{sessionId}/messages/historysync [post]
 func (h *MessageHandler) RequestHistorySync(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {

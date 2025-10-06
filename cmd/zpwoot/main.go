@@ -26,6 +26,15 @@
 //	@tag.name			Contacts
 //	@tag.description	Contact management operations
 
+//	@tag.name			Groups
+//	@tag.description	WhatsApp group management operations
+
+//	@tag.name			Presence
+//	@tag.description	Presence and status management operations
+
+//	@tag.name			Webhooks
+//	@tag.description	Webhook configuration and event management
+
 // @tag.name			Health
 // @tag.description	Health check and system status
 package main
@@ -42,6 +51,8 @@ import (
 	"zpwoot/internal/adapters/logger"
 	"zpwoot/internal/config"
 	"zpwoot/internal/container"
+
+	_ "zpwoot/docs/swagger" // Import swagger docs
 )
 
 func main() {

@@ -28,7 +28,7 @@ func NewWebhookHandler(webhookUseCases input.WebhookUseCases, logger *logger.Log
 // SetWebhook configura ou atualiza um webhook para uma sessão
 // @Summary		Configure Webhook
 // @Description	Configure or update webhook for a session
-// @Tags			Webhook
+// @Tags			Webhooks
 // @Accept			json
 // @Produce		json
 // @Param			sessionId	path		string						true	"Session ID"
@@ -36,7 +36,7 @@ func NewWebhookHandler(webhookUseCases input.WebhookUseCases, logger *logger.Log
 // @Success		200			{object}	dto.WebhookResponse			"Webhook configured successfully"
 // @Failure		400			{object}	dto.ErrorResponse			"Invalid request"
 // @Failure		500			{object}	dto.ErrorResponse			"Internal server error"
-// @Router			/sessions/{sessionId}/webhook/create [post]
+// @Router			/sessions/{sessionId}/webhooks [post]
 // @Security		ApiKeyAuth
 func (h *WebhookHandler) SetWebhook(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
@@ -71,13 +71,13 @@ func (h *WebhookHandler) SetWebhook(w http.ResponseWriter, r *http.Request) {
 // GetWebhook busca a configuração de webhook de uma sessão
 // @Summary		Get Webhook Configuration
 // @Description	Get webhook configuration for a session
-// @Tags			Webhook
+// @Tags			Webhooks
 // @Produce		json
 // @Param			sessionId	path		string				true	"Session ID"
 // @Success		200			{object}	dto.WebhookResponse	"Webhook configuration"
 // @Failure		404			{object}	dto.ErrorResponse	"Webhook not found"
 // @Failure		500			{object}	dto.ErrorResponse	"Internal server error"
-// @Router			/sessions/{sessionId}/webhook/info [get]
+// @Router			/sessions/{sessionId}/webhooks [get]
 // @Security		ApiKeyAuth
 func (h *WebhookHandler) GetWebhook(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
@@ -103,13 +103,13 @@ func (h *WebhookHandler) GetWebhook(w http.ResponseWriter, r *http.Request) {
 // DeleteWebhook remove a configuração de webhook de uma sessão
 // @Summary		Delete Webhook Configuration
 // @Description	Delete webhook configuration for a session
-// @Tags			Webhook
+// @Tags			Webhooks
 // @Produce		json
 // @Param			sessionId	path		string			true	"Session ID"
-// @Success		200			{object}	dto.SuccessResponse	"Webhook deleted successfully"
+// @Success		200			{object}	dto.APIResponse	"Webhook deleted successfully"
 // @Failure		404			{object}	dto.ErrorResponse	"Webhook not found"
 // @Failure		500			{object}	dto.ErrorResponse	"Internal server error"
-// @Router			/sessions/{sessionId}/webhook/delete [delete]
+// @Router			/sessions/{sessionId}/webhooks [delete]
 // @Security		ApiKeyAuth
 func (h *WebhookHandler) DeleteWebhook(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
@@ -140,11 +140,11 @@ func (h *WebhookHandler) DeleteWebhook(w http.ResponseWriter, r *http.Request) {
 // ListEvents lista todos os eventos disponíveis para webhook
 // @Summary		List Available Events
 // @Description	List all available webhook event types
-// @Tags			Webhook
+// @Tags			Webhooks
 // @Produce		json
 // @Success		200	{object}	dto.ListEventsResponse	"Available events"
 // @Failure		500	{object}	dto.ErrorResponse		"Internal server error"
-// @Router			/webhook/events [get]
+// @Router			/webhooks/events [get]
 // @Security		ApiKeyAuth
 func (h *WebhookHandler) ListEvents(w http.ResponseWriter, r *http.Request) {
 	response, err := h.webhookUseCases.ListEvents(r.Context())

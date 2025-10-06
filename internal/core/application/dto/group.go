@@ -5,8 +5,8 @@ type ListGroupsResponse struct {
 	Groups []GroupInfo `json:"groups"`
 } //@name ListGroupsResponse
 
-// GroupInfo - Informações do grupo
-type GroupInfo struct {
+// WhatsAppGroupInfo - Informações do grupo
+type WhatsAppGroupInfo struct {
 	JID          string   `json:"jid" example:"123456789@g.us"`
 	Name         string   `json:"name" example:"Meu Grupo"`
 	Topic        string   `json:"topic,omitempty" example:"Descrição do grupo"`
@@ -14,7 +14,7 @@ type GroupInfo struct {
 	IsAnnounce   bool     `json:"isAnnounce" example:"false"`
 	IsLocked     bool     `json:"isLocked" example:"false"`
 	CreatedAt    int64    `json:"createdAt,omitempty" example:"1696570882"`
-} //@name GroupInfo
+} //@name WhatsAppGroupInfo
 
 // GetGroupInfoRequest - Obter informações do grupo
 type GetGroupInfoRequest struct {
@@ -27,10 +27,10 @@ type GetGroupInviteLinkRequest struct {
 	Reset    bool   `json:"reset,omitempty" example:"false"`
 } //@name GetGroupInviteLinkRequest
 
-// GetGroupInviteLinkResponse - Resposta com link de convite
-type GetGroupInviteLinkResponse struct {
+// GetInviteLinkResponse - Resposta com link de convite
+type GetInviteLinkResponse struct {
 	InviteLink string `json:"inviteLink" example:"https://chat.whatsapp.com/ABC123"`
-} //@name GetGroupInviteLinkResponse
+} //@name GetInviteLinkResponse
 
 // JoinGroupRequest - Entrar no grupo via link
 type JoinGroupRequest struct {
@@ -49,28 +49,28 @@ type SetGroupLockedRequest struct {
 	Locked   bool   `json:"locked" validate:"required" example:"true"`
 } //@name SetGroupLockedRequest
 
-// SetDisappearingTimerRequest - Configurar mensagens temporárias
-type SetDisappearingTimerRequest struct {
+// SetDisappearingRequest - Configurar mensagens temporárias
+type SetDisappearingRequest struct {
 	GroupJID string `json:"groupJid" validate:"required" example:"123456789@g.us"`
 	Duration string `json:"duration" validate:"required,oneof=24h 7d 90d off" example:"7d"`
-} //@name SetDisappearingTimerRequest
+} //@name SetDisappearingRequest
 
-// RemoveGroupPhotoRequest - Remover foto do grupo
-type RemoveGroupPhotoRequest struct {
+// RemovePhotoRequest - Remover foto do grupo
+type RemovePhotoRequest struct {
 	GroupJID string `json:"groupJid" validate:"required" example:"123456789@g.us"`
-} //@name RemoveGroupPhotoRequest
+} //@name RemovePhotoRequest
 
-// UpdateGroupParticipantsRequest - Gerenciar participantes
-type UpdateGroupParticipantsRequest struct {
+// UpdateParticipantsRequest - Gerenciar participantes
+type UpdateParticipantsRequest struct {
 	GroupJID     string   `json:"groupJid" validate:"required" example:"123456789@g.us"`
 	Participants []string `json:"participants" validate:"required,min=1" example:"5511999999999"`
 	Action       string   `json:"action" validate:"required,oneof=add remove promote demote" example:"add"`
-} //@name UpdateGroupParticipantsRequest
+} //@name UpdateParticipantsRequest
 
-// GetGroupInviteInfoRequest - Obter informações do convite
-type GetGroupInviteInfoRequest struct {
+// GetInviteInfoRequest - Obter informações do convite
+type GetInviteInfoRequest struct {
 	Code string `json:"code" validate:"required" example:"ABC123DEF456"`
-} //@name GetGroupInviteInfoRequest
+} //@name GetInviteInfoRequest
 
 // SetGroupPhotoRequest - Definir foto do grupo
 type SetGroupPhotoRequest struct {

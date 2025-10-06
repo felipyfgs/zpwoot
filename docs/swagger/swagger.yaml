@@ -1,15 +1,89 @@
 basePath: /
 definitions:
+  APIErrorInfo:
+    properties:
+      code:
+        example: validation_error
+        type: string
+      details:
+        additionalProperties: true
+        type: object
+      message:
+        example: Validation failed
+        type: string
+    type: object
   APIResponse:
     properties:
       data: {}
       error:
-        $ref: '#/definitions/ErrorInfo'
+        $ref: '#/definitions/APIErrorInfo'
       success:
         example: true
         type: boolean
       timestamp:
         example: "2025-01-15T10:30:00Z"
+        type: string
+    type: object
+  ChatPresenceRequest:
+    properties:
+      media:
+        example: text
+        type: string
+      phone:
+        example: "5511999999999"
+        type: string
+      presence:
+        enum:
+        - composing
+        - paused
+        example: composing
+        type: string
+    required:
+    - phone
+    - presence
+    type: object
+  ChatPresenceResponse:
+    properties:
+      success:
+        example: true
+        type: boolean
+    type: object
+  CheckUserRequest:
+    properties:
+      phones:
+        example:
+        - "5511999999999"
+        - "5511888888888"
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - phones
+    type: object
+  CheckUserResponse:
+    properties:
+      users:
+        items:
+          $ref: '#/definitions/WhatsAppUserInfo'
+        type: array
+    type: object
+  ContactDetail:
+    properties:
+      businessName:
+        example: John's Store
+        type: string
+      jid:
+        example: 5511999999999@s.whatsapp.net
+        type: string
+      name:
+        example: John Doe
+        type: string
+      notify:
+        example: John
+        type: string
+      verifiedName:
+        example: John Doe Business
         type: string
     type: object
   ContactInfo:
@@ -53,6 +127,23 @@ definitions:
         example: 3EB0A9253FA64269E11C9D
         type: string
     type: object
+  CreateGroupRequest:
+    properties:
+      name:
+        example: Meu Grupo
+        type: string
+      participants:
+        example:
+        - "5511999999999"
+        - "5511888888888"
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - name
+    - participants
+    type: object
   CreateSessionRequest:
     properties:
       name:
@@ -68,17 +159,71 @@ definitions:
     required:
     - name
     type: object
-  ErrorInfo:
+  CreateWebhookRequest:
     properties:
-      code:
-        example: validation_error
+      events:
+        description: Se vazio, aceita todos os eventos
+        items:
+          type: string
+        type: array
+      secret:
         type: string
-      details:
-        additionalProperties: true
-        type: object
-      message:
-        example: Validation failed
+      url:
         type: string
+    required:
+    - url
+    type: object
+  DeleteMessageRequest:
+    properties:
+      messageId:
+        example: 3EB0C767D0D1A2B5F8
+        type: string
+      phone:
+        example: "5511999999999"
+        type: string
+    required:
+    - messageId
+    - phone
+    type: object
+  DeleteMessageResponse:
+    properties:
+      messageId:
+        example: 3EB0C767D0D1A2B5F8
+        type: string
+      success:
+        example: true
+        type: boolean
+      timestamp:
+        example: 1696570882
+        type: integer
+    type: object
+  EditMessageRequest:
+    properties:
+      messageId:
+        example: 3EB0C767D0D1A2B5F8
+        type: string
+      phone:
+        example: "5511999999999"
+        type: string
+      text:
+        example: Edited message text
+        type: string
+    required:
+    - messageId
+    - phone
+    - text
+    type: object
+  EditMessageResponse:
+    properties:
+      messageId:
+        example: 3EB0C767D0D1A2B5F8
+        type: string
+      success:
+        example: true
+        type: boolean
+      timestamp:
+        example: 1696570882
+        type: integer
     type: object
   ErrorResponse:
     properties:
@@ -88,6 +233,94 @@ definitions:
       message:
         example: name is required
         type: string
+    type: object
+  EventCategoryResponse:
+    properties:
+      category:
+        type: string
+      events:
+        items:
+          type: string
+        type: array
+    type: object
+  GetAvatarRequest:
+    properties:
+      phone:
+        example: "5511999999999"
+        type: string
+      preview:
+        example: false
+        type: boolean
+    required:
+    - phone
+    type: object
+  GetAvatarResponse:
+    properties:
+      directUrl:
+        example: https://...
+        type: string
+      id:
+        example: "1234567890"
+        type: string
+      type:
+        example: image
+        type: string
+      url:
+        example: https://pps.whatsapp.net/v/...
+        type: string
+    type: object
+  GetContactsResponse:
+    properties:
+      contacts:
+        items:
+          $ref: '#/definitions/ContactDetail'
+        type: array
+    type: object
+  GetInviteInfoRequest:
+    properties:
+      code:
+        example: ABC123DEF456
+        type: string
+    required:
+    - code
+    type: object
+  GetInviteLinkResponse:
+    properties:
+      inviteLink:
+        example: https://chat.whatsapp.com/ABC123
+        type: string
+    type: object
+  GetUserRequest:
+    properties:
+      phone:
+        example: "5511999999999"
+        type: string
+    required:
+    - phone
+    type: object
+  GetUserResponse:
+    properties:
+      jid:
+        example: 5511999999999@s.whatsapp.net
+        type: string
+      pictureId:
+        example: "1234567890"
+        type: string
+      status:
+        example: Hey there! I am using WhatsApp.
+        type: string
+      verifiedName:
+        example: John Doe Business
+        type: string
+    type: object
+  GroupActionResponse:
+    properties:
+      message:
+        example: Operation completed successfully
+        type: string
+      success:
+        example: true
+        type: boolean
     type: object
   HealthResponse:
     properties:
@@ -101,16 +334,90 @@ definitions:
         example: 1.0.0
         type: string
     type: object
-  InfoResponse:
+  HistorySyncRequest:
     properties:
-      message:
-        example: zpwoot WhatsApp API is running
+      count:
+        example: 50
+        type: integer
+    type: object
+  HistorySyncResponse:
+    properties:
+      success:
+        example: true
+        type: boolean
+      timestamp:
+        example: 1696570882
+        type: integer
+    type: object
+  JoinGroupRequest:
+    properties:
+      code:
+        example: ABC123DEF456
         type: string
-      service:
-        example: zpwoot
+    required:
+    - code
+    type: object
+  LeaveGroupRequest:
+    properties:
+      groupJid:
+        example: 123456789@g.us
         type: string
-      version:
-        example: 1.0.0
+    required:
+    - groupJid
+    type: object
+  ListEventsResponse:
+    properties:
+      allEvents:
+        items:
+          type: string
+        type: array
+      categories:
+        items:
+          $ref: '#/definitions/EventCategoryResponse'
+        type: array
+    type: object
+  ListGroupsResponse:
+    properties:
+      groups:
+        items:
+          $ref: '#/definitions/WhatsAppGroupInfo'
+        type: array
+    type: object
+  MarkReadRequest:
+    properties:
+      messageIds:
+        example:
+        - 3EB0C767D0D1A2B5F8
+        - 3EB0C767D0D1A2B5F9
+        items:
+          type: string
+        minItems: 1
+        type: array
+      phone:
+        example: "5511999999999"
+        type: string
+    required:
+    - messageIds
+    - phone
+    type: object
+  MarkReadResponse:
+    properties:
+      success:
+        example: true
+        type: boolean
+    type: object
+  PairPhoneRequest:
+    properties:
+      phone:
+        example: "5511999999999"
+        type: string
+    required:
+    - phone
+    type: object
+  PairPhoneResponse:
+    properties:
+      linkingCode:
+        example: ABCD-EFGH
         type: string
     type: object
   ProxySettings:
@@ -153,6 +460,14 @@ definitions:
         example: generated
         type: string
     type: object
+  RemovePhotoRequest:
+    properties:
+      groupJid:
+        example: 123456789@g.us
+        type: string
+    required:
+    - groupJid
+    type: object
   SendAudioMessageRequest:
     properties:
       contextInfo:
@@ -187,21 +502,6 @@ definitions:
         type: string
     required:
     - contact
-    - phone
-    type: object
-  SendContactsArrayMessageRequest:
-    properties:
-      contacts:
-        description: Array of contacts sent in a single message
-        items:
-          $ref: '#/definitions/ContactInfo'
-        minItems: 1
-        type: array
-      phone:
-        example: "5511999999999"
-        type: string
-    required:
-    - contacts
     - phone
     type: object
   SendDocumentMessageRequest:
@@ -307,6 +607,21 @@ definitions:
         example: text
         type: string
     type: object
+  SendMultipleContactsRequest:
+    properties:
+      contacts:
+        description: Array of contacts sent in a single message
+        items:
+          $ref: '#/definitions/ContactInfo'
+        minItems: 1
+        type: array
+      phone:
+        example: "5511999999999"
+        type: string
+    required:
+    - contacts
+    - phone
+    type: object
   SendPollMessageRequest:
     properties:
       name:
@@ -335,6 +650,26 @@ definitions:
     - options
     - phone
     - selectableOptionsCount
+    type: object
+  SendPresenceRequest:
+    properties:
+      presence:
+        enum:
+        - available
+        - unavailable
+        - composing
+        - recording
+        - paused
+        example: available
+        type: string
+    required:
+    - presence
+    type: object
+  SendPresenceResponse:
+    properties:
+      success:
+        example: true
+        type: boolean
     type: object
   SendReactionMessageRequest:
     properties:
@@ -514,6 +849,145 @@ definitions:
         example: connected
         type: string
     type: object
+  SetDisappearingRequest:
+    properties:
+      duration:
+        enum:
+        - 24h
+        - 7d
+        - 90d
+        - "off"
+        example: 7d
+        type: string
+      groupJid:
+        example: 123456789@g.us
+        type: string
+    required:
+    - duration
+    - groupJid
+    type: object
+  SetGroupAnnounceRequest:
+    properties:
+      announce:
+        example: true
+        type: boolean
+      groupJid:
+        example: 123456789@g.us
+        type: string
+    required:
+    - announce
+    - groupJid
+    type: object
+  SetGroupLockedRequest:
+    properties:
+      groupJid:
+        example: 123456789@g.us
+        type: string
+      locked:
+        example: true
+        type: boolean
+    required:
+    - groupJid
+    - locked
+    type: object
+  SetGroupNameRequest:
+    properties:
+      groupJid:
+        example: 123456789@g.us
+        type: string
+      name:
+        example: Novo Nome
+        type: string
+    required:
+    - groupJid
+    - name
+    type: object
+  SetGroupPhotoRequest:
+    properties:
+      groupJid:
+        example: 123456789@g.us
+        type: string
+      image:
+        example: data:image/jpeg;base64,...
+        type: string
+    required:
+    - groupJid
+    - image
+    type: object
+  SetGroupPhotoResponse:
+    properties:
+      pictureId:
+        example: abc123
+        type: string
+    type: object
+  SetGroupTopicRequest:
+    properties:
+      groupJid:
+        example: 123456789@g.us
+        type: string
+      topic:
+        example: Nova descrição
+        type: string
+    required:
+    - groupJid
+    - topic
+    type: object
+  SystemInfoResponse:
+    properties:
+      message:
+        example: zpwoot WhatsApp API is running
+        type: string
+      service:
+        example: zpwoot
+        type: string
+      version:
+        example: 1.0.0
+        type: string
+    type: object
+  UpdateParticipantsRequest:
+    properties:
+      action:
+        enum:
+        - add
+        - remove
+        - promote
+        - demote
+        example: add
+        type: string
+      groupJid:
+        example: 123456789@g.us
+        type: string
+      participants:
+        example:
+        - "5511999999999"
+        items:
+          type: string
+        minItems: 1
+        type: array
+    required:
+    - action
+    - groupJid
+    - participants
+    type: object
+  WebhookResponse:
+    properties:
+      createdAt:
+        type: string
+      enabled:
+        type: boolean
+      events:
+        items:
+          type: string
+        type: array
+      id:
+        type: string
+      sessionId:
+        type: string
+      updatedAt:
+        type: string
+      url:
+        type: string
+    type: object
   WebhookSettings:
     properties:
       enabled:
@@ -532,6 +1006,46 @@ definitions:
         type: string
       url:
         example: https://api.example.com/webhook
+        type: string
+    type: object
+  WhatsAppGroupInfo:
+    properties:
+      createdAt:
+        example: 1696570882
+        type: integer
+      isAnnounce:
+        example: false
+        type: boolean
+      isLocked:
+        example: false
+        type: boolean
+      jid:
+        example: 123456789@g.us
+        type: string
+      name:
+        example: Meu Grupo
+        type: string
+      participants:
+        items:
+          type: string
+        type: array
+      topic:
+        example: Descrição do grupo
+        type: string
+    type: object
+  WhatsAppUserInfo:
+    properties:
+      isInWhatsApp:
+        example: true
+        type: boolean
+      jid:
+        example: 5511999999999@s.whatsapp.net
+        type: string
+      query:
+        example: "5511999999999"
+        type: string
+      verifiedName:
+        example: John Doe Business
         type: string
     type: object
 info:
@@ -557,7 +1071,7 @@ paths:
         "200":
           description: Service information
           schema:
-            $ref: '#/definitions/InfoResponse'
+            $ref: '#/definitions/SystemInfoResponse'
       summary: Service Information
       tags:
       - Health
@@ -578,6 +1092,135 @@ paths:
       summary: Health Check
       tags:
       - Health
+  /sessions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all WhatsApp sessions with their current status
+        (without QR codes)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of sessions (without QR codes)
+          schema:
+            $ref: '#/definitions/APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List WhatsApp Sessions
+      tags:
+      - Sessions
+    post:
+      consumes:
+      - application/json
+      description: Creates a new WhatsApp session with the specified configuration
+      parameters:
+      - description: Session configuration
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/CreateSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Session created successfully
+          schema:
+            $ref: '#/definitions/SessionResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "409":
+          description: Session already exists
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create WhatsApp Session
+      tags:
+      - Sessions
+  /sessions/{sessionId}:
+    delete:
+      consumes:
+      - application/json
+      description: Permanently deletes a WhatsApp session and all associated data
+      parameters:
+      - description: Session ID
+        format: uuid
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Session deleted successfully
+          schema:
+            $ref: '#/definitions/SessionResponse'
+        "400":
+          description: Invalid session ID
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Deletion error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete WhatsApp Session
+      tags:
+      - Sessions
+    get:
+      consumes:
+      - application/json
+      description: Retrieves detailed information about a specific WhatsApp session
+        (without QR code)
+      parameters:
+      - description: Session ID
+        format: uuid
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Session information (without QR code)
+          schema:
+            $ref: '#/definitions/SessionListInfo'
+        "400":
+          description: Invalid session ID
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get WhatsApp Session
+      tags:
+      - Sessions
   /sessions/{sessionId}/connect:
     post:
       consumes:
@@ -615,14 +1258,13 @@ paths:
       summary: Connect WhatsApp Session
       tags:
       - Sessions
-  /sessions/{sessionId}/delete:
-    delete:
+  /sessions/{sessionId}/contacts:
+    get:
       consumes:
       - application/json
-      description: Permanently deletes a WhatsApp session and all associated data
+      description: List all contacts from the WhatsApp account
       parameters:
       - description: Session ID
-        format: uuid
         in: path
         name: sessionId
         required: true
@@ -631,26 +1273,149 @@ paths:
       - application/json
       responses:
         "200":
-          description: Session deleted successfully
+          description: OK
           schema:
-            $ref: '#/definitions/SessionResponse'
+            $ref: '#/definitions/GetContactsResponse'
         "400":
-          description: Invalid session ID
+          description: Bad Request
           schema:
             $ref: '#/definitions/ErrorResponse'
         "404":
-          description: Session not found
+          description: Not Found
           schema:
             $ref: '#/definitions/ErrorResponse'
         "500":
-          description: Deletion error
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/ErrorResponse'
       security:
       - ApiKeyAuth: []
-      summary: Delete WhatsApp Session
+      summary: Get all contacts
       tags:
-      - Sessions
+      - Contacts
+  /sessions/{sessionId}/contacts/avatar:
+    post:
+      consumes:
+      - application/json
+      description: Get profile picture of a WhatsApp user
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Avatar request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/GetAvatarRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/GetAvatarResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get user avatar
+      tags:
+      - Contacts
+  /sessions/{sessionId}/contacts/check:
+    post:
+      consumes:
+      - application/json
+      description: Verify if phone numbers are registered on WhatsApp
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Phone numbers to check
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/CheckUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/CheckUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Check if users are on WhatsApp
+      tags:
+      - Contacts
+  /sessions/{sessionId}/contacts/user:
+    post:
+      consumes:
+      - application/json
+      description: Get detailed information about a WhatsApp user
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Phone number
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/GetUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/GetUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get user information
+      tags:
+      - Contacts
   /sessions/{sessionId}/disconnect:
     post:
       consumes:
@@ -688,15 +1453,13 @@ paths:
       summary: Disconnect WhatsApp Session
       tags:
       - Sessions
-  /sessions/{sessionId}/info:
+  /sessions/{sessionId}/groups:
     get:
       consumes:
       - application/json
-      description: Retrieves detailed information about a specific WhatsApp session
-        (without QR code)
+      description: List all groups the session is part of
       parameters:
       - description: Session ID
-        format: uuid
         in: path
         name: sessionId
         required: true
@@ -705,26 +1468,554 @@ paths:
       - application/json
       responses:
         "200":
-          description: Session information (without QR code)
+          description: OK
           schema:
-            $ref: '#/definitions/SessionListInfo'
-        "400":
-          description: Invalid session ID
+            $ref: '#/definitions/ListGroupsResponse'
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/ErrorResponse'
         "404":
-          description: Session not found
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "412":
+          description: Precondition Failed
           schema:
             $ref: '#/definitions/ErrorResponse'
         "500":
-          description: Internal server error
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/ErrorResponse'
       security:
       - ApiKeyAuth: []
-      summary: Get WhatsApp Session
+      summary: List groups
       tags:
-      - Sessions
+      - Groups
+  /sessions/{sessionId}/groups/create:
+    post:
+      consumes:
+      - application/json
+      description: Create a new WhatsApp group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Group data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/CreateGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/WhatsAppGroupInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create group
+      tags:
+      - Groups
+  /sessions/{sessionId}/groups/info:
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a specific group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Group JID
+        in: query
+        name: groupJid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/WhatsAppGroupInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get group info
+      tags:
+      - Groups
+  /sessions/{sessionId}/groups/invite-info:
+    post:
+      consumes:
+      - application/json
+      description: Get group information from invite code without joining
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Invite code
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/GetInviteInfoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/WhatsAppGroupInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get group invite info
+      tags:
+      - Groups
+  /sessions/{sessionId}/groups/invite-link:
+    get:
+      consumes:
+      - application/json
+      description: Get or reset the invite link for a group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Group JID
+        in: query
+        name: groupJid
+        required: true
+        type: string
+      - description: Reset link
+        in: query
+        name: reset
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/GetInviteLinkResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get group invite link
+      tags:
+      - Groups
+  /sessions/{sessionId}/groups/join:
+    post:
+      consumes:
+      - application/json
+      description: Join a group using invite code
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Join request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/JoinGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/GroupActionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Join group
+      tags:
+      - Groups
+  /sessions/{sessionId}/groups/leave:
+    post:
+      consumes:
+      - application/json
+      description: Leave a WhatsApp group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Leave request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/LeaveGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/GroupActionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Leave group
+      tags:
+      - Groups
+  /sessions/{sessionId}/groups/name:
+    post:
+      consumes:
+      - application/json
+      description: Change the name of a group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Name update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/SetGroupNameRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/GroupActionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set group name
+      tags:
+      - Groups
+  /sessions/{sessionId}/groups/participants:
+    post:
+      consumes:
+      - application/json
+      description: Add, remove, promote or demote group participants
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Participants update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/UpdateParticipantsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/GroupActionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update group participants
+      tags:
+      - Groups
+  /sessions/{sessionId}/groups/photo:
+    delete:
+      consumes:
+      - application/json
+      description: Remove the photo of a group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Remove request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/RemovePhotoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/GroupActionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Remove group photo
+      tags:
+      - Groups
+    post:
+      consumes:
+      - application/json
+      description: Set the photo of a group (JPEG format required)
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Photo data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/SetGroupPhotoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SetGroupPhotoResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set group photo
+      tags:
+      - Groups
+  /sessions/{sessionId}/groups/settings/announce:
+    post:
+      consumes:
+      - application/json
+      description: Enable or disable announce mode (only admins can send messages
+        when enabled)
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Announce setting
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/SetGroupAnnounceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/GroupActionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set group announce
+      tags:
+      - Groups
+  /sessions/{sessionId}/groups/settings/disappearing:
+    post:
+      consumes:
+      - application/json
+      description: Configure disappearing messages timer (24h, 7d, 90d, or off)
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Timer setting
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/SetDisappearingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/GroupActionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set disappearing timer
+      tags:
+      - Groups
+  /sessions/{sessionId}/groups/settings/locked:
+    post:
+      consumes:
+      - application/json
+      description: Lock or unlock group settings (only admins can edit when locked)
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Locked setting
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/SetGroupLockedRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/GroupActionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set group locked
+      tags:
+      - Groups
+  /sessions/{sessionId}/groups/topic:
+    post:
+      consumes:
+      - application/json
+      description: Change the description/topic of a group
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Topic update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/SetGroupTopicRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/GroupActionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set group topic
+      tags:
+      - Groups
   /sessions/{sessionId}/logout:
     post:
       consumes:
@@ -762,48 +2053,170 @@ paths:
       summary: Logout WhatsApp Session
       tags:
       - Sessions
-  /sessions/{sessionId}/qr:
-    get:
+  /sessions/{sessionId}/messages/delete:
+    post:
       consumes:
       - application/json
-      description: Retrieves the QR code for WhatsApp session authentication. Scan
-        with WhatsApp mobile app.
+      description: Delete a sent message
       parameters:
       - description: Session ID
-        format: uuid
         in: path
         name: sessionId
         required: true
         type: string
+      - description: Delete message request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/DeleteMessageRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: QR code data
+          description: OK
           schema:
-            $ref: '#/definitions/QRCodeResponse'
+            $ref: '#/definitions/DeleteMessageResponse'
         "400":
-          description: Invalid session ID
+          description: Bad Request
           schema:
             $ref: '#/definitions/ErrorResponse'
         "404":
-          description: Session not found
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "409":
-          description: Session already connected
+          description: Not Found
           schema:
             $ref: '#/definitions/ErrorResponse'
         "500":
-          description: QR code generation error
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/ErrorResponse'
       security:
       - ApiKeyAuth: []
-      summary: Get QR Code
+      summary: Delete message
       tags:
-      - Sessions
-  /sessions/{sessionId}/send/message/audio:
+      - Messages
+  /sessions/{sessionId}/messages/edit:
+    post:
+      consumes:
+      - application/json
+      description: Edit a sent message
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Edit message request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/EditMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/EditMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Edit message
+      tags:
+      - Messages
+  /sessions/{sessionId}/messages/historysync:
+    post:
+      consumes:
+      - application/json
+      description: Request synchronization of message history
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: History sync request
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/HistorySyncRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/HistorySyncResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Request history sync
+      tags:
+      - Messages
+  /sessions/{sessionId}/messages/markread:
+    post:
+      consumes:
+      - application/json
+      description: Mark one or more messages as read
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Mark read request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/MarkReadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/MarkReadResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Mark messages as read
+      tags:
+      - Messages
+  /sessions/{sessionId}/messages/send/audio:
     post:
       consumes:
       - application/json
@@ -854,7 +2267,30 @@ paths:
       summary: Send audio message
       tags:
       - Messages
-  /sessions/{sessionId}/send/message/contact:
+  /sessions/{sessionId}/messages/send/buttons:
+    post:
+      consumes:
+      - application/json
+      description: Send a buttons message to a WhatsApp contact (Not yet implemented)
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "501":
+          description: Not implemented
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Send buttons message
+      tags:
+      - Messages
+  /sessions/{sessionId}/messages/send/contact:
     post:
       consumes:
       - application/json
@@ -904,7 +2340,7 @@ paths:
       summary: Send contact message
       tags:
       - Messages
-  /sessions/{sessionId}/send/message/contacts:
+  /sessions/{sessionId}/messages/send/contacts:
     post:
       consumes:
       - application/json
@@ -922,7 +2358,7 @@ paths:
         name: message
         required: true
         schema:
-          $ref: '#/definitions/SendContactsArrayMessageRequest'
+          $ref: '#/definitions/SendMultipleContactsRequest'
       produces:
       - application/json
       responses:
@@ -955,7 +2391,7 @@ paths:
       summary: Send multiple contacts
       tags:
       - Messages
-  /sessions/{sessionId}/send/message/document:
+  /sessions/{sessionId}/messages/send/document:
     post:
       consumes:
       - application/json
@@ -1005,7 +2441,7 @@ paths:
       summary: Send document message
       tags:
       - Messages
-  /sessions/{sessionId}/send/message/image:
+  /sessions/{sessionId}/messages/send/image:
     post:
       consumes:
       - application/json
@@ -1057,7 +2493,30 @@ paths:
       summary: Send image message
       tags:
       - Messages
-  /sessions/{sessionId}/send/message/location:
+  /sessions/{sessionId}/messages/send/list:
+    post:
+      consumes:
+      - application/json
+      description: Send a list message to a WhatsApp contact (Not yet implemented)
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "501":
+          description: Not implemented
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Send list message
+      tags:
+      - Messages
+  /sessions/{sessionId}/messages/send/location:
     post:
       consumes:
       - application/json
@@ -1107,7 +2566,7 @@ paths:
       summary: Send location message
       tags:
       - Messages
-  /sessions/{sessionId}/send/message/poll:
+  /sessions/{sessionId}/messages/send/poll:
     post:
       consumes:
       - application/json
@@ -1157,7 +2616,7 @@ paths:
       summary: Send poll message
       tags:
       - Messages
-  /sessions/{sessionId}/send/message/reaction:
+  /sessions/{sessionId}/messages/send/reaction:
     post:
       consumes:
       - application/json
@@ -1207,7 +2666,7 @@ paths:
       summary: Send reaction message
       tags:
       - Messages
-  /sessions/{sessionId}/send/message/sticker:
+  /sessions/{sessionId}/messages/send/sticker:
     post:
       consumes:
       - application/json
@@ -1257,7 +2716,30 @@ paths:
       summary: Send sticker message
       tags:
       - Messages
-  /sessions/{sessionId}/send/message/text:
+  /sessions/{sessionId}/messages/send/template:
+    post:
+      consumes:
+      - application/json
+      description: Send a template message to a WhatsApp contact (Not yet implemented)
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "501":
+          description: Not implemented
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Send template message
+      tags:
+      - Messages
+  /sessions/{sessionId}/messages/send/text:
     post:
       consumes:
       - application/json
@@ -1307,7 +2789,7 @@ paths:
       summary: Send text message
       tags:
       - Messages
-  /sessions/{sessionId}/send/message/video:
+  /sessions/{sessionId}/messages/send/video:
     post:
       consumes:
       - application/json
@@ -1359,64 +2841,286 @@ paths:
       summary: Send video message
       tags:
       - Messages
-  /sessions/create:
+  /sessions/{sessionId}/pair:
     post:
       consumes:
       - application/json
-      description: Creates a new WhatsApp session with the specified configuration
+      description: Pair a phone number without QR code
       parameters:
-      - description: Session configuration
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Phone number
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/CreateSessionRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Session created successfully
-          schema:
-            $ref: '#/definitions/SessionResponse'
-        "400":
-          description: Invalid request body or validation error
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "409":
-          description: Session already exists
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Create WhatsApp Session
-      tags:
-      - Sessions
-  /sessions/list:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves a list of all WhatsApp sessions with their current status
-        (without QR codes)
+          $ref: '#/definitions/PairPhoneRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: List of sessions (without QR codes)
+          description: OK
+          schema:
+            $ref: '#/definitions/PairPhoneResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Pair phone
+      tags:
+      - Sessions
+  /sessions/{sessionId}/presence/chat:
+    post:
+      consumes:
+      - application/json
+      description: Send presence in specific chat (typing/recording)
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Chat presence request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/ChatPresenceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ChatPresenceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Send chat presence
+      tags:
+      - Presence
+  /sessions/{sessionId}/presence/send:
+    post:
+      consumes:
+      - application/json
+      description: Send general presence status (available/unavailable)
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Presence request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/SendPresenceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SendPresenceResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Send presence
+      tags:
+      - Presence
+  /sessions/{sessionId}/qr:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the QR code for WhatsApp session authentication. Scan
+        with WhatsApp mobile app.
+      parameters:
+      - description: Session ID
+        format: uuid
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: QR code data
+          schema:
+            $ref: '#/definitions/QRCodeResponse'
+        "400":
+          description: Invalid session ID
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Session not found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "409":
+          description: Session already connected
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: QR code generation error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get QR Code
+      tags:
+      - Sessions
+  /sessions/{sessionId}/webhooks:
+    delete:
+      description: Delete webhook configuration for a session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Webhook deleted successfully
           schema:
             $ref: '#/definitions/APIResponse'
+        "404":
+          description: Webhook not found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
         "500":
           description: Internal server error
           schema:
             $ref: '#/definitions/ErrorResponse'
       security:
       - ApiKeyAuth: []
-      summary: List WhatsApp Sessions
+      summary: Delete Webhook Configuration
       tags:
-      - Sessions
+      - Webhooks
+    get:
+      description: Get webhook configuration for a session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Webhook configuration
+          schema:
+            $ref: '#/definitions/WebhookResponse'
+        "404":
+          description: Webhook not found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get Webhook Configuration
+      tags:
+      - Webhooks
+    post:
+      consumes:
+      - application/json
+      description: Configure or update webhook for a session
+      parameters:
+      - description: Session ID
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Webhook configuration
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/CreateWebhookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Webhook configured successfully
+          schema:
+            $ref: '#/definitions/WebhookResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Configure Webhook
+      tags:
+      - Webhooks
+  /webhooks/events:
+    get:
+      description: List all available webhook event types
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Available events
+          schema:
+            $ref: '#/definitions/ListEventsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List Available Events
+      tags:
+      - Webhooks
 securityDefinitions:
   ApiKeyAuth:
     description: 'API key for authentication. Use the value from .env file (API_KEY
@@ -1432,5 +3136,11 @@ tags:
   name: Messages
 - description: Contact management operations
   name: Contacts
+- description: WhatsApp group management operations
+  name: Groups
+- description: Presence and status management operations
+  name: Presence
+- description: Webhook configuration and event management
+  name: Webhooks
 - description: Health check and system status
   name: Health

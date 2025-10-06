@@ -36,7 +36,7 @@ func NewSessionHandler(useCases input.SessionUseCases, sessionManager input.Sess
 // @Failure		409		{object}	ErrorResponse			"Session already exists"
 // @Failure		500		{object}	ErrorResponse			"Internal server error"
 // @Security		ApiKeyAuth
-// @Router			/sessions/create [post]
+// @Router			/sessions [post]
 func (h *SessionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -89,7 +89,7 @@ func (h *SessionHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Failure		404			{object}	dto.ErrorResponse		"Session not found"
 // @Failure		500			{object}	dto.ErrorResponse		"Internal server error"
 // @Security		ApiKeyAuth
-// @Router			/sessions/{sessionId}/info [get]
+// @Router			/sessions/{sessionId} [get]
 func (h *SessionHandler) Get(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -118,7 +118,7 @@ func (h *SessionHandler) Get(w http.ResponseWriter, r *http.Request) {
 // @Success		200	{object}	dto.APIResponse	"List of sessions (without QR codes)"
 // @Failure		500	{object}	dto.ErrorResponse		"Internal server error"
 // @Security		ApiKeyAuth
-// @Router			/sessions/list [get]
+// @Router			/sessions [get]
 func (h *SessionHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	pagination := &dto.PaginationRequest{
@@ -266,7 +266,7 @@ func (h *SessionHandler) Logout(w http.ResponseWriter, r *http.Request) {
 // @Failure		404			{object}	dto.ErrorResponse		"Session not found"
 // @Failure		500			{object}	dto.ErrorResponse		"Deletion error"
 // @Security		ApiKeyAuth
-// @Router			/sessions/{sessionId}/delete [delete]
+// @Router			/sessions/{sessionId} [delete]
 func (h *SessionHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {

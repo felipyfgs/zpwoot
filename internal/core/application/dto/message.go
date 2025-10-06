@@ -345,10 +345,10 @@ func (c *ContactInfo) ToInterfacesContactInfo() *output.ContactInfo {
 	}
 }
 
-type SendContactsArrayMessageRequest struct {
+type SendMultipleContactsRequest struct {
 	Phone    string         `json:"phone" validate:"required" example:"5511999999999"`
 	Contacts []*ContactInfo `json:"contacts" validate:"required,min=1"` // Array of contacts sent in a single message
-} //@name SendContactsArrayMessageRequest
+} //@name SendMultipleContactsRequest
 
 type Button struct {
 	ID   string `json:"id" validate:"required" example:"btn_1"`
@@ -438,13 +438,13 @@ type MarkReadResponse struct {
 	Success bool `json:"success" example:"true"`
 } //@name MarkReadResponse
 
-// RequestHistorySyncRequest representa a requisição de sincronização de histórico
-type RequestHistorySyncRequest struct {
+// HistorySyncRequest representa a requisição de sincronização de histórico
+type HistorySyncRequest struct {
 	Count int `json:"count,omitempty" example:"50" description:"Number of messages to sync (default: 50)"`
-} //@name RequestHistorySyncRequest
+} //@name HistorySyncRequest
 
-// RequestHistorySyncResponse representa a resposta de sincronização de histórico
-type RequestHistorySyncResponse struct {
+// HistorySyncResponse representa a resposta de sincronização de histórico
+type HistorySyncResponse struct {
 	Success   bool  `json:"success" example:"true"`
 	Timestamp int64 `json:"timestamp" example:"1696570882"`
-} //@name RequestHistorySyncResponse
+} //@name HistorySyncResponse

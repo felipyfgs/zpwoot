@@ -14,16 +14,7 @@ import (
 func NewRouter(c *container.Container) http.Handler {
 	r := chi.NewRouter()
 	middleware.SetupMiddleware(r)
-
-	h := handlers.NewHandlers(
-		c.GetDatabase(),
-		c.GetLogger(),
-		c.GetConfig(),
-		c.GetSessionUseCases(),
-		c.GetMessageUseCases(),
-		c.GetWebhookUseCases(),
-		c.GetWhatsAppClient(),
-	)
+	h := handlers.NewHandlers(c.GetDatabase(), c.GetLogger(), c.GetConfig(), c.GetSessionUseCases(), c.GetMessageUseCases(), c.GetWebhookUseCases(), c.GetWhatsAppClient())
 
 	// === PÚBLICAS ===
 	r.Get("/", h.Health.Info)
@@ -35,41 +26,39 @@ func NewRouter(c *container.Container) http.Handler {
 		middleware.SetupAuthMiddleware(r, c.GetConfig())
 
 		// --- SESSÕES ---
-		r.Post("/sessions/create", h.Session.Create)
-		r.Get("/sessions/list", h.Session.List)
-		r.Get("/sessions/{sessionId}/info", h.Session.Get)
-		r.Delete("/sessions/{sessionId}/delete", h.Session.Delete)
+		r.Post("/sessions", h.Session.Create)
+		r.Get("/sessions", h.Session.List)
+		r.Get("/sessions/{sessionId}", h.Session.Get)
+		r.Delete("/sessions/{sessionId}", h.Session.Delete)
 		r.Post("/sessions/{sessionId}/connect", h.Session.Connect)
 		r.Post("/sessions/{sessionId}/disconnect", h.Session.Disconnect)
 		r.Post("/sessions/{sessionId}/logout", h.Session.Logout)
 		r.Get("/sessions/{sessionId}/qr", h.Session.QRCode)
 		r.Post("/sessions/{sessionId}/pair", h.Session.PairPhone)
 
-		// --- MENSAGENS ---
-		r.Post("/sessions/{sessionId}/send/message/text", h.Message.SendText)
-		r.Post("/sessions/{sessionId}/send/message/image", h.Message.SendImage)
-		r.Post("/sessions/{sessionId}/send/message/audio", h.Message.SendAudio)
-		r.Post("/sessions/{sessionId}/send/message/video", h.Message.SendVideo)
-		r.Post("/sessions/{sessionId}/send/message/document", h.Message.SendDocument)
-		r.Post("/sessions/{sessionId}/send/message/sticker", h.Message.SendSticker)
-		r.Post("/sessions/{sessionId}/send/message/location", h.Message.SendLocation)
-		r.Post("/sessions/{sessionId}/send/message/contact", h.Message.SendContact)
-		r.Post("/sessions/{sessionId}/send/message/contacts", h.Message.SendContactsArray)
-		r.Post("/sessions/{sessionId}/send/message/reaction", h.Message.SendReaction)
-		r.Post("/sessions/{sessionId}/send/message/poll", h.Message.SendPoll)
-		r.Post("/sessions/{sessionId}/send/message/buttons", h.Message.SendButtons)
-		r.Post("/sessions/{sessionId}/send/message/list", h.Message.SendList)
-		r.Post("/sessions/{sessionId}/send/message/template", h.Message.SendTemplate)
+		// --- MENSAGENS (prefixo send) ---
+		r.Post("/sessions/{sessionId}/messages/send/text", h.Message.SendText)
+		r.Post("/sessions/{sessionId}/messages/send/image", h.Message.SendImage)
+		r.Post("/sessions/{sessionId}/messages/send/audio", h.Message.SendAudio)
+		r.Post("/sessions/{sessionId}/messages/send/video", h.Message.SendVideo)
+		r.Post("/sessions/{sessionId}/messages/send/document", h.Message.SendDocument)
+		r.Post("/sessions/{sessionId}/messages/send/sticker", h.Message.SendSticker)
+		r.Post("/sessions/{sessionId}/messages/send/location", h.Message.SendLocation)
+		r.Post("/sessions/{sessionId}/messages/send/contact", h.Message.SendContact)
+		r.Post("/sessions/{sessionId}/messages/send/contacts", h.Message.SendContactsArray)
+		r.Post("/sessions/{sessionId}/messages/send/reaction", h.Message.SendReaction)
+		r.Post("/sessions/{sessionId}/messages/send/poll", h.Message.SendPoll)
+		r.Post("/sessions/{sessionId}/messages/send/buttons", h.Message.SendButtons)
+		r.Post("/sessions/{sessionId}/messages/send/list", h.Message.SendList)
+		r.Post("/sessions/{sessionId}/messages/send/template", h.Message.SendTemplate)
+		r.Post("/sessions/{sessionId}/messages/delete", h.Message.DeleteMessage)
+		r.Post("/sessions/{sessionId}/messages/edit", h.Message.EditMessage)
+		r.Post("/sessions/{sessionId}/messages/markread", h.Message.MarkRead)
+		r.Post("/sessions/{sessionId}/messages/historysync", h.Message.RequestHistorySync)
 
 		// --- PRESENÇA ---
-		r.Post("/sessions/{sessionId}/send/presence", h.Contact.SendPresence)
-		r.Post("/sessions/{sessionId}/presence", h.Contact.ChatPresence)
-
-		// --- GERENCIAMENTO DE MENSAGENS ---
-		r.Post("/sessions/{sessionId}/message/delete", h.Message.DeleteMessage)
-		r.Post("/sessions/{sessionId}/message/edit", h.Message.EditMessage)
-		r.Post("/sessions/{sessionId}/message/markread", h.Message.MarkRead)
-		r.Post("/sessions/{sessionId}/message/historysync", h.Message.RequestHistorySync)
+		r.Post("/sessions/{sessionId}/presence/send", h.Contact.SendPresence)
+		r.Post("/sessions/{sessionId}/presence/chat", h.Contact.ChatPresence)
 
 		// --- CONTATOS ---
 		r.Get("/sessions/{sessionId}/contacts", h.Contact.GetContacts)
@@ -95,10 +84,10 @@ func NewRouter(c *container.Container) http.Handler {
 		r.Delete("/sessions/{sessionId}/groups/photo", h.Group.RemoveGroupPhoto)
 
 		// --- WEBHOOKS ---
-		r.Post("/sessions/{sessionId}/webhook/create", h.Webhook.SetWebhook)
-		r.Get("/sessions/{sessionId}/webhook/info", h.Webhook.GetWebhook)
-		r.Delete("/sessions/{sessionId}/webhook/delete", h.Webhook.DeleteWebhook)
-		r.Get("/webhook/events", h.Webhook.ListEvents)
+		r.Post("/sessions/{sessionId}/webhooks", h.Webhook.SetWebhook)
+		r.Get("/sessions/{sessionId}/webhooks", h.Webhook.GetWebhook)
+		r.Delete("/sessions/{sessionId}/webhooks", h.Webhook.DeleteWebhook)
+		r.Get("/webhooks/events", h.Webhook.ListEvents)
 	})
 
 	return r
