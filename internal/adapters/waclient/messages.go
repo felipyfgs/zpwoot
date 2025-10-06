@@ -419,17 +419,17 @@ func (ms *Sender) GetChatsAsInput(ctx context.Context, sessionID string) ([]*inp
 	return inputChats, nil
 }
 
-type MessageServiceWrapper struct {
+type MessageService struct {
 	*Sender
 }
 
-func NewMessageServiceWrapper(messageSender *Sender) input.MessageService {
-	return &MessageServiceWrapper{
+func NewMessageService(messageSender *Sender) input.MessageService {
+	return &MessageService{
 		Sender: messageSender,
 	}
 }
 
-func (w *MessageServiceWrapper) SendTextMessage(ctx context.Context, sessionID string, to string, text string, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
+func (w *MessageService) SendTextMessage(ctx context.Context, sessionID string, to string, text string, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
 	resp, err := w.Sender.SendTextMessage(ctx, sessionID, to, text, contextInfo)
 	if err != nil {
 		return nil, err
@@ -441,7 +441,7 @@ func (w *MessageServiceWrapper) SendTextMessage(ctx context.Context, sessionID s
 	}, nil
 }
 
-func (w *MessageServiceWrapper) SendMediaMessage(ctx context.Context, sessionID string, to string, media *output.MediaData, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
+func (w *MessageService) SendMediaMessage(ctx context.Context, sessionID string, to string, media *output.MediaData, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
 	// TODO: Implement contextInfo support for media messages
 	resp, err := w.Sender.SendMediaMessage(ctx, sessionID, to, media)
 	if err != nil {
@@ -454,7 +454,7 @@ func (w *MessageServiceWrapper) SendMediaMessage(ctx context.Context, sessionID 
 	}, nil
 }
 
-func (w *MessageServiceWrapper) SendLocationMessage(ctx context.Context, sessionID, to string, latitude, longitude float64, name string, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
+func (w *MessageService) SendLocationMessage(ctx context.Context, sessionID, to string, latitude, longitude float64, name string, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
 	// TODO: Implement contextInfo support for location messages
 	err := w.Sender.SendLocationMessage(ctx, sessionID, to, latitude, longitude, name)
 	if err != nil {
@@ -467,7 +467,7 @@ func (w *MessageServiceWrapper) SendLocationMessage(ctx context.Context, session
 	}, nil
 }
 
-func (w *MessageServiceWrapper) SendContactMessage(ctx context.Context, sessionID string, to string, contact *input.ContactInfo, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
+func (w *MessageService) SendContactMessage(ctx context.Context, sessionID string, to string, contact *input.ContactInfo, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
 	// TODO: Implement contextInfo support for contact messages
 	err := w.SendContactMessageFromInput(ctx, sessionID, to, contact)
 	if err != nil {
@@ -480,7 +480,7 @@ func (w *MessageServiceWrapper) SendContactMessage(ctx context.Context, sessionI
 	}, nil
 }
 
-func (w *MessageServiceWrapper) SendReactionMessage(ctx context.Context, sessionID, to, messageID, reaction string, fromMe bool) (*output.MessageResult, error) {
+func (w *MessageService) SendReactionMessage(ctx context.Context, sessionID, to, messageID, reaction string, fromMe bool) (*output.MessageResult, error) {
 	err := w.Sender.SendReactionMessage(ctx, sessionID, to, messageID, reaction, fromMe)
 	if err != nil {
 		return nil, err
@@ -492,7 +492,7 @@ func (w *MessageServiceWrapper) SendReactionMessage(ctx context.Context, session
 	}, nil
 }
 
-func (w *MessageServiceWrapper) SendPollMessage(ctx context.Context, sessionID, to, name string, options []string, selectableCount int) (*output.MessageResult, error) {
+func (w *MessageService) SendPollMessage(ctx context.Context, sessionID, to, name string, options []string, selectableCount int) (*output.MessageResult, error) {
 	err := w.Sender.SendPollMessage(ctx, sessionID, to, name, options, selectableCount)
 	if err != nil {
 		return nil, err
@@ -504,7 +504,7 @@ func (w *MessageServiceWrapper) SendPollMessage(ctx context.Context, sessionID, 
 	}, nil
 }
 
-func (w *MessageServiceWrapper) SendButtonsMessage(ctx context.Context, sessionID, to, text string, buttons []input.ButtonInfo) (*output.MessageResult, error) {
+func (w *MessageService) SendButtonsMessage(ctx context.Context, sessionID, to, text string, buttons []input.ButtonInfo) (*output.MessageResult, error) {
 
 	var waButtons []ButtonInfo
 	for _, btn := range buttons {
@@ -524,7 +524,7 @@ func (w *MessageServiceWrapper) SendButtonsMessage(ctx context.Context, sessionI
 	}, nil
 }
 
-func (w *MessageServiceWrapper) SendListMessage(ctx context.Context, sessionID, to, text, title string, sections []input.ListSectionInfo) (*output.MessageResult, error) {
+func (w *MessageService) SendListMessage(ctx context.Context, sessionID, to, text, title string, sections []input.ListSectionInfo) (*output.MessageResult, error) {
 
 	var waSections []ListSection
 	for _, section := range sections {
@@ -552,7 +552,7 @@ func (w *MessageServiceWrapper) SendListMessage(ctx context.Context, sessionID, 
 	}, nil
 }
 
-func (w *MessageServiceWrapper) SendTemplateMessage(ctx context.Context, sessionID, to string, template input.TemplateInfo) (*output.MessageResult, error) {
+func (w *MessageService) SendTemplateMessage(ctx context.Context, sessionID, to string, template input.TemplateInfo) (*output.MessageResult, error) {
 	waTemplate := TemplateInfo{
 		Content: template.Content,
 		Footer:  template.Footer,
@@ -568,7 +568,7 @@ func (w *MessageServiceWrapper) SendTemplateMessage(ctx context.Context, session
 	}, nil
 }
 
-func (w *MessageServiceWrapper) SendViewOnceMessage(ctx context.Context, sessionID, to string, media *output.MediaData) (*output.MessageResult, error) {
+func (w *MessageService) SendViewOnceMessage(ctx context.Context, sessionID, to string, media *output.MediaData) (*output.MessageResult, error) {
 	err := w.Sender.SendViewOnceMessage(ctx, sessionID, to, media)
 	if err != nil {
 		return nil, err
@@ -580,15 +580,15 @@ func (w *MessageServiceWrapper) SendViewOnceMessage(ctx context.Context, session
 	}, nil
 }
 
-func (w *MessageServiceWrapper) GetChatInfo(ctx context.Context, sessionID, chatJID string) (*input.ChatInfo, error) {
+func (w *MessageService) GetChatInfo(ctx context.Context, sessionID, chatJID string) (*input.ChatInfo, error) {
 	return w.GetChatInfoAsInput(ctx, sessionID, chatJID)
 }
 
-func (w *MessageServiceWrapper) GetContacts(ctx context.Context, sessionID string) ([]*input.ContactInfo, error) {
+func (w *MessageService) GetContacts(ctx context.Context, sessionID string) ([]*input.ContactInfo, error) {
 	return w.GetContactsAsInput(ctx, sessionID)
 }
 
-func (w *MessageServiceWrapper) GetChats(ctx context.Context, sessionID string) ([]*input.ChatInfo, error) {
+func (w *MessageService) GetChats(ctx context.Context, sessionID string) ([]*input.ChatInfo, error) {
 	return w.GetChatsAsInput(ctx, sessionID)
 }
 

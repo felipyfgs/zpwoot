@@ -40,7 +40,7 @@ func createSessionHandler(
 	if !ok {
 		panic("waClient is not a WAClientAdapter")
 	}
-	sessionManager := waclient.NewSessionManagerAdapter(waClientAdapter.GetWAClient())
+	sessionManager := waclient.NewManager(waClientAdapter.GetWAClient())
 
 	return NewSessionHandler(
 		sessionUseCases,
@@ -60,7 +60,7 @@ func createMessageHandler(
 	}
 
 	messageSender := waclient.NewSender(waClientAdapter.GetWAClient())
-	messageService := waclient.NewMessageServiceWrapper(messageSender)
+	messageService := waclient.NewMessageService(messageSender)
 
 	return NewMessageHandler(
 		messageService,

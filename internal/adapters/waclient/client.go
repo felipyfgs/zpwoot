@@ -207,17 +207,17 @@ type ContactInfo struct {
 	VCard string `json:"vcard,omitempty"`
 }
 
-type SessionManagerAdapter struct {
+type Manager struct {
 	client *WAClient
 }
 
-func NewSessionManagerAdapter(client *WAClient) *SessionManagerAdapter {
-	return &SessionManagerAdapter{
+func NewManager(client *WAClient) *Manager {
+	return &Manager{
 		client: client,
 	}
 }
 
-func (s *SessionManagerAdapter) CreateSession(ctx context.Context, sessionID string) error {
+func (s *Manager) CreateSession(ctx context.Context, sessionID string) error {
 	config := &SessionConfig{
 		SessionID: sessionID,
 	}
@@ -225,7 +225,7 @@ func (s *SessionManagerAdapter) CreateSession(ctx context.Context, sessionID str
 	return err
 }
 
-func (s *SessionManagerAdapter) GetSessionStatus(ctx context.Context, sessionID string) (*output.SessionStatus, error) {
+func (s *Manager) GetSessionStatus(ctx context.Context, sessionID string) (*output.SessionStatus, error) {
 	client, err := s.client.GetSession(ctx, sessionID)
 	if err != nil {
 		return nil, err
@@ -241,23 +241,23 @@ func (s *SessionManagerAdapter) GetSessionStatus(ctx context.Context, sessionID 
 	}, nil
 }
 
-func (s *SessionManagerAdapter) DeleteSession(ctx context.Context, sessionID string) error {
+func (s *Manager) DeleteSession(ctx context.Context, sessionID string) error {
 	return s.client.DeleteSession(ctx, sessionID)
 }
 
-func (s *SessionManagerAdapter) ConnectSession(ctx context.Context, sessionID string) error {
+func (s *Manager) ConnectSession(ctx context.Context, sessionID string) error {
 	return s.client.ConnectSession(ctx, sessionID)
 }
 
-func (s *SessionManagerAdapter) DisconnectSession(ctx context.Context, sessionID string) error {
+func (s *Manager) DisconnectSession(ctx context.Context, sessionID string) error {
 	return s.client.DisconnectSession(ctx, sessionID)
 }
 
-func (s *SessionManagerAdapter) LogoutSession(ctx context.Context, sessionID string) error {
+func (s *Manager) LogoutSession(ctx context.Context, sessionID string) error {
 	return s.client.LogoutSession(ctx, sessionID)
 }
 
-func (s *SessionManagerAdapter) IsConnected(ctx context.Context, sessionID string) bool {
+func (s *Manager) IsConnected(ctx context.Context, sessionID string) bool {
 	client, err := s.client.GetSession(ctx, sessionID)
 	if err != nil {
 		return false
@@ -265,7 +265,7 @@ func (s *SessionManagerAdapter) IsConnected(ctx context.Context, sessionID strin
 	return client.IsConnected()
 }
 
-func (s *SessionManagerAdapter) IsLoggedIn(ctx context.Context, sessionID string) bool {
+func (s *Manager) IsLoggedIn(ctx context.Context, sessionID string) bool {
 	client, err := s.client.GetSession(ctx, sessionID)
 	if err != nil {
 		return false
@@ -273,7 +273,7 @@ func (s *SessionManagerAdapter) IsLoggedIn(ctx context.Context, sessionID string
 	return client.IsLoggedIn()
 }
 
-func (s *SessionManagerAdapter) GetQRCode(ctx context.Context, sessionID string) (*output.QRCodeInfo, error) {
+func (s *Manager) GetQRCode(ctx context.Context, sessionID string) (*output.QRCodeInfo, error) {
 	qrEvent, err := s.client.GetQRCodeForSession(ctx, sessionID)
 	if err != nil {
 		return nil, err
