@@ -12,6 +12,7 @@ import (
 	"zpwoot/internal/core/ports/output"
 
 	"go.mau.fi/whatsmeow"
+	waCommon "go.mau.fi/whatsmeow/proto/waCommon"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
 	"google.golang.org/protobuf/proto"
@@ -479,8 +480,8 @@ func (w *MessageServiceWrapper) SendContactMessage(ctx context.Context, sessionI
 	}, nil
 }
 
-func (w *MessageServiceWrapper) SendReactionMessage(ctx context.Context, sessionID, to, messageID, reaction string) (*output.MessageResult, error) {
-	err := w.MessageSenderImpl.SendReactionMessage(ctx, sessionID, to, messageID, reaction)
+func (w *MessageServiceWrapper) SendReactionMessage(ctx context.Context, sessionID, to, messageID, reaction string, fromMe bool) (*output.MessageResult, error) {
+	err := w.MessageSenderImpl.SendReactionMessage(ctx, sessionID, to, messageID, reaction, fromMe)
 	if err != nil {
 		return nil, err
 	}
@@ -602,7 +603,7 @@ func (ms *MessageSenderImpl) GetChats(ctx context.Context, sessionID string) ([]
 	return chatList, nil
 }
 
-func (ms *MessageSenderImpl) SendReactionMessage(ctx context.Context, sessionID string, to string, messageID string, reaction string) error {
+func (ms *MessageSenderImpl) SendReactionMessage(ctx context.Context, sessionID string, to string, messageID string, reaction string, fromMe bool) error {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return err
@@ -613,13 +614,25 @@ func (ms *MessageSenderImpl) SendReactionMessage(ctx context.Context, sessionID 
 		return ErrInvalidJID
 	}
 
-	senderJID := recipientJID
-	if recipientJID.Server == types.GroupServer {
-
-		senderJID = recipientJID
+	// Handle "remove" reaction (empty string)
+	if reaction == "remove" {
+		reaction = ""
 	}
 
-	reactionMsg := client.WAClient.BuildReaction(recipientJID, senderJID, messageID, reaction)
+	// Build reaction message manually to support fromMe parameter
+	// This allows reacting to messages sent by us (fromMe=true) or received (fromMe=false)
+	reactionMsg := &waE2E.Message{
+		ReactionMessage: &waE2E.ReactionMessage{
+			Key: &waCommon.MessageKey{
+				RemoteJID: proto.String(recipientJID.String()),
+				FromMe:    proto.Bool(fromMe),
+				ID:        proto.String(messageID),
+			},
+			Text:              proto.String(reaction),
+			GroupingKey:       proto.String(reaction),
+			SenderTimestampMS: proto.Int64(time.Now().UnixMilli()),
+		},
+	}
 
 	_, err = client.WAClient.SendMessage(ctx, recipientJID, reactionMsg)
 	if err != nil {

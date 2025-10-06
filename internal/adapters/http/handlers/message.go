@@ -553,7 +553,22 @@ func (h *MessageHandler) SendReaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.messageService.SendReactionMessage(r.Context(), sessionID, req.To, req.MessageID, req.Reaction)
+	// Process "me:" prefix in messageID (WuzAPI compatibility)
+	// Example: "me:3EB0C767D0D1A6F4FD29" means fromMe=true
+	messageID := req.MessageID
+	fromMe := false
+
+	if strings.HasPrefix(messageID, "me:") {
+		fromMe = true
+		messageID = messageID[len("me:"):]
+	}
+
+	// Allow explicit fromMe field to override prefix detection
+	if req.FromMe != nil {
+		fromMe = *req.FromMe
+	}
+
+	result, err := h.messageService.SendReactionMessage(r.Context(), sessionID, req.To, messageID, req.Reaction, fromMe)
 	if err != nil {
 		h.logger.Error().
 			Err(err).

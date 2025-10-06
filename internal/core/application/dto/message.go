@@ -118,6 +118,10 @@ type SendReactionMessageRequest struct {
 	To        string `json:"to" validate:"required" example:"5511999999999"`
 	MessageID string `json:"messageId" validate:"required" example:"3EB0C767D0D1A6F4FD29"`
 	Reaction  string `json:"reaction" validate:"required" example:"👍"`
+	// FromMe indicates if the message being reacted to was sent by us
+	// Can be set explicitly or by using "me:" prefix in MessageID
+	// Example: "me:3EB0C767D0D1A6F4FD29" or set FromMe: true
+	FromMe *bool `json:"fromMe,omitempty" example:"false"`
 } //@name SendReactionMessageRequest
 
 type SendPollMessageRequest struct {
