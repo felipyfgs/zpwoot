@@ -808,7 +808,7 @@ func (h *GroupHandler) SetGroupPhoto(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Security     ApiKeyAuth
 // @Param        sessionId   path      string                         true  "Session ID"
-// @Param        request     body      dto.RemoveGroupPhotoRequest    true  "Remove request"
+// @Param        request     body      dto.RemovePhotoRequest    true  "Remove request"
 // @Success      200  {object}  dto.GroupActionResponse
 // @Failure      400  {object}  dto.ErrorResponse
 // @Failure      500  {object}  dto.ErrorResponse
@@ -820,7 +820,7 @@ func (h *GroupHandler) RemoveGroupPhoto(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var req dto.RemoveGroupPhotoRequest
+	var req dto.RemovePhotoRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.writeError(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
 		return

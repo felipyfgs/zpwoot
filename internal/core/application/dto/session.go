@@ -294,6 +294,6 @@ type PairPhoneResponse struct {
 var (
 	ErrInvalidSessionName   = NewValidationError("name", "Session name is required")
 	ErrSessionNameTooLong   = NewValidationError("name", "Session name must be less than 100 characters")
-	ErrSessionNotFound      = &ErrorInfo{Code: "SESSION_NOT_FOUND", Message: "Session not found"}
-	ErrSessionAlreadyExists = &ErrorInfo{Code: "SESSION_ALREADY_EXISTS", Message: "Session already exists"}
+	ErrSessionNotFound      = &APIErrorInfo{Code: "SESSION_NOT_FOUND", Message: "Session not found"}
+	ErrSessionAlreadyExists = &APIErrorInfo{Code: "SESSION_ALREADY_EXISTS", Message: "Session already exists"}
 )

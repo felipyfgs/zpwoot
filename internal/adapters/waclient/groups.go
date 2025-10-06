@@ -192,7 +192,7 @@ func (gs *GroupService) CreateGroup(ctx context.Context, sessionID string, name 
 		participantStrings[i] = p.JID.String()
 	}
 
-	return &dto.GroupInfo{
+	return &dto.WhatsAppGroupInfo{
 		JID:          group.JID.String(),
 		Name:         group.Name,
 		Topic:        group.Topic,

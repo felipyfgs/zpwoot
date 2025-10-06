@@ -66,9 +66,9 @@ func (h *ContactHandler) CheckUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users := make([]dto.UserInfo, 0, len(results))
+	users := make([]dto.WhatsAppUserInfo, 0, len(results))
 	for _, result := range results {
-		users = append(users, dto.UserInfo{
+		users = append(users, dto.WhatsAppUserInfo{
 			Query:        result.Query,
 			IsInWhatsApp: result.IsInWhatsApp,
 			JID:          result.JID,
