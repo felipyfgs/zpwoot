@@ -62,9 +62,6 @@ func setupSessionRoutes(r chi.Router, h *handlers.Handlers) {
 		r.Get("/{sessionId}/qr", h.Session.GetQRCode)
 
 		r.Post("/{sessionId}/messages", h.Message.SendMessage)
-		r.Get("/{sessionId}/chats", h.Message.GetChats)
-		r.Get("/{sessionId}/contacts", h.Message.GetContacts)
-		r.Get("/{sessionId}/chat-info", h.Message.GetChatInfo)
 	})
 
 	setupMessageRoutes(r, h)

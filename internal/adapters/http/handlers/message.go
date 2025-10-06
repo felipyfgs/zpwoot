@@ -13,7 +13,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// Error codes
 const (
 	errCodeSessionNotFound = "SESSION_NOT_FOUND"
 	errCodeNotConnected    = "NOT_CONNECTED"
@@ -32,6 +31,19 @@ func NewMessageHandler(messageService input.MessageService, logger output.Logger
 	}
 }
 
+// @Summary      Send a message (generic)
+// @Description  Send a message of any type (text, media, location, contact) using a generic endpoint
+// @Tags         Messages
+// @Accept       json
+// @Produce      json
+// @Param        sessionId   path      string                    true  "Session ID"
+// @Param        message     body      dto.SendMessageRequest    true  "Message data"
+// @Success      200         {object}  dto.SendMessageResponse   "Message sent successfully"
+// @Failure      400         {object}  dto.ErrorResponse         "Invalid request"
+// @Failure      404         {object}  dto.ErrorResponse         "Session not found"
+// @Failure      412         {object}  dto.ErrorResponse         "Session not connected"
+// @Failure      500         {object}  dto.ErrorResponse         "Internal server error"
+// @Router       /sessions/{sessionId}/messages [post]
 func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -110,128 +122,6 @@ func (h *MessageHandler) sendMessageByType(r *http.Request, sessionID string, re
 	}
 }
 
-func (h *MessageHandler) GetChatInfo(w http.ResponseWriter, r *http.Request) {
-	sessionID := chi.URLParam(r, "sessionId")
-	chatJID := r.URL.Query().Get("chatJid")
-
-	if sessionID == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "sessionId is required")
-		return
-	}
-
-	if chatJID == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "chatJid is required")
-		return
-	}
-
-	chatInfo, err := h.messageService.GetChatInfo(r.Context(), sessionID, chatJID)
-	if err != nil {
-		h.logger.Error().
-			Err(err).
-			Str("session_id", sessionID).
-			Str("chat_jid", chatJID).
-			Msg("Failed to get chat info")
-		var waErr *output.WhatsAppError
-		if errors.As(err, &waErr) {
-			var status int
-			switch waErr.Code {
-			case errCodeSessionNotFound:
-				status = http.StatusNotFound
-			case errCodeNotConnected:
-				status = http.StatusPreconditionFailed
-			case errCodeInvalidJID:
-				status = http.StatusBadRequest
-			default:
-				status = http.StatusInternalServerError
-			}
-			h.writeError(w, status, waErr.Code, waErr.Message)
-		} else {
-			h.writeError(w, http.StatusInternalServerError, "chat_info_error", "failed to get chat info")
-		}
-		return
-	}
-
-	h.writeJSON(w, chatInfo)
-}
-
-func (h *MessageHandler) GetContacts(w http.ResponseWriter, r *http.Request) {
-	sessionID := chi.URLParam(r, "sessionId")
-	if sessionID == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "sessionId is required")
-		return
-	}
-
-	contacts, err := h.messageService.GetContacts(r.Context(), sessionID)
-	if err != nil {
-		h.logger.Error().
-			Err(err).
-			Str("session_id", sessionID).
-			Msg("Failed to get contacts")
-		var waErr *output.WhatsAppError
-		if errors.As(err, &waErr) {
-			var status int
-			switch waErr.Code {
-			case errCodeSessionNotFound:
-				status = http.StatusNotFound
-			case errCodeNotConnected:
-				status = http.StatusPreconditionFailed
-			default:
-				status = http.StatusInternalServerError
-			}
-			h.writeError(w, status, waErr.Code, waErr.Message)
-		} else {
-			h.writeError(w, http.StatusInternalServerError, "contacts_error", "failed to get contacts")
-		}
-		return
-	}
-
-	response := map[string]interface{}{
-		"success":  true,
-		"contacts": contacts,
-	}
-
-	h.writeJSON(w, response)
-}
-
-func (h *MessageHandler) GetChats(w http.ResponseWriter, r *http.Request) {
-	sessionID := chi.URLParam(r, "sessionId")
-	if sessionID == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "sessionId is required")
-		return
-	}
-
-	chats, err := h.messageService.GetChats(r.Context(), sessionID)
-	if err != nil {
-		h.logger.Error().
-			Err(err).
-			Str("session_id", sessionID).
-			Msg("Failed to get chats")
-		var waErr *output.WhatsAppError
-		if errors.As(err, &waErr) {
-			var status int
-			switch waErr.Code {
-			case errCodeSessionNotFound:
-				status = http.StatusNotFound
-			case errCodeNotConnected:
-				status = http.StatusPreconditionFailed
-			default:
-				status = http.StatusInternalServerError
-			}
-			h.writeError(w, status, waErr.Code, waErr.Message)
-		} else {
-			h.writeError(w, http.StatusInternalServerError, "chats_error", "failed to get chats")
-		}
-		return
-	}
-
-	response := map[string]interface{}{
-		"success": true,
-		"chats":   chats,
-	}
-
-	h.writeJSON(w, response)
-}
-
 func (h *MessageHandler) writeJSON(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -251,11 +141,23 @@ func (h *MessageHandler) writeError(w http.ResponseWriter, status int, code, mes
 	}
 }
 
+// @Summary      Send text message
+// @Description  Send a simple text message to a WhatsApp contact
+// @Tags         Messages
+// @Accept       json
+// @Produce      json
+// @Param        sessionId   path      string                        true  "Session ID"
+// @Param        message     body      dto.SendTextMessageRequest    true  "Text message data"
+// @Success      200         {object}  dto.SendMessageResponse       "Message sent successfully"
+// @Failure      400         {object}  dto.ErrorResponse             "Invalid request"
+// @Failure      404         {object}  dto.ErrorResponse             "Session not found"
+// @Failure      412         {object}  dto.ErrorResponse             "Session not connected"
+// @Failure      500         {object}  dto.ErrorResponse             "Internal server error"
+// @Router       /sessions/{sessionId}/send/message/text [post]
 func (h *MessageHandler) SendText(w http.ResponseWriter, r *http.Request) {
 	h.SendTextMessage(w, r)
 }
 
-// sendMediaMessageGeneric is a generic handler for all media message types
 func (h *MessageHandler) sendMediaMessageGeneric(w http.ResponseWriter, r *http.Request, mediaType, fieldName string) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -283,7 +185,6 @@ func (h *MessageHandler) sendMediaMessageGeneric(w http.ResponseWriter, r *http.
 		return
 	}
 
-	// Select the appropriate media field
 	var media *dto.MediaData
 	switch fieldName {
 	case "audio":
@@ -443,26 +344,110 @@ func generateID() string {
 	return "123456789"
 }
 
+// SendVideo godoc
+// @Summary      Send video message
+// @Description  Send a video message to a WhatsApp contact with optional caption
+// @Tags         Messages
+// @Accept       json
+// @Produce      json
+// @Param        sessionId   path      string                        true  "Session ID"
+// @Param        message     body      dto.SendVideoMessageRequest   true  "Video message data"
+// @Success      200         {object}  dto.SendMessageResponse       "Message sent successfully"
+// @Failure      400         {object}  dto.ErrorResponse             "Invalid request"
+// @Failure      404         {object}  dto.ErrorResponse             "Session not found"
+// @Failure      412         {object}  dto.ErrorResponse             "Session not connected"
+// @Failure      500         {object}  dto.ErrorResponse             "Internal server error"
+// @Router       /sessions/{sessionId}/send/message/video [post]
 func (h *MessageHandler) SendVideo(w http.ResponseWriter, r *http.Request) {
 	h.sendMediaMessageGeneric(w, r, "video", "video")
 }
 
+// SendDocument godoc
+// @Summary      Send document message
+// @Description  Send a document/file message to a WhatsApp contact
+// @Tags         Messages
+// @Accept       json
+// @Produce      json
+// @Param        sessionId   path      string                           true  "Session ID"
+// @Param        message     body      dto.SendDocumentMessageRequest   true  "Document message data"
+// @Success      200         {object}  dto.SendMessageResponse          "Message sent successfully"
+// @Failure      400         {object}  dto.ErrorResponse                "Invalid request"
+// @Failure      404         {object}  dto.ErrorResponse                "Session not found"
+// @Failure      412         {object}  dto.ErrorResponse                "Session not connected"
+// @Failure      500         {object}  dto.ErrorResponse                "Internal server error"
+// @Router       /sessions/{sessionId}/send/message/document [post]
 func (h *MessageHandler) SendDocument(w http.ResponseWriter, r *http.Request) {
 	h.sendMediaMessageGeneric(w, r, "document", "document")
 }
 
+// SendSticker godoc
+// @Summary      Send sticker message
+// @Description  Send a sticker message to a WhatsApp contact
+// @Tags         Messages
+// @Accept       json
+// @Produce      json
+// @Param        sessionId   path      string                          true  "Session ID"
+// @Param        message     body      dto.SendStickerMessageRequest   true  "Sticker message data"
+// @Success      200         {object}  dto.SendMessageResponse         "Message sent successfully"
+// @Failure      400         {object}  dto.ErrorResponse               "Invalid request"
+// @Failure      404         {object}  dto.ErrorResponse               "Session not found"
+// @Failure      412         {object}  dto.ErrorResponse               "Session not connected"
+// @Failure      500         {object}  dto.ErrorResponse               "Internal server error"
+// @Router       /sessions/{sessionId}/send/message/sticker [post]
 func (h *MessageHandler) SendSticker(w http.ResponseWriter, r *http.Request) {
 	h.sendMediaMessageGeneric(w, r, "sticker", "sticker")
 }
 
+// SendAudio godoc
+// @Summary      Send audio message
+// @Description  Send an audio/voice message to a WhatsApp contact
+// @Tags         Messages
+// @Accept       json
+// @Produce      json
+// @Param        sessionId   path      string                        true  "Session ID"
+// @Param        message     body      dto.SendAudioMessageRequest   true  "Audio message data"
+// @Success      200         {object}  dto.SendMessageResponse       "Message sent successfully"
+// @Failure      400         {object}  dto.ErrorResponse             "Invalid request"
+// @Failure      404         {object}  dto.ErrorResponse             "Session not found"
+// @Failure      412         {object}  dto.ErrorResponse             "Session not connected"
+// @Failure      500         {object}  dto.ErrorResponse             "Internal server error"
+// @Router       /sessions/{sessionId}/send/message/audio [post]
 func (h *MessageHandler) SendAudio(w http.ResponseWriter, r *http.Request) {
 	h.SendAudioMessage(w, r)
 }
 
+// SendImage godoc
+// @Summary      Send image message
+// @Description  Send an image message to a WhatsApp contact with optional caption
+// @Tags         Messages
+// @Accept       json
+// @Produce      json
+// @Param        sessionId   path      string                        true  "Session ID"
+// @Param        message     body      dto.SendImageMessageRequest   true  "Image message data"
+// @Success      200         {object}  dto.SendMessageResponse       "Message sent successfully"
+// @Failure      400         {object}  dto.ErrorResponse             "Invalid request"
+// @Failure      404         {object}  dto.ErrorResponse             "Session not found"
+// @Failure      412         {object}  dto.ErrorResponse             "Session not connected"
+// @Failure      500         {object}  dto.ErrorResponse             "Internal server error"
+// @Router       /sessions/{sessionId}/send/message/image [post]
 func (h *MessageHandler) SendImage(w http.ResponseWriter, r *http.Request) {
 	h.SendImageMessage(w, r)
 }
 
+// SendLocation godoc
+// @Summary      Send location message
+// @Description  Send a location message with GPS coordinates to a WhatsApp contact
+// @Tags         Messages
+// @Accept       json
+// @Produce      json
+// @Param        sessionId   path      string                           true  "Session ID"
+// @Param        message     body      dto.SendLocationMessageRequest   true  "Location message data"
+// @Success      200         {object}  dto.SendMessageResponse          "Message sent successfully"
+// @Failure      400         {object}  dto.ErrorResponse                "Invalid request"
+// @Failure      404         {object}  dto.ErrorResponse                "Session not found"
+// @Failure      412         {object}  dto.ErrorResponse                "Session not connected"
+// @Failure      500         {object}  dto.ErrorResponse                "Internal server error"
+// @Router       /sessions/{sessionId}/send/message/location [post]
 func (h *MessageHandler) SendLocation(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -794,7 +779,6 @@ func (h *MessageHandler) SendList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert DTO sections to input.ListSectionInfo
 	sections := make([]input.ListSectionInfo, 0, len(req.Sections))
 	for _, section := range req.Sections {
 		rows := make([]input.ListRowInfo, 0, len(section.Rows))
@@ -854,10 +838,8 @@ func (h *MessageHandler) SendTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert DTO template to input.TemplateInfo
-	// Note: This is a simplified implementation. Full template support may require more complex structure
 	template := input.TemplateInfo{
-		Content: req.Template.Name, // Using name as content for now
+		Content: req.Template.Name,
 		Footer:  req.Template.Language,
 	}
 
@@ -904,7 +886,6 @@ func (h *MessageHandler) SendViewOnce(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Convert DTO media to output.MediaData
 	media := req.Media.ToInterfacesMediaData()
 
 	err := h.messageService.SendViewOnceMessage(r.Context(), sessionID, req.To, media)
