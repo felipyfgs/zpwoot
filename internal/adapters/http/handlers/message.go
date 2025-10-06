@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -10,6 +11,13 @@ import (
 	"zpwoot/internal/core/ports/output"
 
 	"github.com/go-chi/chi/v5"
+)
+
+// Error codes
+const (
+	errCodeSessionNotFound = "SESSION_NOT_FOUND"
+	errCodeNotConnected    = "NOT_CONNECTED"
+	errCodeInvalidJID      = "INVALID_JID"
 )
 
 type MessageHandler struct {
@@ -94,14 +102,18 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("session_id", sessionID).
 			Msg("Failed to send message")
-		if waErr, ok := err.(*output.WhatsAppError); ok {
-			status := http.StatusInternalServerError
-			if waErr.Code == "SESSION_NOT_FOUND" {
+		var waErr *output.WhatsAppError
+		if errors.As(err, &waErr) {
+			var status int
+			switch waErr.Code {
+			case errCodeSessionNotFound:
 				status = http.StatusNotFound
-			} else if waErr.Code == "NOT_CONNECTED" {
+			case errCodeNotConnected:
 				status = http.StatusPreconditionFailed
-			} else if waErr.Code == "INVALID_JID" {
+			case errCodeInvalidJID:
 				status = http.StatusBadRequest
+			default:
+				status = http.StatusInternalServerError
 			}
 			h.writeError(w, status, waErr.Code, waErr.Message)
 		} else {
@@ -116,7 +128,7 @@ func (h *MessageHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		SentAt:    time.Now(),
 	}
 
-	h.writeJSON(w, http.StatusOK, response)
+	h.writeJSON(w, response)
 }
 
 func (h *MessageHandler) GetChatInfo(w http.ResponseWriter, r *http.Request) {
@@ -140,14 +152,18 @@ func (h *MessageHandler) GetChatInfo(w http.ResponseWriter, r *http.Request) {
 			Str("session_id", sessionID).
 			Str("chat_jid", chatJID).
 			Msg("Failed to get chat info")
-		if waErr, ok := err.(*output.WhatsAppError); ok {
-			status := http.StatusInternalServerError
-			if waErr.Code == "SESSION_NOT_FOUND" {
+		var waErr *output.WhatsAppError
+		if errors.As(err, &waErr) {
+			var status int
+			switch waErr.Code {
+			case errCodeSessionNotFound:
 				status = http.StatusNotFound
-			} else if waErr.Code == "NOT_CONNECTED" {
+			case errCodeNotConnected:
 				status = http.StatusPreconditionFailed
-			} else if waErr.Code == "INVALID_JID" {
+			case errCodeInvalidJID:
 				status = http.StatusBadRequest
+			default:
+				status = http.StatusInternalServerError
 			}
 			h.writeError(w, status, waErr.Code, waErr.Message)
 		} else {
@@ -156,7 +172,7 @@ func (h *MessageHandler) GetChatInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeJSON(w, http.StatusOK, chatInfo)
+	h.writeJSON(w, chatInfo)
 }
 
 func (h *MessageHandler) GetContacts(w http.ResponseWriter, r *http.Request) {
@@ -172,12 +188,16 @@ func (h *MessageHandler) GetContacts(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("session_id", sessionID).
 			Msg("Failed to get contacts")
-		if waErr, ok := err.(*output.WhatsAppError); ok {
-			status := http.StatusInternalServerError
-			if waErr.Code == "SESSION_NOT_FOUND" {
+		var waErr *output.WhatsAppError
+		if errors.As(err, &waErr) {
+			var status int
+			switch waErr.Code {
+			case errCodeSessionNotFound:
 				status = http.StatusNotFound
-			} else if waErr.Code == "NOT_CONNECTED" {
+			case errCodeNotConnected:
 				status = http.StatusPreconditionFailed
+			default:
+				status = http.StatusInternalServerError
 			}
 			h.writeError(w, status, waErr.Code, waErr.Message)
 		} else {
@@ -191,7 +211,7 @@ func (h *MessageHandler) GetContacts(w http.ResponseWriter, r *http.Request) {
 		"contacts": contacts,
 	}
 
-	h.writeJSON(w, http.StatusOK, response)
+	h.writeJSON(w, response)
 }
 
 func (h *MessageHandler) GetChats(w http.ResponseWriter, r *http.Request) {
@@ -207,12 +227,16 @@ func (h *MessageHandler) GetChats(w http.ResponseWriter, r *http.Request) {
 			Err(err).
 			Str("session_id", sessionID).
 			Msg("Failed to get chats")
-		if waErr, ok := err.(*output.WhatsAppError); ok {
-			status := http.StatusInternalServerError
-			if waErr.Code == "SESSION_NOT_FOUND" {
+		var waErr *output.WhatsAppError
+		if errors.As(err, &waErr) {
+			var status int
+			switch waErr.Code {
+			case errCodeSessionNotFound:
 				status = http.StatusNotFound
-			} else if waErr.Code == "NOT_CONNECTED" {
+			case errCodeNotConnected:
 				status = http.StatusPreconditionFailed
+			default:
+				status = http.StatusInternalServerError
 			}
 			h.writeError(w, status, waErr.Code, waErr.Message)
 		} else {
@@ -226,24 +250,101 @@ func (h *MessageHandler) GetChats(w http.ResponseWriter, r *http.Request) {
 		"chats":   chats,
 	}
 
-	h.writeJSON(w, http.StatusOK, response)
+	h.writeJSON(w, response)
 }
 
-func (h *MessageHandler) writeJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+func (h *MessageHandler) writeJSON(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode JSON response")
+	}
 }
 
 func (h *MessageHandler) writeError(w http.ResponseWriter, status int, code, message string) {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{
+	if err := json.NewEncoder(w).Encode(map[string]string{
 		"error":   code,
 		"message": message,
-	})
+	}); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode error response")
+	}
 }
 
 func (h *MessageHandler) SendText(w http.ResponseWriter, r *http.Request) {
 	h.SendTextMessage(w, r)
+}
+
+// sendMediaMessageGeneric is a generic handler for all media message types
+func (h *MessageHandler) sendMediaMessageGeneric(w http.ResponseWriter, r *http.Request, mediaType, fieldName string) {
+	sessionID := chi.URLParam(r, "sessionId")
+	if sessionID == "" {
+		h.writeError(w, http.StatusBadRequest, "validation_error", "sessionId is required")
+		return
+	}
+
+	var req struct {
+		To    string         `json:"to"`
+		Media *dto.MediaData `json:"media,omitempty"`
+		Audio *dto.MediaData `json:"audio,omitempty"`
+		Image *dto.MediaData `json:"image,omitempty"`
+		Video *dto.MediaData `json:"video,omitempty"`
+		Document *dto.MediaData `json:"document,omitempty"`
+		Sticker *dto.MediaData `json:"sticker,omitempty"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.writeError(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
+		return
+	}
+
+	if req.To == "" {
+		h.writeError(w, http.StatusBadRequest, "validation_error", "to is required")
+		return
+	}
+
+	// Select the appropriate media field
+	var media *dto.MediaData
+	switch fieldName {
+	case "audio":
+		media = req.Audio
+	case "image":
+		media = req.Image
+	case "video":
+		media = req.Video
+	case "document":
+		media = req.Document
+	case "sticker":
+		media = req.Sticker
+	default:
+		media = req.Media
+	}
+
+	if media == nil {
+		h.writeError(w, http.StatusBadRequest, "validation_error", fieldName+" is required")
+		return
+	}
+
+	err := h.messageService.SendMediaMessage(r.Context(), sessionID, req.To, media.ToMediaData())
+	if err != nil {
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Str("to", req.To).
+			Str("media_type", mediaType).
+			Msg("Failed to send media message")
+		h.handleMessageError(w, err)
+		return
+	}
+
+	response := &dto.SendMessageResponse{
+		MessageID: "msg_" + generateID(),
+		Status:    "sent",
+		SentAt:    time.Now(),
+	}
+
+	h.writeJSON(w, response)
 }
 
 // @Summary		Send Text Message
@@ -300,7 +401,7 @@ func (h *MessageHandler) SendTextMessage(w http.ResponseWriter, r *http.Request)
 		SentAt:    time.Now(),
 	}
 
-	h.writeJSON(w, http.StatusOK, response)
+	h.writeJSON(w, response)
 }
 
 // @Summary		Send Audio Message
@@ -318,46 +419,7 @@ func (h *MessageHandler) SendTextMessage(w http.ResponseWriter, r *http.Request)
 // @Security		ApiKeyAuth
 // @Router			/sessions/{sessionId}/send/message/audio [post]
 func (h *MessageHandler) SendAudioMessage(w http.ResponseWriter, r *http.Request) {
-	sessionID := chi.URLParam(r, "sessionId")
-	if sessionID == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "sessionId is required")
-		return
-	}
-
-	var req dto.SendAudioMessageRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.writeError(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
-		return
-	}
-
-	if req.To == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "to is required")
-		return
-	}
-
-	if req.Audio == nil {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "audio is required")
-		return
-	}
-
-	err := h.messageService.SendMediaMessage(r.Context(), sessionID, req.To, req.Audio.ToMediaData())
-	if err != nil {
-		h.logger.Error().
-			Err(err).
-			Str("session_id", sessionID).
-			Str("to", req.To).
-			Msg("Failed to send audio message")
-		h.handleMessageError(w, err)
-		return
-	}
-
-	response := &dto.SendMessageResponse{
-		MessageID: "msg_" + generateID(),
-		Status:    "sent",
-		SentAt:    time.Now(),
-	}
-
-	h.writeJSON(w, http.StatusOK, response)
+	h.sendMediaMessageGeneric(w, r, "audio", "audio")
 }
 
 // @Summary		Send Image Message
@@ -414,18 +476,22 @@ func (h *MessageHandler) SendImageMessage(w http.ResponseWriter, r *http.Request
 		SentAt:    time.Now(),
 	}
 
-	h.writeJSON(w, http.StatusOK, response)
+	h.writeJSON(w, response)
 }
 
 func (h *MessageHandler) handleMessageError(w http.ResponseWriter, err error) {
-	if waErr, ok := err.(*output.WhatsAppError); ok {
-		status := http.StatusInternalServerError
-		if waErr.Code == "SESSION_NOT_FOUND" {
+	var waErr *output.WhatsAppError
+	if errors.As(err, &waErr) {
+		var status int
+		switch waErr.Code {
+		case errCodeSessionNotFound:
 			status = http.StatusNotFound
-		} else if waErr.Code == "NOT_CONNECTED" {
+		case errCodeNotConnected:
 			status = http.StatusPreconditionFailed
-		} else if waErr.Code == "INVALID_JID" {
+		case errCodeInvalidJID:
 			status = http.StatusBadRequest
+		default:
+			status = http.StatusInternalServerError
 		}
 		h.writeError(w, status, waErr.Code, waErr.Message)
 	} else {
@@ -473,7 +539,7 @@ func (h *MessageHandler) SendVideo(w http.ResponseWriter, r *http.Request) {
 		SentAt:    time.Now(),
 	}
 
-	h.writeJSON(w, http.StatusOK, response)
+	h.writeJSON(w, response)
 }
 
 func (h *MessageHandler) SendDocument(w http.ResponseWriter, r *http.Request) {
@@ -512,7 +578,7 @@ func (h *MessageHandler) SendDocument(w http.ResponseWriter, r *http.Request) {
 		SentAt:    time.Now(),
 	}
 
-	h.writeJSON(w, http.StatusOK, response)
+	h.writeJSON(w, response)
 }
 
 func (h *MessageHandler) SendSticker(w http.ResponseWriter, r *http.Request) {
@@ -551,7 +617,7 @@ func (h *MessageHandler) SendSticker(w http.ResponseWriter, r *http.Request) {
 		SentAt:    time.Now(),
 	}
 
-	h.writeJSON(w, http.StatusOK, response)
+	h.writeJSON(w, response)
 }
 
 func (h *MessageHandler) SendAudio(w http.ResponseWriter, r *http.Request) {
@@ -593,7 +659,7 @@ func (h *MessageHandler) SendLocation(w http.ResponseWriter, r *http.Request) {
 		SentAt:    time.Now(),
 	}
 
-	h.writeJSON(w, http.StatusOK, response)
+	h.writeJSON(w, response)
 }
 
 func (h *MessageHandler) SendContact(w http.ResponseWriter, r *http.Request) {
@@ -638,7 +704,7 @@ func (h *MessageHandler) SendContact(w http.ResponseWriter, r *http.Request) {
 		SentAt:    time.Now(),
 	}
 
-	h.writeJSON(w, http.StatusOK, response)
+	h.writeJSON(w, response)
 }
 
 func (h *MessageHandler) SendContactsArray(w http.ResponseWriter, r *http.Request) {
@@ -684,7 +750,7 @@ func (h *MessageHandler) SendContactsArray(w http.ResponseWriter, r *http.Reques
 		SentAt:    time.Now(),
 	}
 
-	h.writeJSON(w, http.StatusOK, response)
+	h.writeJSON(w, response)
 }
 
 func (h *MessageHandler) SendReaction(w http.ResponseWriter, r *http.Request) {
@@ -733,7 +799,7 @@ func (h *MessageHandler) SendReaction(w http.ResponseWriter, r *http.Request) {
 		SentAt:    time.Now(),
 	}
 
-	h.writeJSON(w, http.StatusOK, response)
+	h.writeJSON(w, response)
 }
 
 func (h *MessageHandler) SendPoll(w http.ResponseWriter, r *http.Request) {
@@ -796,7 +862,7 @@ func (h *MessageHandler) SendPoll(w http.ResponseWriter, r *http.Request) {
 		SentAt:    time.Now(),
 	}
 
-	h.writeJSON(w, http.StatusOK, response)
+	h.writeJSON(w, response)
 }
 
 func (h *MessageHandler) SendButtons(w http.ResponseWriter, r *http.Request) {
@@ -857,7 +923,7 @@ func (h *MessageHandler) SendButtons(w http.ResponseWriter, r *http.Request) {
 		SentAt:    time.Now(),
 	}
 
-	h.writeJSON(w, http.StatusOK, response)
+	h.writeJSON(w, response)
 }
 
 func (h *MessageHandler) SendList(w http.ResponseWriter, r *http.Request) {
@@ -893,7 +959,41 @@ func (h *MessageHandler) SendList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeError(w, http.StatusNotImplemented, "not_implemented", "list messages not yet implemented")
+	// Convert DTO sections to input.ListSectionInfo
+	var sections []input.ListSectionInfo
+	for _, section := range req.Sections {
+		var rows []input.ListRowInfo
+		for _, row := range section.Rows {
+			rows = append(rows, input.ListRowInfo{
+				ID:          row.ID,
+				Title:       row.Title,
+				Description: row.Description,
+			})
+		}
+		sections = append(sections, input.ListSectionInfo{
+			Title: section.Title,
+			Rows:  rows,
+		})
+	}
+
+	err := h.messageService.SendListMessage(r.Context(), sessionID, req.To, req.Text, req.Title, sections)
+	if err != nil {
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Str("to", req.To).
+			Msg("Failed to send list message")
+		h.handleMessageError(w, err)
+		return
+	}
+
+	response := &dto.SendMessageResponse{
+		MessageID: "list_" + generateID(),
+		Status:    "sent",
+		SentAt:    time.Now(),
+	}
+
+	h.writeJSON(w, response)
 }
 
 func (h *MessageHandler) SendTemplate(w http.ResponseWriter, r *http.Request) {
@@ -919,7 +1019,31 @@ func (h *MessageHandler) SendTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeError(w, http.StatusNotImplemented, "not_implemented", "template messages not yet implemented")
+	// Convert DTO template to input.TemplateInfo
+	// Note: This is a simplified implementation. Full template support may require more complex structure
+	template := input.TemplateInfo{
+		Content: req.Template.Name, // Using name as content for now
+		Footer:  req.Template.Language,
+	}
+
+	err := h.messageService.SendTemplateMessage(r.Context(), sessionID, req.To, template)
+	if err != nil {
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Str("to", req.To).
+			Msg("Failed to send template message")
+		h.handleMessageError(w, err)
+		return
+	}
+
+	response := &dto.SendMessageResponse{
+		MessageID: "tmpl_" + generateID(),
+		Status:    "sent",
+		SentAt:    time.Now(),
+	}
+
+	h.writeJSON(w, response)
 }
 
 func (h *MessageHandler) SendViewOnce(w http.ResponseWriter, r *http.Request) {
@@ -945,5 +1069,25 @@ func (h *MessageHandler) SendViewOnce(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeError(w, http.StatusNotImplemented, "not_implemented", "view once messages not yet implemented")
+	// Convert DTO media to output.MediaData
+	media := req.Media.ToInterfacesMediaData()
+
+	err := h.messageService.SendViewOnceMessage(r.Context(), sessionID, req.To, media)
+	if err != nil {
+		h.logger.Error().
+			Err(err).
+			Str("session_id", sessionID).
+			Str("to", req.To).
+			Msg("Failed to send view once message")
+		h.handleMessageError(w, err)
+		return
+	}
+
+	response := &dto.SendMessageResponse{
+		MessageID: "vo_" + generateID(),
+		Status:    "sent",
+		SentAt:    time.Now(),
+	}
+
+	h.writeJSON(w, response)
 }

@@ -352,17 +352,6 @@ func (h *SessionHandler) writeErrorResponse(w http.ResponseWriter, status int, c
 	json.NewEncoder(w).Encode(response)
 }
 
-func (h *SessionHandler) writeValidationErrorResponse(w http.ResponseWriter, field, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusBadRequest)
-	response := dto.NewValidationErrorResponse(field, message)
-	json.NewEncoder(w).Encode(response)
-}
-
-func (h *SessionHandler) writeJSON(w http.ResponseWriter, status int, data interface{}) {
-	h.writeSuccessResponse(w, status, data)
-}
-
 func (h *SessionHandler) writeError(w http.ResponseWriter, status int, code, message string) {
 	h.writeErrorResponse(w, status, code, message)
 }
