@@ -10,13 +10,11 @@ import (
 	"zpwoot/internal/core/ports/output"
 )
 
-// MessageUseCases implements the MessageUseCases interface
 type MessageUseCases struct {
 	send    *SendUseCase
 	receive *ReceiveUseCase
 }
 
-// NewMessageUseCases creates a new MessageUseCases implementation
 func NewMessageUseCases(sessionService *domainSession.Service, whatsappClient output.WhatsAppClient) input.MessageUseCases {
 	return &MessageUseCases{
 		send:    NewSendUseCase(sessionService, whatsappClient),
@@ -24,7 +22,6 @@ func NewMessageUseCases(sessionService *domainSession.Service, whatsappClient ou
 	}
 }
 
-// SendTextMessage sends a text message
 func (m *MessageUseCases) SendTextMessage(ctx context.Context, sessionID, to, text string) error {
 	req := &dto.SendMessageRequest{
 		To:   to,
@@ -35,7 +32,6 @@ func (m *MessageUseCases) SendTextMessage(ctx context.Context, sessionID, to, te
 	return err
 }
 
-// SendMediaMessage sends a media message
 func (m *MessageUseCases) SendMediaMessage(ctx context.Context, sessionID, to string, media *dto.MediaData) error {
 	req := &dto.SendMessageRequest{
 		To:    to,
@@ -46,7 +42,6 @@ func (m *MessageUseCases) SendMediaMessage(ctx context.Context, sessionID, to st
 	return err
 }
 
-// SendLocationMessage sends a location message
 func (m *MessageUseCases) SendLocationMessage(ctx context.Context, sessionID, to string, latitude, longitude float64, name string) error {
 	req := &dto.SendMessageRequest{
 		To:   to,
@@ -61,7 +56,6 @@ func (m *MessageUseCases) SendLocationMessage(ctx context.Context, sessionID, to
 	return err
 }
 
-// SendContactMessage sends a contact message
 func (m *MessageUseCases) SendContactMessage(ctx context.Context, sessionID, to string, contact *dto.ContactInfo) error {
 	req := &dto.SendMessageRequest{
 		To:      to,
@@ -72,22 +66,18 @@ func (m *MessageUseCases) SendContactMessage(ctx context.Context, sessionID, to 
 	return err
 }
 
-// Execute processes an incoming message
 func (m *MessageUseCases) Execute(ctx context.Context, req *dto.ReceiveMessageRequest) error {
 	return m.receive.ProcessIncomingMessage(ctx, req)
 }
 
-// GetChatInfo retrieves chat information (placeholder)
 func (m *MessageUseCases) GetChatInfo(ctx context.Context, sessionID, chatJID string) (interface{}, error) {
 	return nil, fmt.Errorf("GetChatInfo not implemented yet")
 }
 
-// GetContacts retrieves contacts (placeholder)
 func (m *MessageUseCases) GetContacts(ctx context.Context, sessionID string) (interface{}, error) {
 	return nil, fmt.Errorf("GetContacts not implemented yet")
 }
 
-// GetChats retrieves chats (placeholder)
 func (m *MessageUseCases) GetChats(ctx context.Context, sessionID string) (interface{}, error) {
 	return nil, fmt.Errorf("GetChats not implemented yet")
 }

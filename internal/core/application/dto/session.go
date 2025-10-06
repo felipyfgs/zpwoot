@@ -9,7 +9,6 @@ import (
 	"zpwoot/internal/core/domain/session"
 )
 
-// ProxySettings represents proxy configuration for WhatsApp sessions
 type ProxySettings struct {
 	Enabled bool   `json:"enabled" example:"true" description:"Enable proxy"`
 	Type    string `json:"type,omitempty" example:"http" enums:"http,https,socks5" description:"Proxy type (http, https, socks5)"`
@@ -19,7 +18,6 @@ type ProxySettings struct {
 	Pass    string `json:"pass,omitempty" example:"proxyPass123" description:"Proxy password (optional)"`
 } //@name ProxySettings
 
-// WebhookSettings represents webhook configuration for WhatsApp sessions
 type WebhookSettings struct {
 	Enabled bool     `json:"enabled" example:"true" description:"Enable webhook"`
 	URL     string   `json:"url,omitempty" example:"https://api.example.com/webhook" validate:"omitempty,url" description:"Webhook URL"`
@@ -27,13 +25,11 @@ type WebhookSettings struct {
 	Secret  string   `json:"secret,omitempty" example:"supersecrettoken123" description:"Webhook secret for validation (optional)"`
 } //@name WebhookSettings
 
-// SessionSettings represents configuration settings for WhatsApp sessions
 type SessionSettings struct {
 	Proxy   *ProxySettings   `json:"proxy,omitempty" description:"Proxy configuration"`
 	Webhook *WebhookSettings `json:"webhook,omitempty" description:"Webhook configuration"`
 } //@name SessionSettings
 
-// CreateSessionRequest represents the request to create a new WhatsApp session
 type CreateSessionRequest struct {
 	Name           string           `json:"name" example:"my-session" validate:"required,min=1,max=100" description:"Session name for identification"`
 	Settings       *SessionSettings `json:"settings,omitempty" description:"Session settings (proxy, webhook)"`
@@ -45,7 +41,6 @@ type UpdateSessionRequest struct {
 	Settings *SessionSettings `json:"settings,omitempty" description:"Session settings (proxy, webhook)"`
 }
 
-// SessionResponse represents the response when creating or updating a session
 type SessionResponse struct {
 	SessionID       string           `json:"sessionId" example:"550e8400-e29b-41d4-a716-446655440000" description:"Unique session identifier"`
 	Name            string           `json:"name" example:"my-session" description:"Session name"`
@@ -62,7 +57,6 @@ type SessionResponse struct {
 	LastSeen        *time.Time       `json:"lastSeen,omitempty" example:"2025-01-15T10:35:00Z" description:"Last activity timestamp"`
 } //@name SessionResponse
 
-// SessionListInfo represents session information in list responses
 type SessionListInfo struct {
 	SessionID   string           `json:"sessionId" example:"550e8400-e29b-41d4-a716-446655440000" description:"Unique session identifier"`
 	Name        string           `json:"name" example:"my-session" description:"Session name"`
@@ -76,7 +70,6 @@ type SessionListInfo struct {
 	LastSeen    *time.Time       `json:"lastSeen,omitempty" example:"2025-01-15T10:35:00Z" description:"Last activity timestamp"`
 } //@name SessionListInfo
 
-// SessionListResponse represents the response for listing sessions
 type SessionListResponse struct {
 	Sessions []SessionListInfo `json:"sessions" description:"List of sessions (without QR codes)"`
 	Total    int               `json:"total" example:"5" description:"Total number of sessions"`
@@ -89,7 +82,6 @@ type SessionActionResponse struct {
 	Message   string `json:"message,omitempty" example:"Session connected successfully" description:"Action message"`
 }
 
-// QRCodeResponse represents QR code information for WhatsApp authentication
 type QRCodeResponse struct {
 	QRCode       string `json:"qrCode" example:"2@abc123..." description:"QR code string (original from WhatsApp)"`
 	QRCodeBase64 string `json:"qrCodeBase64" example:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..." description:"Base64 encoded QR code image"`

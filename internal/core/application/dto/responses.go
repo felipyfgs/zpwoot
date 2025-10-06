@@ -12,7 +12,6 @@ type APIResponse struct {
 	Timestamp time.Time   `json:"timestamp" example:"2025-01-15T10:30:00Z" description:"Response timestamp"`
 } //@name APIResponse
 
-// ErrorResponse represents an error response from the API
 type ErrorResponse struct {
 	Error   string `json:"error" example:"validation_error" description:"Error code"`
 	Message string `json:"message" example:"name is required" description:"Human readable error message"`

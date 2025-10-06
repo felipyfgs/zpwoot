@@ -44,13 +44,11 @@ func (h *SessionHandler) CreateSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate required fields
 	if req.Name == "" {
 		h.writeErrorResponse(w, http.StatusBadRequest, dto.ErrorCodeValidation, "Session name is required")
 		return
 	}
 
-	// Validate name length and format
 	if len(req.Name) < 3 {
 		h.writeErrorResponse(w, http.StatusBadRequest, dto.ErrorCodeValidation, "Session name must be at least 3 characters")
 		return

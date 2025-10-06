@@ -6,6 +6,7 @@ import (
 
 	"zpwoot/internal/adapters/database"
 	"zpwoot/internal/adapters/database/repository"
+	"zpwoot/internal/adapters/http/handlers"
 	"zpwoot/internal/adapters/logger"
 	"zpwoot/internal/adapters/waclient"
 	"zpwoot/internal/config"
@@ -16,39 +17,32 @@ import (
 	"zpwoot/internal/core/ports/output"
 )
 
-// Container is a simple dependency injection container
 type Container struct {
 	config   *config.Config
 	logger   *logger.Logger
 	database *database.Database
 	migrator *database.Migrator
 
-	// Domain services
 	sessionService *domainSession.Service
 
-	// External adapters
 	whatsappClient output.WhatsAppClient
 
-	// Use cases
 	sessionUseCases input.SessionUseCases
 	messageUseCases input.MessageUseCases
 }
 
-// NewContainer creates a new dependency injection container
 func NewContainer(cfg *config.Config) *Container {
 	return &Container{
 		config: cfg,
 	}
 }
 
-// Initialize sets up all dependencies
 func (c *Container) Initialize() error {
-	// Initialize logger
+
 	logger.Init(c.config.LogLevel)
 	c.logger = logger.NewFromAppConfig(c.config)
 	c.logger.Info().Msg("Initializing zpwoot container")
 
-	// Initialize database
 	c.logger.Info().Msg("Connecting to database")
 	db, err := database.New(c.config, c.logger)
 	if err != nil {
@@ -57,7 +51,6 @@ func (c *Container) Initialize() error {
 	c.database = db
 	c.logger.Info().Msg("Database connection established")
 
-	// Initialize migrator and run migrations
 	c.logger.Info().Msg("Running database migrations")
 	c.migrator = database.NewMigrator(db, c.logger)
 	if err := c.migrator.RunMigrations(); err != nil {
@@ -65,16 +58,13 @@ func (c *Container) Initialize() error {
 	}
 	c.logger.Info().Msg("Database migrations completed")
 
-	// Initialize domain services
 	c.logger.Info().Msg("Initializing domain services")
 	sessionRepo := repository.NewSessionRepository(c.database.DB)
 	c.sessionService = domainSession.NewService(sessionRepo)
 
-	// Initialize WhatsApp client
 	c.logger.Info().Msg("Initializing WhatsApp client")
 	c.initializeWhatsAppClient()
 
-	// Initialize use cases
 	c.logger.Info().Msg("Initializing use cases")
 	c.sessionUseCases = session.NewUseCases(c.sessionService, c.whatsappClient)
 	c.messageUseCases = message.NewMessageUseCases(c.sessionService, c.whatsappClient)
@@ -83,7 +73,6 @@ func (c *Container) Initialize() error {
 	return nil
 }
 
-// initializeWhatsAppClient sets up the WhatsApp client
 func (c *Container) initializeWhatsAppClient() {
 	sessionRepository := repository.NewSessionRepository(c.database.DB)
 	sessionRepo := repository.NewSessionRepo(sessionRepository)
@@ -96,12 +85,10 @@ func (c *Container) initializeWhatsAppClient() {
 	c.whatsappClient = waclient.NewWAClientAdapter(waClient)
 }
 
-// Start initializes the container
 func (c *Container) Start(ctx context.Context) error {
 	return c.Initialize()
 }
 
-// Stop shuts down the container
 func (c *Container) Stop(ctx context.Context) error {
 	if c.database != nil {
 		return c.database.Close()
@@ -109,7 +96,6 @@ func (c *Container) Stop(ctx context.Context) error {
 	return nil
 }
 
-// Getters
 func (c *Container) GetConfig() *config.Config {
 	return c.config
 }
@@ -142,4 +128,39 @@ func (c *Container) GetMessageUseCases() input.MessageUseCases {
 	return c.messageUseCases
 }
 
+func (c *Container) CreateSessionHandler() *handlers.SessionHandler {
+	sessionRepository := repository.NewSessionRepository(c.database.DB)
+	sessionRepo := repository.NewSessionRepo(sessionRepository)
+	waContainer := waclient.NewWAStoreContainer(
+		c.database.DB,
+		c.logger,
+		c.config.Database.URL,
+	)
+	waClient := waclient.NewWAClient(waContainer, c.logger, sessionRepo)
+	sessionManager := waclient.NewSessionManagerAdapter(waClient)
 
+	return handlers.NewSessionHandler(
+		c.sessionUseCases,
+		sessionManager,
+		c.logger,
+	)
+}
+
+func (c *Container) CreateMessageHandler() *handlers.MessageHandler {
+	sessionRepository := repository.NewSessionRepository(c.database.DB)
+	sessionRepo := repository.NewSessionRepo(sessionRepository)
+	waContainer := waclient.NewWAStoreContainer(
+		c.database.DB,
+		c.logger,
+		c.config.Database.URL,
+	)
+	waClient := waclient.NewWAClient(waContainer, c.logger, sessionRepo)
+
+	messageSender := waclient.NewMessageSender(waClient)
+	messageService := waclient.NewMessageServiceWrapper(messageSender)
+
+	return handlers.NewMessageHandler(
+		messageService,
+		c.logger,
+	)
+}
