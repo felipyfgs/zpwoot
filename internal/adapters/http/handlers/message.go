@@ -1107,7 +1107,10 @@ func (h *MessageHandler) RequestHistorySync(w http.ResponseWriter, r *http.Reque
 	var req dto.HistorySyncRequest
 	// Body é opcional, usar defaults se não fornecido
 	if r.Body != nil {
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			h.logger.Error().Err(err).Msg("Failed to decode request body")
+			// Continue with defaults since body is optional
+		}
 	}
 
 	count := req.Count

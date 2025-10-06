@@ -24,6 +24,15 @@ func NewCommunityHandler(communityService input.CommunityService, logger *logger
 	}
 }
 
+// writeJSON escreve uma resposta JSON, tratando erros de encoding
+func (h *CommunityHandler) writeJSON(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode JSON response")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
 // ListCommunities lista todas as comunidades que a sessão participa
 // @Summary Lista comunidades
 // @Description Lista todas as comunidades que a sessão participa
@@ -51,12 +60,7 @@ func (h *CommunityHandler) ListCommunities(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(communities); err != nil {
-		h.logger.Error().Err(err).Msg("Failed to encode response")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
+	h.writeJSON(w, communities)
 }
 
 // GetCommunityInfo obtém informações detalhadas de uma comunidade
@@ -95,12 +99,7 @@ func (h *CommunityHandler) GetCommunityInfo(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(community); err != nil {
-		h.logger.Error().Err(err).Msg("Failed to encode response")
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
+	h.writeJSON(w, community)
 }
 
 // CreateCommunity cria uma nova comunidade
@@ -137,12 +136,8 @@ func (h *CommunityHandler) CreateCommunity(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(community); err != nil {
-		h.logger.Error().Err(err).Msg("Failed to encode response")
-		return
-	}
+	h.writeJSON(w, community)
 }
 
 // LinkGroup vincula um grupo a uma comunidade

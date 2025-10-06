@@ -73,9 +73,11 @@ func (h *HealthHandler) Info(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	json.NewEncoder(w).Encode(SystemInfoResponse{
+	if err := json.NewEncoder(w).Encode(SystemInfoResponse{
 		Message: "zpwoot WhatsApp API is running",
 		Version: "1.0.0",
 		Service: "zpwoot",
-	})
+	}); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode system info response")
+	}
 }

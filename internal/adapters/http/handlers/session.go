@@ -342,14 +342,18 @@ func (h *SessionHandler) writeSuccessResponse(w http.ResponseWriter, status int,
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	response := dto.NewSuccessResponse(data)
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode success response")
+	}
 }
 
 func (h *SessionHandler) writeErrorResponse(w http.ResponseWriter, status int, code, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	response := dto.NewErrorResponse(code, message)
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode error response")
+	}
 }
 
 func (h *SessionHandler) writeError(w http.ResponseWriter, status int, code, message string) {

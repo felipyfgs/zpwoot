@@ -311,8 +311,7 @@ func (h *NewsletterHandler) GetMessages(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(messages)
+	h.writeJSON(w, messages)
 }
 
 // MarkViewed marca mensagens como visualizadas
@@ -363,8 +362,7 @@ func (h *NewsletterHandler) MarkViewed(w http.ResponseWriter, r *http.Request) {
 		"message": "Messages marked as viewed successfully",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	h.writeJSON(w, response)
 }
 
 // SendReaction envia reação a uma mensagem do newsletter
@@ -415,8 +413,7 @@ func (h *NewsletterHandler) SendReaction(w http.ResponseWriter, r *http.Request)
 		"message": "Reaction sent successfully",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	h.writeJSON(w, response)
 }
 
 // ToggleMute silencia ou dessilencia um newsletter
@@ -472,8 +469,7 @@ func (h *NewsletterHandler) ToggleMute(w http.ResponseWriter, r *http.Request) {
 		"message": "Newsletter " + action + " successfully",
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	h.writeJSON(w, response)
 }
 
 // SendMessage envia uma mensagem para um newsletter
@@ -520,6 +516,5 @@ func (h *NewsletterHandler) SendMessage(w http.ResponseWriter, r *http.Request) 
 		"message_id": "temp_id_" + newsletterJID,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	h.writeJSON(w, response)
 }
