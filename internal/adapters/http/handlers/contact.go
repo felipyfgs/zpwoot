@@ -352,14 +352,18 @@ func (h *ContactHandler) writeSuccessResponse(w http.ResponseWriter, status int,
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	response := dto.NewSuccessResponse(data)
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode response")
+	}
 }
 
 func (h *ContactHandler) writeError(w http.ResponseWriter, status int, code, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{
+	if err := json.NewEncoder(w).Encode(map[string]string{
 		"error":   code,
 		"message": message,
-	})
+	}); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode error response")
+	}
 }

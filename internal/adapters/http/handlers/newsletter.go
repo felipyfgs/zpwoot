@@ -25,6 +25,15 @@ func NewNewsletterHandler(newsletterService input.NewsletterService, logger *log
 	}
 }
 
+// writeJSON escreve uma resposta JSON, tratando erros de encoding
+func (h *NewsletterHandler) writeJSON(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode JSON response")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
 // ListNewsletters lista todos os newsletters que a sessão segue
 // @Summary Lista newsletters
 // @Description Lista todos os newsletters que a sessão segue
@@ -52,8 +61,7 @@ func (h *NewsletterHandler) ListNewsletters(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(newsletters)
+	h.writeJSON(w, newsletters)
 }
 
 // GetNewsletterInfo obtém informações detalhadas de um newsletter
@@ -92,8 +100,7 @@ func (h *NewsletterHandler) GetNewsletterInfo(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(newsletter)
+	h.writeJSON(w, newsletter)
 }
 
 // GetNewsletterInfoWithInvite obtém informações de um newsletter via código de convite
@@ -130,8 +137,7 @@ func (h *NewsletterHandler) GetNewsletterInfoWithInvite(w http.ResponseWriter, r
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(newsletter)
+	h.writeJSON(w, newsletter)
 }
 
 // CreateNewsletter cria um novo newsletter
@@ -168,9 +174,8 @@ func (h *NewsletterHandler) CreateNewsletter(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(newsletter)
+	h.writeJSON(w, newsletter)
 }
 
 // FollowNewsletter segue um newsletter

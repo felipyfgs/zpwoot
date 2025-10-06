@@ -52,7 +52,11 @@ func (h *CommunityHandler) ListCommunities(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(communities)
+	if err := json.NewEncoder(w).Encode(communities); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode response")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 }
 
 // GetCommunityInfo obtém informações detalhadas de uma comunidade
@@ -92,7 +96,11 @@ func (h *CommunityHandler) GetCommunityInfo(w http.ResponseWriter, r *http.Reque
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(community)
+	if err := json.NewEncoder(w).Encode(community); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode response")
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 }
 
 // CreateCommunity cria uma nova comunidade
@@ -131,7 +139,10 @@ func (h *CommunityHandler) CreateCommunity(w http.ResponseWriter, r *http.Reques
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(community)
+	if err := json.NewEncoder(w).Encode(community); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode response")
+		return
+	}
 }
 
 // LinkGroup vincula um grupo a uma comunidade
@@ -183,7 +194,10 @@ func (h *CommunityHandler) LinkGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode response")
+		return
+	}
 }
 
 // UnlinkGroup desvincula um grupo de uma comunidade
@@ -235,7 +249,10 @@ func (h *CommunityHandler) UnlinkGroup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode response")
+		return
+	}
 }
 
 // GetSubGroups obtém todos os subgrupos de uma comunidade
@@ -274,7 +291,10 @@ func (h *CommunityHandler) GetSubGroups(w http.ResponseWriter, r *http.Request) 
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(subGroups)
+	if err := json.NewEncoder(w).Encode(subGroups); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode response")
+		return
+	}
 }
 
 // GetParticipants obtém todos os participantes de uma comunidade
@@ -313,5 +333,8 @@ func (h *CommunityHandler) GetParticipants(w http.ResponseWriter, r *http.Reques
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(participants)
+	if err := json.NewEncoder(w).Encode(participants); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode response")
+		return
+	}
 }
