@@ -11,12 +11,10 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-
 type WebhookHandler struct {
 	webhookUseCases input.WebhookUseCases
 	logger          *logger.Logger
 }
-
 
 func NewWebhookHandler(webhookUseCases input.WebhookUseCases, logger *logger.Logger) *WebhookHandler {
 	return &WebhookHandler{
@@ -24,7 +22,6 @@ func NewWebhookHandler(webhookUseCases input.WebhookUseCases, logger *logger.Log
 		logger:          logger,
 	}
 }
-
 
 // @Summary		Configure Webhook
 // @Description	Configure or update webhook for a session
@@ -51,8 +48,6 @@ func (h *WebhookHandler) SetWebhook(w http.ResponseWriter, r *http.Request) {
 		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeBadRequest, "Invalid JSON body")
 		return
 	}
-
-
 	response, err := h.webhookUseCases.Upsert(r.Context(), sessionID, &req)
 	if err != nil {
 		h.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to set webhook")
@@ -67,7 +62,6 @@ func (h *WebhookHandler) SetWebhook(w http.ResponseWriter, r *http.Request) {
 
 	h.writeJSON(w, http.StatusOK, response)
 }
-
 
 // @Summary		Get Webhook Configuration
 // @Description	Get webhook configuration for a session
@@ -99,7 +93,6 @@ func (h *WebhookHandler) GetWebhook(w http.ResponseWriter, r *http.Request) {
 
 	h.writeJSON(w, http.StatusOK, response)
 }
-
 
 // @Summary		Delete Webhook Configuration
 // @Description	Delete webhook configuration for a session
@@ -137,7 +130,6 @@ func (h *WebhookHandler) DeleteWebhook(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 // @Summary		List Available Events
 // @Description	List all available webhook event types
 // @Tags			Webhooks
@@ -156,8 +148,6 @@ func (h *WebhookHandler) ListEvents(w http.ResponseWriter, r *http.Request) {
 
 	h.writeJSON(w, http.StatusOK, response)
 }
-
-
 func (h *WebhookHandler) writeJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
@@ -165,8 +155,6 @@ func (h *WebhookHandler) writeJSON(w http.ResponseWriter, statusCode int, data i
 		h.logger.Error().Err(err).Msg("Failed to encode JSON response")
 	}
 }
-
-
 func (h *WebhookHandler) writeError(w http.ResponseWriter, statusCode int, errorCode, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)

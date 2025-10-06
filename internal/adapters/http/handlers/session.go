@@ -361,7 +361,6 @@ func (h *SessionHandler) writeError(w http.ResponseWriter, status int, code, mes
 	h.writeErrorResponse(w, status, code, message)
 }
 
-
 // @Summary      Pair phone
 // @Description  Pair a phone number without QR code
 // @Tags         Sessions

@@ -15,12 +15,10 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-
 type GroupHandler struct {
 	groupService input.GroupService
 	logger       *logger.Logger
 }
-
 
 func NewGroupHandler(groupService input.GroupService, logger *logger.Logger) *GroupHandler {
 	return &GroupHandler{
@@ -28,7 +26,6 @@ func NewGroupHandler(groupService input.GroupService, logger *logger.Logger) *Gr
 		logger:       logger,
 	}
 }
-
 
 // @Summary      List groups
 // @Description  List all groups the session is part of
@@ -67,7 +64,6 @@ func (h *GroupHandler) ListGroups(w http.ResponseWriter, r *http.Request) {
 
 	h.writeJSON(w, groups)
 }
-
 
 // @Summary      Get group info
 // @Description  Get detailed information about a specific group
@@ -113,7 +109,6 @@ func (h *GroupHandler) GetGroupInfo(w http.ResponseWriter, r *http.Request) {
 
 	h.writeJSON(w, group)
 }
-
 
 // @Summary      Get group invite info
 // @Description  Get group information from invite code without joining
@@ -163,7 +158,6 @@ func (h *GroupHandler) GetGroupInviteInfo(w http.ResponseWriter, r *http.Request
 
 	h.writeJSON(w, group)
 }
-
 
 // @Summary      Get group invite link
 // @Description  Get or reset the invite link for a group
@@ -216,7 +210,6 @@ func (h *GroupHandler) GetGroupInviteLink(w http.ResponseWriter, r *http.Request
 	})
 }
 
-
 // @Summary      Join group
 // @Description  Join a group using invite code
 // @Tags         Groups
@@ -268,7 +261,6 @@ func (h *GroupHandler) JoinGroup(w http.ResponseWriter, r *http.Request) {
 		Message: "Group joined successfully",
 	})
 }
-
 
 // @Summary      Create group
 // @Description  Create a new WhatsApp group
@@ -325,7 +317,6 @@ func (h *GroupHandler) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, group)
 }
 
-
 // @Summary      Leave group
 // @Description  Leave a WhatsApp group
 // @Tags         Groups
@@ -377,7 +368,6 @@ func (h *GroupHandler) LeaveGroup(w http.ResponseWriter, r *http.Request) {
 		Message: "Group left successfully",
 	})
 }
-
 
 // @Summary      Update group participants
 // @Description  Add, remove, promote or demote group participants
@@ -444,7 +434,6 @@ func (h *GroupHandler) UpdateGroupParticipants(w http.ResponseWriter, r *http.Re
 	})
 }
 
-
 // @Summary      Set group name
 // @Description  Change the name of a group
 // @Tags         Groups
@@ -504,7 +493,6 @@ func (h *GroupHandler) SetGroupName(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 // @Summary      Set group topic
 // @Description  Change the description/topic of a group
 // @Tags         Groups
@@ -562,7 +550,6 @@ func (h *GroupHandler) SetGroupTopic(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 // @Summary      Set group locked
 // @Description  Lock or unlock group settings (only admins can edit when locked)
 // @Tags         Groups
@@ -617,7 +604,6 @@ func (h *GroupHandler) SetGroupLocked(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 // @Summary      Set group announce
 // @Description  Enable or disable announce mode (only admins can send messages when enabled)
 // @Tags         Groups
@@ -671,7 +657,6 @@ func (h *GroupHandler) SetGroupAnnounce(w http.ResponseWriter, r *http.Request) 
 		Message: "Group announce setting updated successfully",
 	})
 }
-
 
 // @Summary      Set disappearing timer
 // @Description  Configure disappearing messages timer (24h, 7d, 90d, or off)
@@ -732,7 +717,6 @@ func (h *GroupHandler) SetDisappearingTimer(w http.ResponseWriter, r *http.Reque
 	})
 }
 
-
 // @Summary      Set group photo
 // @Description  Set the photo of a group (JPEG format required)
 // @Tags         Groups
@@ -767,8 +751,6 @@ func (h *GroupHandler) SetGroupPhoto(w http.ResponseWriter, r *http.Request) {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "image is required")
 		return
 	}
-
-
 	imageData, err := decodeBase64Image(req.Image)
 	if err != nil {
 		h.logger.Error().
@@ -800,7 +782,6 @@ func (h *GroupHandler) SetGroupPhoto(w http.ResponseWriter, r *http.Request) {
 		PictureID: pictureID,
 	})
 }
-
 
 // @Summary      Remove group photo
 // @Description  Remove the photo of a group
@@ -853,16 +834,12 @@ func (h *GroupHandler) RemoveGroupPhoto(w http.ResponseWriter, r *http.Request) 
 		Message: "Group photo removed successfully",
 	})
 }
-
-
 func (h *GroupHandler) writeJSON(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(data); err != nil {
 		h.logger.Error().Err(err).Msg("Failed to encode response")
 	}
 }
-
-
 func (h *GroupHandler) writeError(w http.ResponseWriter, status int, code string, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -873,8 +850,6 @@ func (h *GroupHandler) writeError(w http.ResponseWriter, status int, code string
 		h.logger.Error().Err(err).Msg("Failed to encode error response")
 	}
 }
-
-
 func (h *GroupHandler) handleGroupError(w http.ResponseWriter, err error) {
 	if err == nil {
 		return
@@ -895,8 +870,6 @@ func (h *GroupHandler) handleGroupError(w http.ResponseWriter, err error) {
 		h.writeError(w, http.StatusInternalServerError, "internal_error", "Internal server error")
 	}
 }
-
-
 func decodeBase64Image(imageStr string) ([]byte, error) {
 
 	if strings.HasPrefix(imageStr, "data:") {

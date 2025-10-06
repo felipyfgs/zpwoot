@@ -14,19 +14,15 @@ import (
 	"go.mau.fi/whatsmeow/types"
 )
 
-
 type GroupService struct {
 	waClient *WAClient
 }
-
 
 func NewGroupService(waClient *WAClient) *GroupService {
 	return &GroupService{
 		waClient: waClient,
 	}
 }
-
-
 func (gs *GroupService) ListGroups(ctx context.Context, sessionID string) (*dto.ListGroupsResponse, error) {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -54,8 +50,6 @@ func (gs *GroupService) ListGroups(ctx context.Context, sessionID string) (*dto.
 
 	return response, nil
 }
-
-
 func (gs *GroupService) GetGroupInfo(ctx context.Context, sessionID string, groupJID string) (*dto.WhatsAppGroupInfo, error) {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -87,8 +81,6 @@ func (gs *GroupService) GetGroupInfo(ctx context.Context, sessionID string, grou
 		CreatedAt:    group.GroupCreated.Unix(),
 	}, nil
 }
-
-
 func (gs *GroupService) GetGroupInviteInfo(ctx context.Context, sessionID string, code string) (*dto.WhatsAppGroupInfo, error) {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -113,8 +105,6 @@ func (gs *GroupService) GetGroupInviteInfo(ctx context.Context, sessionID string
 		CreatedAt:  group.GroupCreated.Unix(),
 	}, nil
 }
-
-
 func (gs *GroupService) GetGroupInviteLink(ctx context.Context, sessionID string, groupJID string, reset bool) (string, error) {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -133,8 +123,6 @@ func (gs *GroupService) GetGroupInviteLink(ctx context.Context, sessionID string
 
 	return link, nil
 }
-
-
 func (gs *GroupService) JoinGroup(ctx context.Context, sessionID string, code string) error {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -152,8 +140,6 @@ func (gs *GroupService) JoinGroup(ctx context.Context, sessionID string, code st
 
 	return nil
 }
-
-
 func (gs *GroupService) CreateGroup(ctx context.Context, sessionID string, name string, participants []string) (*dto.WhatsAppGroupInfo, error) {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -167,8 +153,6 @@ func (gs *GroupService) CreateGroup(ctx context.Context, sessionID string, name 
 	if len(participants) < 1 {
 		return nil, errors.New("at least one participant is required")
 	}
-
-
 	participantJIDs := make([]types.JID, len(participants))
 	for i, phone := range participants {
 		jid, err := parseJID(phone)
@@ -203,8 +187,6 @@ func (gs *GroupService) CreateGroup(ctx context.Context, sessionID string, name 
 		CreatedAt:    group.GroupCreated.Unix(),
 	}, nil
 }
-
-
 func (gs *GroupService) LeaveGroup(ctx context.Context, sessionID string, groupJID string) error {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -223,8 +205,6 @@ func (gs *GroupService) LeaveGroup(ctx context.Context, sessionID string, groupJ
 
 	return nil
 }
-
-
 func (gs *GroupService) UpdateGroupParticipants(ctx context.Context, sessionID string, groupJID string, participants []string, action string) error {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -239,8 +219,6 @@ func (gs *GroupService) UpdateGroupParticipants(ctx context.Context, sessionID s
 	if len(participants) < 1 {
 		return errors.New("at least one participant is required")
 	}
-
-
 	participantJIDs := make([]types.JID, len(participants))
 	for i, phone := range participants {
 		pjid, err := parseJID(phone)
@@ -249,8 +227,6 @@ func (gs *GroupService) UpdateGroupParticipants(ctx context.Context, sessionID s
 		}
 		participantJIDs[i] = pjid
 	}
-
-
 	var participantChange whatsmeow.ParticipantChange
 	switch action {
 	case "add":
@@ -272,8 +248,6 @@ func (gs *GroupService) UpdateGroupParticipants(ctx context.Context, sessionID s
 
 	return nil
 }
-
-
 func (gs *GroupService) SetGroupName(ctx context.Context, sessionID string, groupJID string, name string) error {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -296,8 +270,6 @@ func (gs *GroupService) SetGroupName(ctx context.Context, sessionID string, grou
 
 	return nil
 }
-
-
 func (gs *GroupService) SetGroupTopic(ctx context.Context, sessionID string, groupJID string, topic string) error {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -316,8 +288,6 @@ func (gs *GroupService) SetGroupTopic(ctx context.Context, sessionID string, gro
 
 	return nil
 }
-
-
 func (gs *GroupService) SetGroupLocked(ctx context.Context, sessionID string, groupJID string, locked bool) error {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -336,8 +306,6 @@ func (gs *GroupService) SetGroupLocked(ctx context.Context, sessionID string, gr
 
 	return nil
 }
-
-
 func (gs *GroupService) SetGroupAnnounce(ctx context.Context, sessionID string, groupJID string, announce bool) error {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -356,8 +324,6 @@ func (gs *GroupService) SetGroupAnnounce(ctx context.Context, sessionID string, 
 
 	return nil
 }
-
-
 func (gs *GroupService) SetDisappearingTimer(ctx context.Context, sessionID string, groupJID string, duration string) error {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -368,8 +334,6 @@ func (gs *GroupService) SetDisappearingTimer(ctx context.Context, sessionID stri
 	if err != nil {
 		return fmt.Errorf("invalid group JID: %w", err)
 	}
-
-
 	var timer time.Duration
 	switch duration {
 	case "24h":
@@ -391,8 +355,6 @@ func (gs *GroupService) SetDisappearingTimer(ctx context.Context, sessionID stri
 
 	return nil
 }
-
-
 func (gs *GroupService) SetGroupPhoto(ctx context.Context, sessionID string, groupJID string, imageData []byte) (string, error) {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -407,8 +369,6 @@ func (gs *GroupService) SetGroupPhoto(ctx context.Context, sessionID string, gro
 	if len(imageData) == 0 {
 		return "", errors.New("image data is required")
 	}
-
-
 	if len(imageData) < 3 || imageData[0] != 0xFF || imageData[1] != 0xD8 || imageData[2] != 0xFF {
 		return "", errors.New("image must be in JPEG format")
 	}
@@ -420,8 +380,6 @@ func (gs *GroupService) SetGroupPhoto(ctx context.Context, sessionID string, gro
 
 	return pictureID, nil
 }
-
-
 func (gs *GroupService) RemoveGroupPhoto(ctx context.Context, sessionID string, groupJID string) error {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -440,8 +398,6 @@ func (gs *GroupService) RemoveGroupPhoto(ctx context.Context, sessionID string, 
 
 	return nil
 }
-
-
 func parseGroupJID(groupJID string) (types.JID, error) {
 
 	if strings.Contains(groupJID, "@g.us") {
@@ -451,8 +407,6 @@ func parseGroupJID(groupJID string) (types.JID, error) {
 		}
 		return jid, nil
 	}
-
-
 	jid, err := types.ParseJID(groupJID + "@g.us")
 	if err != nil {
 		return types.JID{}, fmt.Errorf("invalid group JID: %w", err)
@@ -460,8 +414,6 @@ func parseGroupJID(groupJID string) (types.JID, error) {
 
 	return jid, nil
 }
-
-
 func decodeBase64Image(imageStr string) ([]byte, error) {
 
 	if strings.HasPrefix(imageStr, "data:") {

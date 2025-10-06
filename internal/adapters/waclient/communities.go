@@ -20,8 +20,6 @@ func NewCommunityService(waClient *WAClient) input.CommunityService {
 		waClient: waClient,
 	}
 }
-
-
 func (cs *CommunityService) ListCommunities(ctx context.Context, sessionID string) (*dto.ListCommunitiesResponse, error) {
 	client, err := cs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -31,8 +29,6 @@ func (cs *CommunityService) ListCommunities(ctx context.Context, sessionID strin
 	if !client.IsConnected() {
 		return nil, ErrNotConnected
 	}
-
-
 	groups, err := client.WAClient.GetJoinedGroups(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get joined groups: %w", err)
@@ -54,8 +50,6 @@ func (cs *CommunityService) ListCommunities(ctx context.Context, sessionID strin
 				LinkedGroupsCount: 0,
 				CreatedAt:         group.GroupCreated.Unix(),
 			}
-
-
 			if client.WAClient.Store.ID != nil {
 				for _, participant := range group.Participants {
 					if participant.JID.String() == client.WAClient.Store.ID.String() {
@@ -71,8 +65,6 @@ func (cs *CommunityService) ListCommunities(ctx context.Context, sessionID strin
 
 	return response, nil
 }
-
-
 func (cs *CommunityService) GetCommunityInfo(ctx context.Context, sessionID string, communityJID string) (*dto.CommunityInfo, error) {
 	client, err := cs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -106,8 +98,6 @@ func (cs *CommunityService) GetCommunityInfo(ctx context.Context, sessionID stri
 		LinkedGroupsCount: 0,
 		CreatedAt:         group.GroupCreated.Unix(),
 	}
-
-
 	if client.WAClient.Store.ID != nil {
 		for _, participant := range group.Participants {
 			if participant.JID.String() == client.WAClient.Store.ID.String() {
@@ -117,14 +107,10 @@ func (cs *CommunityService) GetCommunityInfo(ctx context.Context, sessionID stri
 		}
 	}
 
-
-
 	community.LinkedGroupsCount = 0
 
 	return community, nil
 }
-
-
 func (cs *CommunityService) CreateCommunity(ctx context.Context, sessionID string, req *dto.CreateCommunityRequest) (*dto.CommunityInfo, error) {
 	client, err := cs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -138,8 +124,6 @@ func (cs *CommunityService) CreateCommunity(ctx context.Context, sessionID strin
 	if req.Name == "" {
 		return nil, fmt.Errorf("community name is required")
 	}
-
-
 	participantJIDs := make([]types.JID, len(req.Participants))
 	for i, phone := range req.Participants {
 		jid, err := parseJID(phone)
@@ -148,12 +132,9 @@ func (cs *CommunityService) CreateCommunity(ctx context.Context, sessionID strin
 		}
 		participantJIDs[i] = jid
 	}
-
-
 	createReq := whatsmeow.ReqCreateGroup{
 		Name:         req.Name,
 		Participants: participantJIDs,
-
 	}
 
 	group, err := client.WAClient.CreateGroup(ctx, createReq)
@@ -172,8 +153,6 @@ func (cs *CommunityService) CreateCommunity(ctx context.Context, sessionID strin
 		CreatedAt:         group.GroupCreated.Unix(),
 	}, nil
 }
-
-
 func (cs *CommunityService) LinkGroup(ctx context.Context, sessionID string, communityJID string, req *dto.LinkGroupRequest) error {
 	client, err := cs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -201,8 +180,6 @@ func (cs *CommunityService) LinkGroup(ctx context.Context, sessionID string, com
 
 	return nil
 }
-
-
 func (cs *CommunityService) UnlinkGroup(ctx context.Context, sessionID string, communityJID string, req *dto.UnlinkGroupRequest) error {
 	client, err := cs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -230,8 +207,6 @@ func (cs *CommunityService) UnlinkGroup(ctx context.Context, sessionID string, c
 
 	return nil
 }
-
-
 func (cs *CommunityService) GetSubGroups(ctx context.Context, sessionID string, communityJID string) (*dto.ListCommunitySubGroupsResponse, error) {
 	client, err := cs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -242,16 +217,12 @@ func (cs *CommunityService) GetSubGroups(ctx context.Context, sessionID string, 
 		return nil, ErrNotConnected
 	}
 
-
-
 	response := &dto.ListCommunitySubGroupsResponse{
 		SubGroups: make([]dto.CommunitySubGroup, 0),
 	}
 
 	return response, nil
 }
-
-
 func (cs *CommunityService) GetParticipants(ctx context.Context, sessionID string, communityJID string) (*dto.ListCommunityParticipantsResponse, error) {
 	client, err := cs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -266,8 +237,6 @@ func (cs *CommunityService) GetParticipants(ctx context.Context, sessionID strin
 	if err != nil {
 		return nil, fmt.Errorf("invalid community JID: %w", err)
 	}
-
-
 	group, err := client.WAClient.GetGroupInfo(jid)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get community info: %w", err)
@@ -282,15 +251,11 @@ func (cs *CommunityService) GetParticipants(ctx context.Context, sessionID strin
 			JID:  participant.JID.String(),
 			Role: "member",
 		}
-
-
 		if participant.IsSuperAdmin {
 			communityParticipant.Role = "owner"
 		} else if participant.IsAdmin {
 			communityParticipant.Role = "admin"
 		}
-
-
 		contact, err := client.WAClient.Store.Contacts.GetContact(ctx, participant.JID)
 		if err == nil {
 			if contact.FullName != "" {

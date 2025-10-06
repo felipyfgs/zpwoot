@@ -8,19 +8,15 @@ import (
 	"zpwoot/internal/core/domain/webhook"
 )
 
-
 type GetUseCase struct {
 	webhookRepo webhook.Repository
 }
-
 
 func NewGetUseCase(webhookRepo webhook.Repository) *GetUseCase {
 	return &GetUseCase{
 		webhookRepo: webhookRepo,
 	}
 }
-
-
 func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.WebhookResponse, error) {
 	wh, err := uc.webhookRepo.GetBySessionID(ctx, sessionID)
 	if err != nil {

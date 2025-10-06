@@ -8,8 +8,6 @@ import (
 	"zpwoot/internal/core/ports/input"
 )
 
-
-
 type WebhookUseCases struct {
 	create     *CreateUseCase
 	update     *UpdateUseCase
@@ -18,7 +16,6 @@ type WebhookUseCases struct {
 	delete     *DeleteUseCase
 	listEvents *ListEventsUseCase
 }
-
 
 func NewWebhookUseCases(
 	webhookRepo webhook.Repository,
@@ -33,33 +30,21 @@ func NewWebhookUseCases(
 		listEvents: NewListEventsUseCase(webhookService),
 	}
 }
-
-
 func (w *WebhookUseCases) Create(ctx context.Context, sessionID string, request *dto.CreateWebhookRequest) (*dto.WebhookResponse, error) {
 	return w.create.Execute(ctx, sessionID, request)
 }
-
-
 func (w *WebhookUseCases) Update(ctx context.Context, sessionID string, request *dto.CreateWebhookRequest) (*dto.WebhookResponse, error) {
 	return w.update.Execute(ctx, sessionID, request)
 }
-
-
 func (w *WebhookUseCases) Upsert(ctx context.Context, sessionID string, request *dto.CreateWebhookRequest) (*dto.WebhookResponse, error) {
 	return w.upsert.Execute(ctx, sessionID, request)
 }
-
-
 func (w *WebhookUseCases) Get(ctx context.Context, sessionID string) (*dto.WebhookResponse, error) {
 	return w.get.Execute(ctx, sessionID)
 }
-
-
 func (w *WebhookUseCases) Delete(ctx context.Context, sessionID string) error {
 	return w.delete.Execute(ctx, sessionID)
 }
-
-
 func (w *WebhookUseCases) ListEvents(ctx context.Context) (*dto.ListEventsResponse, error) {
 	return w.listEvents.Execute(ctx)
 }

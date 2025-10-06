@@ -134,8 +134,6 @@ type SendReactionMessageRequest struct {
 	MessageID string `json:"messageId" validate:"required" example:"3EB0C767D0D1A6F4FD29"`
 	Reaction  string `json:"reaction" validate:"required" example:"👍"`
 
-
-
 	FromMe *bool `json:"fromMe,omitempty" example:"false"`
 } //@name SendReactionMessageRequest
 
@@ -283,8 +281,6 @@ func (m *MediaData) ToInterfacesMediaData() *output.MediaData {
 
 	var data []byte
 	var err error
-
-
 	if m.Base64 != "" {
 
 		base64Data := m.Base64
@@ -301,8 +297,6 @@ func (m *MediaData) ToInterfacesMediaData() *output.MediaData {
 			data = []byte{}
 		}
 	} else if m.URL != "" {
-
-
 
 		data = []byte{}
 	}
@@ -399,51 +393,35 @@ type SendTemplateMessageRequest struct {
 	Phone    string           `json:"phone" validate:"required" example:"5511999999999"`
 	Template *TemplateMessage `json:"template" validate:"required"`
 } //@name SendTemplateMessageRequest
-
-
 type DeleteMessageRequest struct {
 	Phone     string `json:"phone" validate:"required" example:"5511999999999"`
 	MessageID string `json:"messageId" validate:"required" example:"3EB0C767D0D1A2B5F8"`
 } //@name DeleteMessageRequest
-
-
 type DeleteMessageResponse struct {
 	Success   bool   `json:"success" example:"true"`
 	MessageID string `json:"messageId" example:"3EB0C767D0D1A2B5F8"`
 	Timestamp int64  `json:"timestamp" example:"1696570882"`
 } //@name DeleteMessageResponse
-
-
 type EditMessageRequest struct {
 	Phone     string `json:"phone" validate:"required" example:"5511999999999"`
 	MessageID string `json:"messageId" validate:"required" example:"3EB0C767D0D1A2B5F8"`
 	Text      string `json:"text" validate:"required" example:"Edited message text"`
 } //@name EditMessageRequest
-
-
 type EditMessageResponse struct {
 	Success   bool   `json:"success" example:"true"`
 	MessageID string `json:"messageId" example:"3EB0C767D0D1A2B5F8"`
 	Timestamp int64  `json:"timestamp" example:"1696570882"`
 } //@name EditMessageResponse
-
-
 type MarkReadRequest struct {
 	Phone      string   `json:"phone" validate:"required" example:"5511999999999"`
 	MessageIDs []string `json:"messageIds" validate:"required,min=1" example:"3EB0C767D0D1A2B5F8,3EB0C767D0D1A2B5F9"`
 } //@name MarkReadRequest
-
-
 type MarkReadResponse struct {
 	Success bool `json:"success" example:"true"`
 } //@name MarkReadResponse
-
-
 type HistorySyncRequest struct {
 	Count int `json:"count,omitempty" example:"50" description:"Number of messages to sync (default: 50)"`
 } //@name HistorySyncRequest
-
-
 type HistorySyncResponse struct {
 	Success   bool  `json:"success" example:"true"`
 	Timestamp int64 `json:"timestamp" example:"1696570882"`

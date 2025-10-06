@@ -13,13 +13,10 @@ import (
 	"zpwoot/internal/core/ports/output"
 )
 
-
-
 type HTTPWebhookSender struct {
 	httpClient *http.Client
 	logger     *logger.Logger
 }
-
 
 func NewHTTPWebhookSender(httpClient *http.Client, logger *logger.Logger) output.WebhookSender {
 	if httpClient == nil {
@@ -33,8 +30,6 @@ func NewHTTPWebhookSender(httpClient *http.Client, logger *logger.Logger) output
 		logger:     logger,
 	}
 }
-
-
 func (s *HTTPWebhookSender) SendWebhook(ctx context.Context, url string, secret *string, event *output.WebhookEvent) error {
 
 	if url == "" {
@@ -43,37 +38,25 @@ func (s *HTTPWebhookSender) SendWebhook(ctx context.Context, url string, secret 
 	if event == nil {
 		return fmt.Errorf("webhook event cannot be nil")
 	}
-
-
 	payload, err := json.Marshal(event)
 	if err != nil {
 		return fmt.Errorf("failed to marshal webhook event: %w", err)
 	}
-
-
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(payload))
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP request: %w", err)
 	}
-
-
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "zpwoot-webhook/1.0")
 	req.Header.Set("X-Webhook-Event", event.Type)
 	req.Header.Set("X-Session-ID", event.SessionID)
 	req.Header.Set("X-Webhook-Timestamp", strconv.FormatInt(event.Timestamp.Unix(), 10))
-
-
 	if secret != nil && *secret != "" {
 		signature := GenerateSignature(payload, *secret)
 		req.Header.Set("X-Webhook-Signature", signature)
 	}
-
-
 	return s.sendWithRetry(ctx, req, url, event.Type)
 }
-
-
 func (s *HTTPWebhookSender) sendWithRetry(ctx context.Context, req *http.Request, url, eventType string) error {
 	maxRetries := 3
 	retryDelays := []time.Duration{
@@ -94,16 +77,12 @@ func (s *HTTPWebhookSender) sendWithRetry(ctx context.Context, req *http.Request
 
 			}
 		}
-
-
 		s.logger.Debug().
 			Str("url", url).
 			Str("event_type", eventType).
 			Int("attempt", attempt+1).
 			Int("max_retries", maxRetries).
 			Msg("Sending webhook")
-
-
 		resp, err := s.httpClient.Do(req)
 		if err != nil {
 			lastErr = fmt.Errorf("HTTP request failed (attempt %d/%d): %w", attempt+1, maxRetries, err)
@@ -115,8 +94,6 @@ func (s *HTTPWebhookSender) sendWithRetry(ctx context.Context, req *http.Request
 				Msg("Webhook request failed")
 			continue
 		}
-
-
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 
 			resp.Body.Close()
@@ -128,8 +105,6 @@ func (s *HTTPWebhookSender) sendWithRetry(ctx context.Context, req *http.Request
 				Msg("Webhook sent successfully")
 			return nil
 		}
-
-
 		resp.Body.Close()
 		lastErr = fmt.Errorf("webhook returned status %d (attempt %d/%d)", resp.StatusCode, attempt+1, maxRetries)
 		s.logger.Warn().
@@ -138,8 +113,6 @@ func (s *HTTPWebhookSender) sendWithRetry(ctx context.Context, req *http.Request
 			Int("status_code", resp.StatusCode).
 			Int("attempt", attempt+1).
 			Msg("Webhook returned error status")
-
-
 		if resp.StatusCode >= 400 && resp.StatusCode < 500 {
 			s.logger.Error().
 				Str("url", url).
@@ -149,8 +122,6 @@ func (s *HTTPWebhookSender) sendWithRetry(ctx context.Context, req *http.Request
 			return lastErr
 		}
 	}
-
-
 	s.logger.Error().
 		Err(lastErr).
 		Str("url", url).

@@ -388,8 +388,6 @@ func (ms *Sender) SendContactsArrayMessage(ctx context.Context, sessionID string
 	if err != nil {
 		return ErrInvalidJID
 	}
-
-
 	contactMessages := make([]*waE2E.ContactMessage, len(contacts))
 	for i, contact := range contacts {
 		vcard := contact.VCard
@@ -402,8 +400,6 @@ func (ms *Sender) SendContactsArrayMessage(ctx context.Context, sessionID string
 			Vcard:       proto.String(vcard),
 		}
 	}
-
-
 	message := &waE2E.Message{
 		ContactsArrayMessage: &waE2E.ContactsArrayMessage{
 			DisplayName: proto.String("Contacts"),
@@ -682,13 +678,9 @@ func (ms *Sender) SendReactionMessage(ctx context.Context, sessionID string, to 
 	if err != nil {
 		return ErrInvalidJID
 	}
-
-
 	if reaction == "remove" {
 		reaction = ""
 	}
-
-
 
 	reactionMsg := &waE2E.Message{
 		ReactionMessage: &waE2E.ReactionMessage{
@@ -889,8 +881,6 @@ func buildContextInfo(contextInfo *output.MessageContextInfo) *waE2E.ContextInfo
 
 	return ctx
 }
-
-
 func (ms *Sender) DeleteMessage(ctx context.Context, sessionID string, phone string, messageID string) error {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
@@ -901,8 +891,6 @@ func (ms *Sender) DeleteMessage(ctx context.Context, sessionID string, phone str
 	if err != nil {
 		return ErrInvalidJID
 	}
-
-
 	_, err = client.WAClient.RevokeMessage(recipientJID, messageID)
 	if err != nil {
 		return fmt.Errorf("failed to delete message: %w", err)
@@ -910,8 +898,6 @@ func (ms *Sender) DeleteMessage(ctx context.Context, sessionID string, phone str
 
 	return nil
 }
-
-
 func (ms *Sender) EditMessage(ctx context.Context, sessionID string, phone string, messageID string, text string) error {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
@@ -922,8 +908,6 @@ func (ms *Sender) EditMessage(ctx context.Context, sessionID string, phone strin
 	if err != nil {
 		return ErrInvalidJID
 	}
-
-
 	_, err = client.WAClient.SendMessage(ctx, recipientJID, &waE2E.Message{
 		EditedMessage: &waE2E.FutureProofMessage{
 			Message: &waE2E.Message{
@@ -946,8 +930,6 @@ func (ms *Sender) EditMessage(ctx context.Context, sessionID string, phone strin
 
 	return nil
 }
-
-
 func (ms *Sender) MarkRead(ctx context.Context, sessionID string, phone string, messageIDs []string) error {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
@@ -958,8 +940,6 @@ func (ms *Sender) MarkRead(ctx context.Context, sessionID string, phone string, 
 	if err != nil {
 		return ErrInvalidJID
 	}
-
-
 	err = client.WAClient.MarkRead(messageIDs, time.Now(), recipientJID, recipientJID)
 	if err != nil {
 		return fmt.Errorf("failed to mark as read: %w", err)
@@ -967,8 +947,6 @@ func (ms *Sender) MarkRead(ctx context.Context, sessionID string, phone string, 
 
 	return nil
 }
-
-
 func (ms *Sender) RequestHistorySync(ctx context.Context, sessionID string, count int) error {
 	_, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
@@ -978,12 +956,6 @@ func (ms *Sender) RequestHistorySync(ctx context.Context, sessionID string, coun
 	if count <= 0 {
 		count = 50
 	}
-
-
-
-
-
-
 
 	return nil
 }

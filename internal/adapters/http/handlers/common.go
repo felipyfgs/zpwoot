@@ -115,7 +115,6 @@ func createCommunityHandler(
 	logger *logger.Logger,
 	waClient output.WhatsAppClient,
 ) *CommunityHandler {
-
 	waClientAdapter, ok := waClient.(*waclient.WAClientAdapter)
 	if !ok {
 		panic("waClient is not a WAClientAdapter")

@@ -13,19 +13,15 @@ import (
 	"github.com/lib/pq"
 )
 
-
 type WebhookRepository struct {
 	db *sqlx.DB
 }
-
 
 func NewWebhookRepository(db *sqlx.DB) *WebhookRepository {
 	return &WebhookRepository{
 		db: db,
 	}
 }
-
-
 func (r *WebhookRepository) Create(ctx context.Context, wh *webhook.Webhook) error {
 	eventsJSON, err := json.Marshal(wh.Events)
 	if err != nil {
@@ -64,8 +60,6 @@ func (r *WebhookRepository) Create(ctx context.Context, wh *webhook.Webhook) err
 
 	return nil
 }
-
-
 func (r *WebhookRepository) GetByID(ctx context.Context, id string) (*webhook.Webhook, error) {
 	query := `
 		SELECT "id", "sessionId", "url", "secret", "events", 
@@ -85,8 +79,6 @@ func (r *WebhookRepository) GetByID(ctx context.Context, id string) (*webhook.We
 
 	return wh.toDomain()
 }
-
-
 func (r *WebhookRepository) GetBySessionID(ctx context.Context, sessionID string) (*webhook.Webhook, error) {
 	query := `
 		SELECT "id", "sessionId", "url", "secret", "events", 
@@ -106,8 +98,6 @@ func (r *WebhookRepository) GetBySessionID(ctx context.Context, sessionID string
 
 	return wh.toDomain()
 }
-
-
 func (r *WebhookRepository) Update(ctx context.Context, wh *webhook.Webhook) error {
 	eventsJSON, err := json.Marshal(wh.Events)
 	if err != nil {
@@ -148,8 +138,6 @@ func (r *WebhookRepository) Update(ctx context.Context, wh *webhook.Webhook) err
 
 	return nil
 }
-
-
 func (r *WebhookRepository) Delete(ctx context.Context, id string) error {
 	query := `DELETE FROM "zpWebhooks" WHERE "id" = $1`
 
@@ -169,8 +157,6 @@ func (r *WebhookRepository) Delete(ctx context.Context, id string) error {
 
 	return nil
 }
-
-
 func (r *WebhookRepository) DeleteBySessionID(ctx context.Context, sessionID string) error {
 	query := `DELETE FROM "zpWebhooks" WHERE "sessionId" = $1`
 
@@ -190,8 +176,6 @@ func (r *WebhookRepository) DeleteBySessionID(ctx context.Context, sessionID str
 
 	return nil
 }
-
-
 func (r *WebhookRepository) List(ctx context.Context, limit, offset int) ([]*webhook.Webhook, error) {
 	query := `
 		SELECT "id", "sessionId", "url", "secret", "events", 
@@ -219,7 +203,6 @@ func (r *WebhookRepository) List(ctx context.Context, limit, offset int) ([]*web
 	return webhooks, nil
 }
 
-
 type webhookDB struct {
 	ID        string       `db:"id"`
 	SessionID string       `db:"sessionId"`
@@ -230,7 +213,6 @@ type webhookDB struct {
 	CreatedAt sql.NullTime `db:"createdAt"`
 	UpdatedAt sql.NullTime `db:"updatedAt"`
 }
-
 
 func (wh *webhookDB) toDomain() (*webhook.Webhook, error) {
 	var events []string

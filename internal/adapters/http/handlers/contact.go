@@ -23,7 +23,6 @@ func NewContactHandler(contactService input.ContactService, logger output.Logger
 	}
 }
 
-
 // @Summary      Check if users are on WhatsApp
 // @Description  Verify if phone numbers are registered on WhatsApp
 // @Tags         Contacts
@@ -83,7 +82,6 @@ func (h *ContactHandler) CheckUser(w http.ResponseWriter, r *http.Request) {
 	h.writeSuccessResponse(w, http.StatusOK, response)
 }
 
-
 // @Summary      Get user information
 // @Description  Get detailed information about a WhatsApp user
 // @Tags         Contacts
@@ -136,7 +134,6 @@ func (h *ContactHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	h.writeSuccessResponse(w, http.StatusOK, response)
 }
-
 
 // @Summary      Get user avatar
 // @Description  Get profile picture of a WhatsApp user
@@ -191,7 +188,6 @@ func (h *ContactHandler) GetAvatar(w http.ResponseWriter, r *http.Request) {
 	h.writeSuccessResponse(w, http.StatusOK, response)
 }
 
-
 // @Summary      Get all contacts
 // @Description  List all contacts from the WhatsApp account
 // @Tags         Contacts
@@ -239,7 +235,6 @@ func (h *ContactHandler) GetContacts(w http.ResponseWriter, r *http.Request) {
 
 	h.writeSuccessResponse(w, http.StatusOK, response)
 }
-
 
 // @Summary      Send presence
 // @Description  Send general presence status (available/unavailable)
@@ -290,7 +285,6 @@ func (h *ContactHandler) SendPresence(w http.ResponseWriter, r *http.Request) {
 
 	h.writeSuccessResponse(w, http.StatusOK, response)
 }
-
 
 // @Summary      Send chat presence
 // @Description  Send presence in specific chat (typing/recording)

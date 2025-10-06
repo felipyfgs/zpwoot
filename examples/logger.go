@@ -153,7 +153,6 @@ func main() {
 }
 
 func processData() error {
-
 	time.Sleep(5 * time.Millisecond)
 
 	return errors.New("simulated processing error")

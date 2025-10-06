@@ -12,12 +12,10 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-
 type CommunityHandler struct {
 	communityService input.CommunityService
 	logger           *logger.Logger
 }
-
 
 func NewCommunityHandler(communityService input.CommunityService, logger *logger.Logger) *CommunityHandler {
 	return &CommunityHandler{
@@ -25,8 +23,6 @@ func NewCommunityHandler(communityService input.CommunityService, logger *logger
 		logger:           logger,
 	}
 }
-
-
 func (h *CommunityHandler) writeJSON(w http.ResponseWriter, data interface{}) error {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(data); err != nil {
@@ -36,8 +32,6 @@ func (h *CommunityHandler) writeJSON(w http.ResponseWriter, data interface{}) er
 	}
 	return nil
 }
-
-
 func (h *CommunityHandler) validateCommunityRequest(w http.ResponseWriter, sessionID, communityJID string) bool {
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
@@ -53,8 +47,6 @@ func (h *CommunityHandler) validateCommunityRequest(w http.ResponseWriter, sessi
 
 	return true
 }
-
-
 func (h *CommunityHandler) handleGroupLinkOperation(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -116,7 +108,6 @@ func (h *CommunityHandler) handleGroupLinkOperation(
 	}
 }
 
-
 // @Summary Lista comunidades
 // @Description Lista todas as comunidades que a sessão participa
 // @Tags Comunidades
@@ -147,7 +138,6 @@ func (h *CommunityHandler) ListCommunities(w http.ResponseWriter, r *http.Reques
 		return
 	}
 }
-
 
 // @Summary Obter informações da comunidade
 // @Description Obtém informações detalhadas de uma comunidade específica
@@ -189,7 +179,6 @@ func (h *CommunityHandler) GetCommunityInfo(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-
 // @Summary Criar comunidade
 // @Description Cria uma nova comunidade WhatsApp
 // @Tags Comunidades
@@ -229,7 +218,6 @@ func (h *CommunityHandler) CreateCommunity(w http.ResponseWriter, r *http.Reques
 	}
 }
 
-
 // @Summary Vincular grupo à comunidade
 // @Description Vincula um grupo existente a uma comunidade
 // @Tags Comunidades
@@ -248,7 +236,6 @@ func (h *CommunityHandler) LinkGroup(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-
 // @Summary Desvincular grupo da comunidade
 // @Description Desvincula um grupo de uma comunidade
 // @Tags Comunidades
@@ -266,7 +253,6 @@ func (h *CommunityHandler) UnlinkGroup(w http.ResponseWriter, r *http.Request) {
 		return h.communityService.UnlinkGroup(ctx, sessionID, communityJID, req.(*dto.UnlinkGroupRequest))
 	})
 }
-
 
 // @Summary Listar subgrupos da comunidade
 // @Description Lista todos os subgrupos vinculados a uma comunidade
@@ -306,7 +292,6 @@ func (h *CommunityHandler) GetSubGroups(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 }
-
 
 // @Summary Listar participants da comunidade
 // @Description Lista todos os participants de uma comunidade (de todos os grupos vinculados)

@@ -53,7 +53,7 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 
 		domainSession.SetError(err.Error())
 		if updateErr := uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusError); updateErr != nil {
-			// Log error but don't fail the main operation
+
 			fmt.Printf("Failed to update session status: %v\n", updateErr)
 		}
 

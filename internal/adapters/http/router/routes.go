@@ -23,17 +23,11 @@ func NewRouter(c *container.Container) http.Handler {
 		c.GetWebhookUseCases(),
 		c.GetWhatsAppClient(),
 	)
-
-
 	r.Get("/", h.Health.Info)
 	r.Get("/health", h.Health.Health)
 	r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL("/swagger/doc.json")))
-
-
 	r.Group(func(r chi.Router) {
 		middleware.SetupAuthMiddleware(r, c.GetConfig())
-
-
 		r.Post("/sessions", h.Session.Create)
 		r.Get("/sessions", h.Session.List)
 		r.Get("/sessions/{sessionId}", h.Session.Get)
@@ -43,8 +37,6 @@ func NewRouter(c *container.Container) http.Handler {
 		r.Post("/sessions/{sessionId}/logout", h.Session.Logout)
 		r.Get("/sessions/{sessionId}/qr", h.Session.QRCode)
 		r.Post("/sessions/{sessionId}/pair", h.Session.PairPhone)
-
-
 		r.Post("/sessions/{sessionId}/messages/send/text", h.Message.SendText)
 		r.Post("/sessions/{sessionId}/messages/send/image", h.Message.SendImage)
 		r.Post("/sessions/{sessionId}/messages/send/audio", h.Message.SendAudio)
@@ -63,18 +55,12 @@ func NewRouter(c *container.Container) http.Handler {
 		r.Post("/sessions/{sessionId}/messages/edit", h.Message.EditMessage)
 		r.Post("/sessions/{sessionId}/messages/markread", h.Message.MarkRead)
 		r.Post("/sessions/{sessionId}/messages/historysync", h.Message.RequestHistorySync)
-
-
 		r.Post("/sessions/{sessionId}/presence/send", h.Contact.SendPresence)
 		r.Post("/sessions/{sessionId}/presence/chat", h.Contact.ChatPresence)
-
-
 		r.Get("/sessions/{sessionId}/contacts", h.Contact.GetContacts)
 		r.Post("/sessions/{sessionId}/contacts/check", h.Contact.CheckUser)
 		r.Post("/sessions/{sessionId}/contacts/user", h.Contact.GetUser)
 		r.Post("/sessions/{sessionId}/contacts/avatar", h.Contact.GetAvatar)
-
-
 		r.Get("/sessions/{sessionId}/groups", h.Group.ListGroups)
 		r.Get("/sessions/{sessionId}/groups/info", h.Group.GetGroupInfo)
 		r.Post("/sessions/{sessionId}/groups/invite-info", h.Group.GetGroupInviteInfo)
@@ -90,8 +76,6 @@ func NewRouter(c *container.Container) http.Handler {
 		r.Post("/sessions/{sessionId}/groups/settings/disappearing", h.Group.SetDisappearingTimer)
 		r.Post("/sessions/{sessionId}/groups/photo", h.Group.SetGroupPhoto)
 		r.Delete("/sessions/{sessionId}/groups/photo", h.Group.RemoveGroupPhoto)
-
-
 		r.Get("/sessions/{sessionId}/communities", h.Community.ListCommunities)
 		r.Get("/sessions/{sessionId}/communities/info", h.Community.GetCommunityInfo)
 		r.Post("/sessions/{sessionId}/communities", h.Community.CreateCommunity)
@@ -99,8 +83,6 @@ func NewRouter(c *container.Container) http.Handler {
 		r.Get("/sessions/{sessionId}/communities/{communityJid}/participants", h.Community.GetParticipants)
 		r.Post("/sessions/{sessionId}/communities/{communityJid}/link", h.Community.LinkGroup)
 		r.Post("/sessions/{sessionId}/communities/{communityJid}/unlink", h.Community.UnlinkGroup)
-
-
 		r.Get("/sessions/{sessionId}/newsletters", h.Newsletter.ListNewsletters)
 		r.Get("/sessions/{sessionId}/newsletters/info", h.Newsletter.GetNewsletterInfo)
 		r.Post("/sessions/{sessionId}/newsletters/info-invite", h.Newsletter.GetNewsletterInfoWithInvite)
@@ -112,8 +94,6 @@ func NewRouter(c *container.Container) http.Handler {
 		r.Post("/sessions/{sessionId}/newsletters/{newsletterJid}/react", h.Newsletter.SendReaction)
 		r.Post("/sessions/{sessionId}/newsletters/{newsletterJid}/mute", h.Newsletter.ToggleMute)
 		r.Post("/sessions/{sessionId}/newsletters/{newsletterJid}/send", h.Newsletter.SendMessage)
-
-
 		r.Post("/sessions/{sessionId}/webhooks", h.Webhook.SetWebhook)
 		r.Get("/sessions/{sessionId}/webhooks", h.Webhook.GetWebhook)
 		r.Delete("/sessions/{sessionId}/webhooks", h.Webhook.DeleteWebhook)

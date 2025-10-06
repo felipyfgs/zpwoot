@@ -13,12 +13,10 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-
 type NewsletterHandler struct {
 	newsletterService input.NewsletterService
 	logger            *logger.Logger
 }
-
 
 func NewNewsletterHandler(newsletterService input.NewsletterService, logger *logger.Logger) *NewsletterHandler {
 	return &NewsletterHandler{
@@ -26,8 +24,6 @@ func NewNewsletterHandler(newsletterService input.NewsletterService, logger *log
 		logger:            logger,
 	}
 }
-
-
 func (h *NewsletterHandler) writeJSON(w http.ResponseWriter, data interface{}) error {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(data); err != nil {
@@ -37,8 +33,6 @@ func (h *NewsletterHandler) writeJSON(w http.ResponseWriter, data interface{}) e
 	}
 	return nil
 }
-
-
 func (h *NewsletterHandler) validateNewsletterRequest(w http.ResponseWriter, sessionID, newsletterJID string) bool {
 	if sessionID == "" {
 		h.logger.Error().Msg("Session ID is required")
@@ -54,8 +48,6 @@ func (h *NewsletterHandler) validateNewsletterRequest(w http.ResponseWriter, ses
 
 	return true
 }
-
-
 func (h *NewsletterHandler) handleNewsletterOperation(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -105,7 +97,6 @@ func (h *NewsletterHandler) handleNewsletterOperation(
 	}
 }
 
-
 // @Summary Lista newsletters
 // @Description Lista todos os newsletters que a sessão segue
 // @Tags Newsletters
@@ -136,7 +127,6 @@ func (h *NewsletterHandler) ListNewsletters(w http.ResponseWriter, r *http.Reque
 		return
 	}
 }
-
 
 // @Summary Obter informações do newsletter
 // @Description Obtém informações detalhadas de um newsletter específico
@@ -178,7 +168,6 @@ func (h *NewsletterHandler) GetNewsletterInfo(w http.ResponseWriter, r *http.Req
 	}
 }
 
-
 // @Summary Obter informações do newsletter via convite
 // @Description Obtém informações de um newsletter usando código de convite
 // @Tags Newsletters
@@ -216,7 +205,6 @@ func (h *NewsletterHandler) GetNewsletterInfoWithInvite(w http.ResponseWriter, r
 		return
 	}
 }
-
 
 // @Summary Criar newsletter
 // @Description Cria um novo newsletter WhatsApp
@@ -256,7 +244,6 @@ func (h *NewsletterHandler) CreateNewsletter(w http.ResponseWriter, r *http.Requ
 		return
 	}
 }
-
 
 // @Summary Seguir newsletter
 // @Description Segue um newsletter por JID ou código de convite
@@ -300,7 +287,6 @@ func (h *NewsletterHandler) FollowNewsletter(w http.ResponseWriter, r *http.Requ
 		return
 	}
 }
-
 
 // @Summary Deixar de seguir newsletter
 // @Description Para de seguir um newsletter específico
@@ -346,7 +332,6 @@ func (h *NewsletterHandler) UnfollowNewsletter(w http.ResponseWriter, r *http.Re
 	}
 }
 
-
 // @Summary Obter mensagens do newsletter
 // @Description Lista mensagens de um newsletter com paginação
 // @Tags Newsletters
@@ -375,8 +360,6 @@ func (h *NewsletterHandler) GetMessages(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Newsletter JID is required", http.StatusBadRequest)
 		return
 	}
-
-
 	req := &dto.GetNewsletterMessagesRequest{}
 	if countStr := r.URL.Query().Get("count"); countStr != "" {
 		if count, err := strconv.Atoi(countStr); err == nil {
@@ -399,7 +382,6 @@ func (h *NewsletterHandler) GetMessages(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-
 // @Summary Marcar mensagens como visualizadas
 // @Description Marca mensagens específicas do newsletter como visualizadas
 // @Tags Newsletters
@@ -418,7 +400,6 @@ func (h *NewsletterHandler) MarkViewed(w http.ResponseWriter, r *http.Request) {
 		return h.newsletterService.MarkViewed(ctx, sessionID, newsletterJID, reqData.(*dto.NewsletterMarkViewedRequest))
 	}, &req)
 }
-
 
 // @Summary Reagir a mensagem do newsletter
 // @Description Envia uma reação (emoji) a uma mensagem específica do newsletter
@@ -439,7 +420,6 @@ func (h *NewsletterHandler) SendReaction(w http.ResponseWriter, r *http.Request)
 	}, &req)
 }
 
-
 // @Summary Silenciar/dessilenciar newsletter
 // @Description Alterna o estado de silenciamento de um newsletter
 // @Tags Newsletters
@@ -458,7 +438,6 @@ func (h *NewsletterHandler) ToggleMute(w http.ResponseWriter, r *http.Request) {
 		return h.newsletterService.ToggleMute(ctx, sessionID, newsletterJID, reqData.(*dto.NewsletterMuteRequest))
 	}, &req)
 }
-
 
 // @Summary Enviar mensagem para newsletter
 // @Description Envia uma mensagem de texto para um newsletter (apenas para owners/admins)
@@ -494,8 +473,6 @@ func (h *NewsletterHandler) SendMessage(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-
-
 
 	response := map[string]interface{}{
 		"success":    true,

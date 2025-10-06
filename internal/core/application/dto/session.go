@@ -282,12 +282,9 @@ func QRBase64(qrString string) string {
 	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(qrImage)
 }
 
-
 type PairPhoneRequest struct {
 	Phone string `json:"phone" validate:"required" example:"5511999999999" description:"Phone number with country code"`
 } //@name PairPhoneRequest
-
-
 type PairPhoneResponse struct {
 	LinkingCode string `json:"linkingCode" example:"ABCD-EFGH" description:"8-character linking code to enter on phone"`
 } //@name PairPhoneResponse

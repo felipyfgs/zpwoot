@@ -21,8 +21,6 @@ func NewNewsletterService(waClient *WAClient) input.NewsletterService {
 		waClient: waClient,
 	}
 }
-
-
 func (ns *NewsletterService) ListNewsletters(ctx context.Context, sessionID string) (*dto.ListNewslettersResponse, error) {
 	client, err := ns.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -59,8 +57,6 @@ func (ns *NewsletterService) ListNewsletters(ctx context.Context, sessionID stri
 
 	return response, nil
 }
-
-
 func (ns *NewsletterService) GetNewsletterInfo(ctx context.Context, sessionID string, newsletterJID string) (*dto.NewsletterInfo, error) {
 	client, err := ns.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -92,8 +88,6 @@ func (ns *NewsletterService) GetNewsletterInfo(ctx context.Context, sessionID st
 		CreatedAt:       newsletter.ThreadMeta.CreationTime.Unix(),
 	}, nil
 }
-
-
 func (ns *NewsletterService) GetNewsletterInfoWithInvite(ctx context.Context, sessionID string, req *dto.NewsletterInfoWithInviteRequest) (*dto.NewsletterInfo, error) {
 	client, err := ns.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -124,8 +118,6 @@ func (ns *NewsletterService) GetNewsletterInfoWithInvite(ctx context.Context, se
 		CreatedAt:       newsletter.ThreadMeta.CreationTime.Unix(),
 	}, nil
 }
-
-
 func (ns *NewsletterService) CreateNewsletter(ctx context.Context, sessionID string, req *dto.CreateNewsletterRequest) (*dto.NewsletterInfo, error) {
 	client, err := ns.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -140,12 +132,8 @@ func (ns *NewsletterService) CreateNewsletter(ctx context.Context, sessionID str
 		return nil, fmt.Errorf("newsletter name is required")
 	}
 
-
-
 	return nil, fmt.Errorf("create newsletter not yet implemented in whatsmeow")
 }
-
-
 func (ns *NewsletterService) FollowNewsletter(ctx context.Context, sessionID string, req *dto.FollowNewsletterRequest) error {
 	client, err := ns.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -168,14 +156,10 @@ func (ns *NewsletterService) FollowNewsletter(ctx context.Context, sessionID str
 			return fmt.Errorf("failed to follow newsletter: %w", err)
 		}
 	} else if req.InviteCode != "" {
-
-
 		newsletter, err := client.WAClient.GetNewsletterInfoWithInvite(req.InviteCode)
 		if err != nil {
 			return fmt.Errorf("failed to get newsletter info with invite: %w", err)
 		}
-
-
 		err = client.WAClient.FollowNewsletter(newsletter.ID)
 		if err != nil {
 			return fmt.Errorf("failed to follow newsletter: %w", err)
@@ -186,8 +170,6 @@ func (ns *NewsletterService) FollowNewsletter(ctx context.Context, sessionID str
 
 	return nil
 }
-
-
 func (ns *NewsletterService) UnfollowNewsletter(ctx context.Context, sessionID string, newsletterJID string) error {
 	client, err := ns.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -210,8 +192,6 @@ func (ns *NewsletterService) UnfollowNewsletter(ctx context.Context, sessionID s
 
 	return nil
 }
-
-
 func (ns *NewsletterService) GetMessages(ctx context.Context, sessionID string, newsletterJID string, req *dto.GetNewsletterMessagesRequest) (*dto.ListNewsletterMessagesResponse, error) {
 	client, err := ns.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -226,8 +206,6 @@ func (ns *NewsletterService) GetMessages(ctx context.Context, sessionID string, 
 	if err != nil {
 		return nil, fmt.Errorf("invalid newsletter JID: %w", err)
 	}
-
-
 	params := &whatsmeow.GetNewsletterMessagesParams{
 		Count: 50,
 	}
@@ -267,8 +245,6 @@ func (ns *NewsletterService) GetMessages(ctx context.Context, sessionID string, 
 
 	return response, nil
 }
-
-
 func (ns *NewsletterService) MarkViewed(ctx context.Context, sessionID string, newsletterJID string, req *dto.NewsletterMarkViewedRequest) error {
 	client, err := ns.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -283,8 +259,6 @@ func (ns *NewsletterService) MarkViewed(ctx context.Context, sessionID string, n
 	if err != nil {
 		return fmt.Errorf("invalid newsletter JID: %w", err)
 	}
-
-
 	serverIDs := make([]types.MessageServerID, len(req.ServerIDs))
 	for i, serverIDStr := range req.ServerIDs {
 
@@ -300,8 +274,6 @@ func (ns *NewsletterService) MarkViewed(ctx context.Context, sessionID string, n
 
 	return nil
 }
-
-
 func (ns *NewsletterService) SendReaction(ctx context.Context, sessionID string, newsletterJID string, req *dto.NewsletterReactionRequest) error {
 	client, err := ns.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -316,8 +288,6 @@ func (ns *NewsletterService) SendReaction(ctx context.Context, sessionID string,
 	if err != nil {
 		return fmt.Errorf("invalid newsletter JID: %w", err)
 	}
-
-
 	serverIDInt, err := strconv.Atoi(req.ServerID)
 	if err != nil {
 		return fmt.Errorf("invalid server ID: %w", err)
@@ -332,8 +302,6 @@ func (ns *NewsletterService) SendReaction(ctx context.Context, sessionID string,
 
 	return nil
 }
-
-
 func (ns *NewsletterService) ToggleMute(ctx context.Context, sessionID string, newsletterJID string, req *dto.NewsletterMuteRequest) error {
 	client, err := ns.waClient.GetSession(ctx, sessionID)
 	if err != nil {

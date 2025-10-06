@@ -2,14 +2,11 @@ package dto
 
 import "time"
 
-
 type CreateWebhookRequest struct {
 	URL    string   `json:"url" validate:"required,url"`
 	Secret *string  `json:"secret,omitempty"`
 	Events []string `json:"events,omitempty"`
 } //@name CreateWebhookRequest
-
-
 type WebhookResponse struct {
 	ID        string    `json:"id"`
 	SessionID string    `json:"sessionId"`
@@ -19,20 +16,14 @@ type WebhookResponse struct {
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 } //@name WebhookResponse
-
-
 type EventCategoryResponse struct {
 	Category string   `json:"category"`
 	Events   []string `json:"events"`
 } //@name EventCategoryResponse
-
-
 type ListEventsResponse struct {
 	Categories []EventCategoryResponse `json:"categories"`
 	AllEvents  []string                `json:"allEvents"`
 } //@name ListEventsResponse
-
-
 type WebhookEventPayload struct {
 	ID        string                 `json:"id"`
 	Type      string                 `json:"type"`

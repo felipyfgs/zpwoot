@@ -6,8 +6,6 @@ import (
 	"encoding/hex"
 )
 
-
-
 func GenerateSignature(payload []byte, secret string) string {
 	if secret == "" {
 		return ""
@@ -19,8 +17,6 @@ func GenerateSignature(payload []byte, secret string) string {
 
 	return hex.EncodeToString(signature)
 }
-
-
 func ValidateSignature(payload []byte, secret string, signature string) bool {
 	expectedSignature := GenerateSignature(payload, secret)
 	return hmac.Equal([]byte(expectedSignature), []byte(signature))

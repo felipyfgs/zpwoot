@@ -27,8 +27,6 @@ func NewMessageHandler(messageService input.MessageService, logger output.Logger
 		logger:         logger,
 	}
 }
-
-
 func (h *MessageHandler) buildMessageResponse(result *output.MessageResult, to, messageType, content string) *dto.SendMessageResponse {
 	response := &dto.SendMessageResponse{
 		Success:   true,
@@ -88,8 +86,6 @@ func (h *MessageHandler) SendText(w http.ResponseWriter, r *http.Request) {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "text is required")
 		return
 	}
-
-
 	var contextInfo *output.MessageContextInfo
 	if req.ContextInfo != nil {
 		contextInfo = &output.MessageContextInfo{
@@ -155,8 +151,6 @@ func (h *MessageHandler) SendImage(w http.ResponseWriter, r *http.Request) {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "file is required")
 		return
 	}
-
-
 	var contextInfo *output.MessageContextInfo
 	if req.ContextInfo != nil {
 		contextInfo = &output.MessageContextInfo{
@@ -164,8 +158,6 @@ func (h *MessageHandler) SendImage(w http.ResponseWriter, r *http.Request) {
 			Participant: req.ContextInfo.Participant,
 		}
 	}
-
-
 	mediaProcessor := utils.NewMediaProcessor()
 	media, err := mediaProcessor.ProcessMedia(req.File, req.MimeType, req.FileName)
 	if err != nil {
@@ -233,8 +225,6 @@ func (h *MessageHandler) SendAudio(w http.ResponseWriter, r *http.Request) {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "file is required")
 		return
 	}
-
-
 	var contextInfo *output.MessageContextInfo
 	if req.ContextInfo != nil {
 		contextInfo = &output.MessageContextInfo{
@@ -242,8 +232,6 @@ func (h *MessageHandler) SendAudio(w http.ResponseWriter, r *http.Request) {
 			Participant: req.ContextInfo.Participant,
 		}
 	}
-
-
 	mediaProcessor := utils.NewMediaProcessor()
 	media, err := mediaProcessor.ProcessMedia(req.File, req.MimeType, req.FileName)
 	if err != nil {
@@ -364,8 +352,6 @@ func (h *MessageHandler) SendVideo(w http.ResponseWriter, r *http.Request) {
 			Participant: req.ContextInfo.Participant,
 		}
 	}
-
-
 	mediaProcessor := utils.NewMediaProcessor()
 	media, err := mediaProcessor.ProcessMedia(req.File, req.MimeType, req.FileName)
 	if err != nil {
@@ -441,8 +427,6 @@ func (h *MessageHandler) SendDocument(w http.ResponseWriter, r *http.Request) {
 			Participant: req.ContextInfo.Participant,
 		}
 	}
-
-
 	mediaProcessor := utils.NewMediaProcessor()
 	media, err := mediaProcessor.ProcessMedia(req.File, req.MimeType, req.FileName)
 	if err != nil {
@@ -633,8 +617,6 @@ func (h *MessageHandler) SendReaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
-
 	messageID := req.MessageID
 	fromMe := false
 
@@ -642,8 +624,6 @@ func (h *MessageHandler) SendReaction(w http.ResponseWriter, r *http.Request) {
 		fromMe = true
 		messageID = messageID[len("me:"):]
 	}
-
-
 	if req.FromMe != nil {
 		fromMe = *req.FromMe
 	}
@@ -764,8 +744,6 @@ func (h *MessageHandler) SendSticker(w http.ResponseWriter, r *http.Request) {
 		h.writeError(w, http.StatusBadRequest, "validation_error", "file is required")
 		return
 	}
-
-
 	var contextInfo *output.MessageContextInfo
 	if req.ContextInfo != nil {
 		contextInfo = &output.MessageContextInfo{
@@ -773,8 +751,6 @@ func (h *MessageHandler) SendSticker(w http.ResponseWriter, r *http.Request) {
 			Participant: req.ContextInfo.Participant,
 		}
 	}
-
-
 	mediaProcessor := utils.NewMediaProcessor()
 	media, err := mediaProcessor.ProcessMedia(req.File, req.MimeType, req.FileName)
 	if err != nil {
@@ -839,8 +815,6 @@ func (h *MessageHandler) SendContactsArray(w http.ResponseWriter, r *http.Reques
 		h.writeError(w, http.StatusBadRequest, "validation_error", "contacts array is required and must not be empty")
 		return
 	}
-
-
 	contacts := make([]*input.ContactInfo, len(req.Contacts))
 	for i, contact := range req.Contacts {
 		contacts[i] = &input.ContactInfo{
@@ -904,7 +878,6 @@ func (h *MessageHandler) SendList(w http.ResponseWriter, r *http.Request) {
 	h.writeError(w, http.StatusNotImplemented, "not_implemented", "List messages not yet implemented")
 }
 
-
 // @Summary      Delete message
 // @Description  Delete a sent message
 // @Tags         Messages
@@ -962,7 +935,6 @@ func (h *MessageHandler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 
 	h.writeSuccessResponse(w, http.StatusOK, response)
 }
-
 
 // @Summary      Edit message
 // @Description  Edit a sent message
@@ -1027,7 +999,6 @@ func (h *MessageHandler) EditMessage(w http.ResponseWriter, r *http.Request) {
 	h.writeSuccessResponse(w, http.StatusOK, response)
 }
 
-
 // @Summary      Mark messages as read
 // @Description  Mark one or more messages as read
 // @Tags         Messages
@@ -1082,7 +1053,6 @@ func (h *MessageHandler) MarkRead(w http.ResponseWriter, r *http.Request) {
 
 	h.writeSuccessResponse(w, http.StatusOK, response)
 }
-
 
 // @Summary      Request history sync
 // @Description  Request synchronization of message history

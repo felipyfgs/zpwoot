@@ -6,16 +6,11 @@ import (
 	"strings"
 )
 
-
-
 type Service struct{}
-
 
 func NewService() *Service {
 	return &Service{}
 }
-
-
 func (s *Service) ValidateURL(webhookURL string) error {
 	if webhookURL == "" {
 		return fmt.Errorf("webhook URL cannot be empty")
@@ -25,27 +20,17 @@ func (s *Service) ValidateURL(webhookURL string) error {
 	if err != nil {
 		return fmt.Errorf("invalid webhook URL: %w", err)
 	}
-
-
 	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
 		return fmt.Errorf("webhook URL must use http or https scheme")
 	}
-
-
 	if parsedURL.Host == "" {
 		return fmt.Errorf("webhook URL must have a valid host")
 	}
-
-
 	if strings.Contains(parsedURL.Host, "localhost") || strings.Contains(parsedURL.Host, "127.0.0.1") {
-
-
 	}
 
 	return nil
 }
-
-
 func (s *Service) ValidateEvents(events []string) error {
 	if len(events) == 0 {
 
@@ -66,8 +51,6 @@ func (s *Service) ValidateEvents(events []string) error {
 
 	return nil
 }
-
-
 func (s *Service) GetValidEventTypes() []string {
 	return []string{
 		"Message",
@@ -108,8 +91,6 @@ func (s *Service) GetValidEventTypes() []string {
 		"NewsletterMessageMeta",
 	}
 }
-
-
 func (s *Service) GetEventCategories() map[string][]string {
 	return map[string][]string{
 		"Messages": {
@@ -166,8 +147,6 @@ func (s *Service) GetEventCategories() map[string][]string {
 		},
 	}
 }
-
-
 func (s *Service) ValidateSecret(secret string) error {
 	if secret == "" {
 		return fmt.Errorf("webhook secret cannot be empty")

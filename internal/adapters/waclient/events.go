@@ -202,13 +202,9 @@ func (eh *DefaultEventHandler) shouldSendWebhook(webhookConfig *webhook.Webhook,
 	if eh.webhookSender == nil || !webhookConfig.Enabled {
 		return false
 	}
-
-
 	if len(webhookConfig.Events) == 0 {
 		return true
 	}
-
-
 	eventTypeStr := string(eventType)
 	for _, subscribedEvent := range webhookConfig.Events {
 		if subscribedEvent == eventTypeStr {
@@ -222,8 +218,6 @@ func (eh *DefaultEventHandler) shouldSendWebhook(webhookConfig *webhook.Webhook,
 func (eh *DefaultEventHandler) sendWebhook(webhookConfig *webhook.Webhook, eventType EventType, eventData interface{}, sessionID string) error {
 
 	var data map[string]interface{}
-
-
 	if mapData, ok := eventData.(map[string]interface{}); ok {
 		data = mapData
 	} else {
@@ -239,8 +233,6 @@ func (eh *DefaultEventHandler) sendWebhook(webhookConfig *webhook.Webhook, event
 			return err
 		}
 	}
-
-
 	webhookEvent := &output.WebhookEvent{
 		ID:        uuid.New().String(),
 		Type:      string(eventType),

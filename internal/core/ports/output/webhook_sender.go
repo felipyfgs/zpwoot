@@ -5,7 +5,6 @@ import (
 	"time"
 )
 
-
 type WebhookEvent struct {
 	ID        string                 `json:"id"`
 	Type      string                 `json:"type"`
@@ -14,12 +13,6 @@ type WebhookEvent struct {
 	Data      map[string]interface{} `json:"data"`
 }
 
-
-
 type WebhookSender interface {
-
-
-
-
 	SendWebhook(ctx context.Context, url string, secret *string, event *WebhookEvent) error
 }
