@@ -58,6 +58,7 @@ type MediaData struct {
 	Data     []byte `json:"data"`
 	FileName string `json:"fileName,omitempty"`
 	Caption  string `json:"caption,omitempty"`
+	ViewOnce bool   `json:"viewOnce,omitempty"`
 }
 
 type Location struct {

@@ -169,6 +169,9 @@ definitions:
       phone:
         example: "5511999999999"
         type: string
+      viewOnce:
+        example: false
+        type: boolean
     required:
     - file
     - phone
@@ -243,6 +246,9 @@ definitions:
       phone:
         example: "5511999999999"
         type: string
+      viewOnce:
+        example: false
+        type: boolean
     required:
     - file
     - phone
@@ -406,6 +412,9 @@ definitions:
       phone:
         example: "5511999999999"
         type: string
+      viewOnce:
+        example: false
+        type: boolean
     required:
     - file
     - phone
@@ -822,7 +831,8 @@ paths:
       consumes:
       - application/json
       description: Send an audio message to a WhatsApp contact. Supports Base64, URL,
-        or file path. Supports reply/quote using contextInfo.
+        or file path. Supports reply/quote using contextInfo. Set viewOnce to true
+        to send as a view-once message that disappears after being viewed.
       parameters:
       - description: Session ID
         in: path
@@ -1024,6 +1034,8 @@ paths:
       - application/json
       description: Send an image message to a WhatsApp contact with optional caption.
         Supports Base64, URL, or file path. Supports reply/quote using contextInfo.
+        Set viewOnce to true to send as a view-once message that disappears after
+        being viewed.
       parameters:
       - description: Session ID
         in: path
@@ -1324,6 +1336,8 @@ paths:
       - application/json
       description: Send a video message to a WhatsApp contact with optional caption.
         Supports Base64, URL, or file path. Supports reply/quote using contextInfo.
+        Set viewOnce to true to send as a view-once message that disappears after
+        being viewed.
       parameters:
       - description: Session ID
         in: path
@@ -1372,9 +1386,11 @@ paths:
     post:
       consumes:
       - application/json
-      description: Send a view once message (image or video) that disappears after
-        being viewed once. Supports Base64, URL, or file path. Only images and videos
-        are supported (documents not supported).
+      deprecated: true
+      description: 'DEPRECATED: Use /image, /video, or /audio endpoints with viewOnce=true
+        instead. This endpoint sends a view once message (image or video) that disappears
+        after being viewed once. Supports Base64, URL, or file path. Only images and
+        videos are supported (documents not supported).'
       parameters:
       - description: Session ID
         in: path
@@ -1417,7 +1433,7 @@ paths:
             $ref: '#/definitions/ErrorResponse'
       security:
       - ApiKeyAuth: []
-      summary: Send view once message
+      summary: Send view once message (DEPRECATED)
       tags:
       - Messages
   /sessions/create:

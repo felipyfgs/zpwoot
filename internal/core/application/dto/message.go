@@ -74,6 +74,7 @@ type SendImageMessageRequest struct {
 	MimeType    string              `json:"mimeType,omitempty" example:"image/jpeg"`
 	FileName    string              `json:"fileName,omitempty" example:"image.jpg"`
 	Caption     string              `json:"caption,omitempty" example:"Check out this beautiful image!"`
+	ViewOnce    bool                `json:"viewOnce,omitempty" example:"false"`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
 } //@name SendImageMessageRequest
 
@@ -82,6 +83,7 @@ type SendAudioMessageRequest struct {
 	File        string              `json:"file" validate:"required" example:"https://example.com/audio.mp3"`
 	MimeType    string              `json:"mimeType,omitempty" example:"audio/mpeg"`
 	FileName    string              `json:"fileName,omitempty" example:"audio.mp3"`
+	ViewOnce    bool                `json:"viewOnce,omitempty" example:"false"`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
 } //@name SendAudioMessageRequest
 
@@ -91,6 +93,7 @@ type SendVideoMessageRequest struct {
 	MimeType    string              `json:"mimeType,omitempty" example:"video/mp4"`
 	FileName    string              `json:"fileName,omitempty" example:"video.mp4"`
 	Caption     string              `json:"caption,omitempty" example:"Watch this amazing video!"`
+	ViewOnce    bool                `json:"viewOnce,omitempty" example:"false"`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
 } //@name SendVideoMessageRequest
 
@@ -397,10 +400,3 @@ type SendTemplateMessageRequest struct {
 	Template *TemplateMessage `json:"template" validate:"required"`
 } //@name SendTemplateMessageRequest
 
-type SendViewOnceMessageRequest struct {
-	Phone    string `json:"phone" validate:"required" example:"5511999999999"`
-	File     string `json:"file" validate:"required" example:"https://example.com/image.jpg"` // Supports Base64, URL, or file path
-	MimeType string `json:"mimeType,omitempty" example:"image/jpeg"`                          // Auto-detected if not provided
-	FileName string `json:"fileName,omitempty" example:"image.jpg"`
-	Caption  string `json:"caption,omitempty" example:"This message will disappear after viewing"`
-} //@name SendViewOnceMessageRequest

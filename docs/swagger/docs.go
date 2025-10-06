@@ -509,7 +509,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Send an audio message to a WhatsApp contact. Supports Base64, URL, or file path. Supports reply/quote using contextInfo.",
+                "description": "Send an audio message to a WhatsApp contact. Supports Base64, URL, or file path. Supports reply/quote using contextInfo. Set viewOnce to true to send as a view-once message that disappears after being viewed.",
                 "consumes": [
                     "application/json"
                 ],
@@ -813,7 +813,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Send an image message to a WhatsApp contact with optional caption. Supports Base64, URL, or file path. Supports reply/quote using contextInfo.",
+                "description": "Send an image message to a WhatsApp contact with optional caption. Supports Base64, URL, or file path. Supports reply/quote using contextInfo. Set viewOnce to true to send as a view-once message that disappears after being viewed.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1269,7 +1269,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Send a video message to a WhatsApp contact with optional caption. Supports Base64, URL, or file path. Supports reply/quote using contextInfo.",
+                "description": "Send a video message to a WhatsApp contact with optional caption. Supports Base64, URL, or file path. Supports reply/quote using contextInfo. Set viewOnce to true to send as a view-once message that disappears after being viewed.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1345,7 +1345,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Send a view once message (image or video) that disappears after being viewed once. Supports Base64, URL, or file path. Only images and videos are supported (documents not supported).",
+                "description": "DEPRECATED: Use /image, /video, or /audio endpoints with viewOnce=true instead. This endpoint sends a view once message (image or video) that disappears after being viewed once. Supports Base64, URL, or file path. Only images and videos are supported (documents not supported).",
                 "consumes": [
                     "application/json"
                 ],
@@ -1355,7 +1355,8 @@ const docTemplate = `{
                 "tags": [
                     "Messages"
                 ],
-                "summary": "Send view once message",
+                "summary": "Send view once message (DEPRECATED)",
+                "deprecated": true,
                 "parameters": [
                     {
                         "type": "string",
@@ -1649,6 +1650,10 @@ const docTemplate = `{
                 "phone": {
                     "type": "string",
                     "example": "5511999999999"
+                },
+                "viewOnce": {
+                    "type": "boolean",
+                    "example": false
                 }
             }
         },
@@ -1753,6 +1758,10 @@ const docTemplate = `{
                 "phone": {
                     "type": "string",
                     "example": "5511999999999"
+                },
+                "viewOnce": {
+                    "type": "boolean",
+                    "example": false
                 }
             }
         },
@@ -1971,6 +1980,10 @@ const docTemplate = `{
                 "phone": {
                     "type": "string",
                     "example": "5511999999999"
+                },
+                "viewOnce": {
+                    "type": "boolean",
+                    "example": false
                 }
             }
         },

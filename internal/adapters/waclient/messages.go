@@ -106,44 +106,56 @@ func (ms *Sender) SendMediaMessage(ctx context.Context, sessionID string, to str
 	var message *waE2E.Message
 	switch mediaType {
 	case whatsmeow.MediaImage:
+		imgMsg := &waE2E.ImageMessage{
+			URL:           proto.String(uploaded.URL),
+			DirectPath:    proto.String(uploaded.DirectPath),
+			MediaKey:      uploaded.MediaKey,
+			Mimetype:      proto.String(mimeType),
+			FileEncSHA256: uploaded.FileEncSHA256,
+			FileSHA256:    uploaded.FileSHA256,
+			FileLength:    proto.Uint64(uint64(len(fileData))),
+			Caption:       proto.String(media.Caption),
+		}
+		if media.ViewOnce {
+			imgMsg.ViewOnce = proto.Bool(true)
+		}
 		message = &waE2E.Message{
-			ImageMessage: &waE2E.ImageMessage{
-				URL:           proto.String(uploaded.URL),
-				DirectPath:    proto.String(uploaded.DirectPath),
-				MediaKey:      uploaded.MediaKey,
-				Mimetype:      proto.String(mimeType),
-				FileEncSHA256: uploaded.FileEncSHA256,
-				FileSHA256:    uploaded.FileSHA256,
-				FileLength:    proto.Uint64(uint64(len(fileData))),
-				Caption:       proto.String(media.Caption),
-			},
+			ImageMessage: imgMsg,
 		}
 	case whatsmeow.MediaVideo:
+		vidMsg := &waE2E.VideoMessage{
+			URL:           proto.String(uploaded.URL),
+			DirectPath:    proto.String(uploaded.DirectPath),
+			MediaKey:      uploaded.MediaKey,
+			Mimetype:      proto.String(mimeType),
+			FileEncSHA256: uploaded.FileEncSHA256,
+			FileSHA256:    uploaded.FileSHA256,
+			FileLength:    proto.Uint64(uint64(len(fileData))),
+			Caption:       proto.String(media.Caption),
+		}
+		if media.ViewOnce {
+			vidMsg.ViewOnce = proto.Bool(true)
+		}
 		message = &waE2E.Message{
-			VideoMessage: &waE2E.VideoMessage{
-				URL:           proto.String(uploaded.URL),
-				DirectPath:    proto.String(uploaded.DirectPath),
-				MediaKey:      uploaded.MediaKey,
-				Mimetype:      proto.String(mimeType),
-				FileEncSHA256: uploaded.FileEncSHA256,
-				FileSHA256:    uploaded.FileSHA256,
-				FileLength:    proto.Uint64(uint64(len(fileData))),
-				Caption:       proto.String(media.Caption),
-			},
+			VideoMessage: vidMsg,
 		}
 	case whatsmeow.MediaAudio:
 		ptt := true
+		audioMsg := &waE2E.AudioMessage{
+			URL:           proto.String(uploaded.URL),
+			DirectPath:    proto.String(uploaded.DirectPath),
+			MediaKey:      uploaded.MediaKey,
+			Mimetype:      proto.String(mimeType),
+			FileEncSHA256: uploaded.FileEncSHA256,
+			FileSHA256:    uploaded.FileSHA256,
+			FileLength:    proto.Uint64(uint64(len(fileData))),
+			PTT:           &ptt,
+		}
+		if media.ViewOnce {
+			audioMsg.ViewOnce = proto.Bool(true)
+		}
 		message = &waE2E.Message{
-			AudioMessage: &waE2E.AudioMessage{
-				URL:           proto.String(uploaded.URL),
-				DirectPath:    proto.String(uploaded.DirectPath),
-				MediaKey:      uploaded.MediaKey,
-				Mimetype:      proto.String(mimeType),
-				FileEncSHA256: uploaded.FileEncSHA256,
-				FileSHA256:    uploaded.FileSHA256,
-				FileLength:    proto.Uint64(uint64(len(fileData))),
-				PTT:           &ptt,
-			},
+			AudioMessage: audioMsg,
 		}
 	case whatsmeow.MediaDocument:
 		fileName := media.FileName
@@ -621,17 +633,6 @@ func (w *MessageService) SendTemplateMessage(ctx context.Context, sessionID, to 
 	}, nil
 }
 
-func (w *MessageService) SendViewOnceMessage(ctx context.Context, sessionID, to string, media *output.MediaData) (*output.MessageResult, error) {
-	err := w.Sender.SendViewOnceMessage(ctx, sessionID, to, media)
-	if err != nil {
-		return nil, err
-	}
-	return &output.MessageResult{
-		MessageID: fallbackID(),
-		Status:    "sent",
-		SentAt:    time.Now(),
-	}, nil
-}
 
 func (w *MessageService) GetChatInfo(ctx context.Context, sessionID, chatJID string) (*input.ChatInfo, error) {
 	return w.GetChatInfoAsInput(ctx, sessionID, chatJID)

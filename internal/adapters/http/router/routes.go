@@ -82,6 +82,5 @@ func setupMessageRoutes(r chi.Router, h *handlers.Handlers) {
 		r.Post("/buttons", h.Message.SendButtons)
 		r.Post("/list", h.Message.SendList)
 		r.Post("/poll", h.Message.SendPoll)
-		r.Post("/viewonce", h.Message.SendViewOnce)
 	})
 }

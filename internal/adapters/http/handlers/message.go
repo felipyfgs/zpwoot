@@ -118,7 +118,7 @@ func (h *MessageHandler) SendText(w http.ResponseWriter, r *http.Request) {
 }
 
 // @Summary      Send image message
-// @Description  Send an image message to a WhatsApp contact with optional caption. Supports Base64, URL, or file path. Supports reply/quote using contextInfo.
+// @Description  Send an image message to a WhatsApp contact with optional caption. Supports Base64, URL, or file path. Supports reply/quote using contextInfo. Set viewOnce to true to send as a view-once message that disappears after being viewed.
 // @Tags         Messages
 // @Accept       json
 // @Produce      json
@@ -178,6 +178,7 @@ func (h *MessageHandler) SendImage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	media.Caption = req.Caption
+	media.ViewOnce = req.ViewOnce
 
 	result, err := h.messageService.SendMediaMessage(r.Context(), sessionID, req.Phone, media, contextInfo)
 	if err != nil {
@@ -195,7 +196,7 @@ func (h *MessageHandler) SendImage(w http.ResponseWriter, r *http.Request) {
 }
 
 // @Summary      Send audio message
-// @Description  Send an audio message to a WhatsApp contact. Supports Base64, URL, or file path. Supports reply/quote using contextInfo.
+// @Description  Send an audio message to a WhatsApp contact. Supports Base64, URL, or file path. Supports reply/quote using contextInfo. Set viewOnce to true to send as a view-once message that disappears after being viewed.
 // @Tags         Messages
 // @Accept       json
 // @Produce      json
@@ -254,6 +255,8 @@ func (h *MessageHandler) SendAudio(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	media.ViewOnce = req.ViewOnce
+
 	result, err := h.messageService.SendMediaMessage(r.Context(), sessionID, req.Phone, media, contextInfo)
 	if err != nil {
 		h.handleMessageError(w, err)
@@ -307,7 +310,7 @@ func (h *MessageHandler) handleMessageError(w http.ResponseWriter, err error) {
 }
 
 // @Summary      Send video message
-// @Description  Send a video message to a WhatsApp contact with optional caption. Supports Base64, URL, or file path. Supports reply/quote using contextInfo.
+// @Description  Send a video message to a WhatsApp contact with optional caption. Supports Base64, URL, or file path. Supports reply/quote using contextInfo. Set viewOnce to true to send as a view-once message that disappears after being viewed.
 // @Tags         Messages
 // @Accept       json
 // @Produce      json
@@ -366,6 +369,7 @@ func (h *MessageHandler) SendVideo(w http.ResponseWriter, r *http.Request) {
 	}
 
 	media.Caption = req.Caption
+	media.ViewOnce = req.ViewOnce
 
 	result, err := h.messageService.SendMediaMessage(r.Context(), sessionID, req.Phone, media, contextInfo)
 	if err != nil {
@@ -866,70 +870,4 @@ func (h *MessageHandler) SendList(w http.ResponseWriter, r *http.Request) {
 	h.writeError(w, http.StatusNotImplemented, "not_implemented", "List messages not yet implemented")
 }
 
-// @Summary      Send view once message
-// @Description  Send a view once message (image or video) that disappears after being viewed once. Supports Base64, URL, or file path. Only images and videos are supported (documents not supported).
-// @Tags         Messages
-// @Accept       json
-// @Produce      json
-// @Security     ApiKeyAuth
-// @Param        sessionId   path      string                             true  "Session ID"
-// @Param        message     body      dto.SendViewOnceMessageRequest     true  "View once message data"
-// @Success      200         {object}  dto.SendMessageResponse            "View once message sent successfully"
-// @Failure      400         {object}  dto.ErrorResponse                  "Invalid request, media processing error, or unsupported media type"
-// @Failure      401         {object}  dto.ErrorResponse                  "Unauthorized"
-// @Failure      404         {object}  dto.ErrorResponse                  "Session not found"
-// @Failure      412         {object}  dto.ErrorResponse                  "Session not connected"
-// @Failure      500         {object}  dto.ErrorResponse                  "Internal server error"
-// @Router       /sessions/{sessionId}/send/message/viewonce [post]
-func (h *MessageHandler) SendViewOnce(w http.ResponseWriter, r *http.Request) {
-	sessionID := chi.URLParam(r, "sessionId")
-	if sessionID == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "sessionId is required")
-		return
-	}
 
-	var req dto.SendViewOnceMessageRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.writeError(w, http.StatusBadRequest, "invalid_request", "invalid JSON body")
-		return
-	}
-
-	if req.Phone == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "phone is required")
-		return
-	}
-
-	if req.File == "" {
-		h.writeError(w, http.StatusBadRequest, "validation_error", "file is required")
-		return
-	}
-
-	// Process media using the new media processor
-	mediaProcessor := utils.NewMediaProcessor()
-	media, err := mediaProcessor.ProcessMedia(req.File, req.MimeType, req.FileName)
-	if err != nil {
-		h.logger.Error().
-			Err(err).
-			Str("session_id", sessionID).
-			Str("file", req.File).
-			Msg("Failed to process media")
-		h.writeError(w, http.StatusBadRequest, "media_processing_error", fmt.Sprintf("Failed to process media: %v", err))
-		return
-	}
-
-	media.Caption = req.Caption
-
-	result, err := h.messageService.SendViewOnceMessage(r.Context(), sessionID, req.Phone, media)
-	if err != nil {
-		h.handleMessageError(w, err)
-		return
-	}
-
-	normalizedTo := req.Phone
-	if !strings.Contains(normalizedTo, "@") {
-		normalizedTo = normalizedTo + "@s.whatsapp.net"
-	}
-
-	response := h.buildMessageResponse(result, normalizedTo, "viewonce", media.Caption)
-	h.writeJSON(w, response)
-}
