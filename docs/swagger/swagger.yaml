@@ -12,18 +12,6 @@ definitions:
         example: "2025-01-15T10:30:00Z"
         type: string
     type: object
-  Button:
-    properties:
-      id:
-        example: btn_1
-        type: string
-      text:
-        example: Click Me
-        type: string
-    required:
-    - id
-    - text
-    type: object
   ContactInfo:
     properties:
       name:
@@ -43,6 +31,27 @@ definitions:
     required:
     - name
     - phone
+    type: object
+  ContextInfo:
+    properties:
+      participant:
+        example: 5511888888888@s.whatsapp.net
+        type: string
+      quotedId:
+        example: 3EB0A9253FA64269E11C9D
+        type: string
+      stanzaId:
+        example: 3EB0A9253FA64269E11C9D
+        type: string
+    type: object
+  ContextInfoRequest:
+    properties:
+      participant:
+        example: 5511888888888@s.whatsapp.net
+        type: string
+      stanzaId:
+        example: 3EB0A9253FA64269E11C9D
+        type: string
     type: object
   CreateSessionRequest:
     properties:
@@ -103,35 +112,6 @@ definitions:
       version:
         example: 1.0.0
         type: string
-    type: object
-  ListRow:
-    properties:
-      description:
-        example: Description for option 1
-        type: string
-      id:
-        example: row_1
-        type: string
-      title:
-        example: Option 1
-        type: string
-    required:
-    - id
-    - title
-    type: object
-  ListSection:
-    properties:
-      rows:
-        items:
-          $ref: '#/definitions/ListRow'
-        minItems: 1
-        type: array
-      title:
-        example: Section 1
-        type: string
-    required:
-    - rows
-    - title
     type: object
   MediaData:
     properties:
@@ -195,6 +175,8 @@ definitions:
     properties:
       audio:
         $ref: '#/definitions/MediaData'
+      contextInfo:
+        $ref: '#/definitions/ContextInfoRequest'
       to:
         example: "5511999999999"
         type: string
@@ -202,29 +184,12 @@ definitions:
     - audio
     - to
     type: object
-  SendButtonsMessageRequest:
-    properties:
-      buttons:
-        items:
-          $ref: '#/definitions/Button'
-        maxItems: 3
-        minItems: 1
-        type: array
-      text:
-        example: 'Please choose an option:'
-        type: string
-      to:
-        example: "5511999999999"
-        type: string
-    required:
-    - buttons
-    - text
-    - to
-    type: object
   SendContactMessageRequest:
     properties:
       contact:
         $ref: '#/definitions/ContactInfo'
+      contextInfo:
+        $ref: '#/definitions/ContextInfoRequest'
       to:
         example: "5511999999999"
         type: string
@@ -232,25 +197,13 @@ definitions:
     - contact
     - to
     type: object
-  SendContactsArrayMessageRequest:
-    properties:
-      contacts:
-        items:
-          $ref: '#/definitions/ContactInfo'
-        minItems: 1
-        type: array
-      to:
-        example: "5511999999999"
-        type: string
-    required:
-    - contacts
-    - to
-    type: object
   SendDocumentMessageRequest:
     properties:
       caption:
         example: Important document attached
         type: string
+      contextInfo:
+        $ref: '#/definitions/ContextInfoRequest'
       document:
         $ref: '#/definitions/MediaData'
       to:
@@ -265,6 +218,8 @@ definitions:
       caption:
         example: Check out this beautiful image!
         type: string
+      contextInfo:
+        $ref: '#/definitions/ContextInfoRequest'
       image:
         $ref: '#/definitions/MediaData'
       to:
@@ -274,33 +229,13 @@ definitions:
     - image
     - to
     type: object
-  SendListMessageRequest:
-    properties:
-      sections:
-        items:
-          $ref: '#/definitions/ListSection'
-        minItems: 1
-        type: array
-      text:
-        example: Please select an option from the list
-        type: string
-      title:
-        example: Menu Options
-        type: string
-      to:
-        example: "5511999999999"
-        type: string
-    required:
-    - sections
-    - text
-    - title
-    - to
-    type: object
   SendLocationMessageRequest:
     properties:
       address:
         example: Av. Paulista, 1578 - Bela Vista, São Paulo - SP
         type: string
+      contextInfo:
+        $ref: '#/definitions/ContextInfoRequest'
       latitude:
         example: -23.55052
         maximum: 90
@@ -324,14 +259,28 @@ definitions:
     type: object
   SendMessageResponse:
     properties:
-      messageId:
-        example: msg_123456789
+      content:
+        example: Hello! This is a test message.
         type: string
-      sentAt:
-        example: "2024-01-15T10:30:00Z"
+      contextInfo:
+        $ref: '#/definitions/ContextInfo'
+      id:
+        example: 3EB0A9253FA64269E11C9D
         type: string
       status:
         example: sent
+        type: string
+      success:
+        example: true
+        type: boolean
+      timestamp:
+        example: 1696570882
+        type: integer
+      to:
+        example: 5511999999999@s.whatsapp.net
+        type: string
+      type:
+        example: text
         type: string
     type: object
   SendPollMessageRequest:
@@ -379,30 +328,10 @@ definitions:
     - reaction
     - to
     type: object
-  SendStickerMessageRequest:
-    properties:
-      sticker:
-        $ref: '#/definitions/MediaData'
-      to:
-        example: "5511999999999"
-        type: string
-    required:
-    - sticker
-    - to
-    type: object
-  SendTemplateMessageRequest:
-    properties:
-      template:
-        $ref: '#/definitions/TemplateMessage'
-      to:
-        example: "5511999999999"
-        type: string
-    required:
-    - template
-    - to
-    type: object
   SendTextMessageRequest:
     properties:
+      contextInfo:
+        $ref: '#/definitions/ContextInfoRequest'
       text:
         example: Hello! This is a test message from zpwoot API.
         type: string
@@ -418,6 +347,8 @@ definitions:
       caption:
         example: Watch this amazing video!
         type: string
+      contextInfo:
+        $ref: '#/definitions/ContextInfoRequest'
       to:
         example: "5511999999999"
         type: string
@@ -426,20 +357,6 @@ definitions:
     required:
     - to
     - video
-    type: object
-  SendViewOnceMessageRequest:
-    properties:
-      caption:
-        example: This message will disappear after viewing
-        type: string
-      media:
-        $ref: '#/definitions/MediaData'
-      to:
-        example: "5511999999999"
-        type: string
-    required:
-    - media
-    - to
     type: object
   SessionListInfo:
     properties:
@@ -535,45 +452,6 @@ definitions:
       status:
         example: connected
         type: string
-    type: object
-  TemplateComponent:
-    properties:
-      parameters:
-        items:
-          $ref: '#/definitions/TemplateParameter'
-        type: array
-      type:
-        example: body
-        type: string
-    required:
-    - type
-    type: object
-  TemplateMessage:
-    properties:
-      components:
-        items:
-          $ref: '#/definitions/TemplateComponent'
-        type: array
-      language:
-        example: en_US
-        type: string
-      name:
-        example: hello_world
-        type: string
-    required:
-    - language
-    - name
-    type: object
-  TemplateParameter:
-    properties:
-      text:
-        example: John
-        type: string
-      type:
-        example: text
-        type: string
-    required:
-    - type
     type: object
   WebhookSettings:
     properties:
@@ -868,7 +746,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Send an audio/voice message to a WhatsApp contact
+      description: Send an audio message to a WhatsApp contact. Supports reply/quote
+        using contextInfo.
       parameters:
       - description: Session ID
         in: path
@@ -892,6 +771,10 @@ paths:
           description: Invalid request
           schema:
             $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: Session not found
           schema:
@@ -904,57 +787,17 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Send audio message
-      tags:
-      - Messages
-  /sessions/{sessionId}/send/message/buttons:
-    post:
-      consumes:
-      - application/json
-      description: Send an interactive message with buttons (max 3 buttons)
-      parameters:
-      - description: Session ID
-        in: path
-        name: sessionId
-        required: true
-        type: string
-      - description: Buttons message data
-        in: body
-        name: message
-        required: true
-        schema:
-          $ref: '#/definitions/SendButtonsMessageRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Buttons sent successfully
-          schema:
-            $ref: '#/definitions/SendMessageResponse'
-        "400":
-          description: Invalid request
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "404":
-          description: Session not found
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "412":
-          description: Session not connected
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-      summary: Send buttons message
       tags:
       - Messages
   /sessions/{sessionId}/send/message/contact:
     post:
       consumes:
       - application/json
-      description: Send a contact card to a WhatsApp contact
+      description: Send a contact card to a WhatsApp contact. Supports reply/quote
+        using contextInfo
       parameters:
       - description: Session ID
         in: path
@@ -978,69 +821,21 @@ paths:
           description: Invalid request
           schema:
             $ref: '#/definitions/ErrorResponse'
-        "404":
-          description: Session not found
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/ErrorResponse'
-        "412":
-          description: Session not connected
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Send contact message
-      tags:
-      - Messages
-  /sessions/{sessionId}/send/message/contacts:
-    post:
-      consumes:
-      - application/json
-      description: Send multiple contact cards to a WhatsApp contact
-      parameters:
-      - description: Session ID
-        in: path
-        name: sessionId
-        required: true
-        type: string
-      - description: Contacts array message data
-        in: body
-        name: message
-        required: true
-        schema:
-          $ref: '#/definitions/SendContactsArrayMessageRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Message sent successfully
-          schema:
-            $ref: '#/definitions/SendMessageResponse'
-        "400":
-          description: Invalid request
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "404":
-          description: Session not found
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "412":
-          description: Session not connected
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-      summary: Send multiple contacts
       tags:
       - Messages
   /sessions/{sessionId}/send/message/document:
     post:
       consumes:
       - application/json
-      description: Send a document/file message to a WhatsApp contact
+      description: Send a document message to a WhatsApp contact. Supports reply/quote
+        using contextInfo
       parameters:
       - description: Session ID
         in: path
@@ -1064,18 +859,12 @@ paths:
           description: Invalid request
           schema:
             $ref: '#/definitions/ErrorResponse'
-        "404":
-          description: Session not found
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/ErrorResponse'
-        "412":
-          description: Session not connected
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Send document message
       tags:
       - Messages
@@ -1083,7 +872,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Send an image message to a WhatsApp contact with optional caption
+      description: Send an image message to a WhatsApp contact with optional caption.
+        Supports reply/quote using contextInfo.
       parameters:
       - description: Session ID
         in: path
@@ -1107,6 +897,10 @@ paths:
           description: Invalid request
           schema:
             $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/ErrorResponse'
         "404":
           description: Session not found
           schema:
@@ -1119,57 +913,17 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Send image message
-      tags:
-      - Messages
-  /sessions/{sessionId}/send/message/list:
-    post:
-      consumes:
-      - application/json
-      description: Send an interactive list message with sections and rows
-      parameters:
-      - description: Session ID
-        in: path
-        name: sessionId
-        required: true
-        type: string
-      - description: List message data
-        in: body
-        name: message
-        required: true
-        schema:
-          $ref: '#/definitions/SendListMessageRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: List sent successfully
-          schema:
-            $ref: '#/definitions/SendMessageResponse'
-        "400":
-          description: Invalid request
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "404":
-          description: Session not found
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "412":
-          description: Session not connected
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-      summary: Send list message
       tags:
       - Messages
   /sessions/{sessionId}/send/message/location:
     post:
       consumes:
       - application/json
-      description: Send a location message with GPS coordinates to a WhatsApp contact
+      description: Send a location message to a WhatsApp contact. Supports reply/quote
+        using contextInfo
       parameters:
       - description: Session ID
         in: path
@@ -1193,18 +947,12 @@ paths:
           description: Invalid request
           schema:
             $ref: '#/definitions/ErrorResponse'
-        "404":
-          description: Session not found
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/ErrorResponse'
-        "412":
-          description: Session not connected
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Send location message
       tags:
       - Messages
@@ -1212,14 +960,14 @@ paths:
     post:
       consumes:
       - application/json
-      description: Send a poll/survey with multiple options to a WhatsApp contact
+      description: Send a poll message to a WhatsApp contact
       parameters:
       - description: Session ID
         in: path
         name: sessionId
         required: true
         type: string
-      - description: Poll message data (2-12 options)
+      - description: Poll message data
         in: body
         name: message
         required: true
@@ -1236,18 +984,12 @@ paths:
           description: Invalid request
           schema:
             $ref: '#/definitions/ErrorResponse'
-        "404":
-          description: Session not found
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/ErrorResponse'
-        "412":
-          description: Session not connected
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Send poll message
       tags:
       - Messages
@@ -1255,7 +997,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: React to a message with an emoji
+      description: Send a reaction (emoji) to a specific message
       parameters:
       - description: Session ID
         in: path
@@ -1279,121 +1021,30 @@ paths:
           description: Invalid request
           schema:
             $ref: '#/definitions/ErrorResponse'
-        "404":
-          description: Session not found
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/ErrorResponse'
-        "412":
-          description: Session not connected
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-      summary: Send reaction to message
-      tags:
-      - Messages
-  /sessions/{sessionId}/send/message/sticker:
-    post:
-      consumes:
-      - application/json
-      description: Send a sticker message to a WhatsApp contact
-      parameters:
-      - description: Session ID
-        in: path
-        name: sessionId
-        required: true
-        type: string
-      - description: Sticker message data
-        in: body
-        name: message
-        required: true
-        schema:
-          $ref: '#/definitions/SendStickerMessageRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Message sent successfully
-          schema:
-            $ref: '#/definitions/SendMessageResponse'
-        "400":
-          description: Invalid request
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "404":
-          description: Session not found
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "412":
-          description: Session not connected
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-      summary: Send sticker message
-      tags:
-      - Messages
-  /sessions/{sessionId}/send/message/template:
-    post:
-      consumes:
-      - application/json
-      description: Send a WhatsApp Business template message
-      parameters:
-      - description: Session ID
-        in: path
-        name: sessionId
-        required: true
-        type: string
-      - description: Template message data
-        in: body
-        name: message
-        required: true
-        schema:
-          $ref: '#/definitions/SendTemplateMessageRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Template sent successfully
-          schema:
-            $ref: '#/definitions/SendMessageResponse'
-        "400":
-          description: Invalid request
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "404":
-          description: Session not found
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "412":
-          description: Session not connected
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-      summary: Send template message
+      security:
+      - ApiKeyAuth: []
+      summary: Send reaction message
       tags:
       - Messages
   /sessions/{sessionId}/send/message/text:
     post:
       consumes:
       - application/json
-      description: Send a text message to a WhatsApp contact
+      description: Send a simple text message to a WhatsApp contact. Supports reply/quote
+        using contextInfo.
       parameters:
       - description: Session ID
         in: path
         name: sessionId
         required: true
         type: string
-      - description: Text message request
+      - description: Text message data
         in: body
-        name: request
+        name: message
         required: true
         schema:
           $ref: '#/definitions/SendTextMessageRequest'
@@ -1405,7 +1056,11 @@ paths:
           schema:
             $ref: '#/definitions/SendMessageResponse'
         "400":
-          description: Bad request
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/ErrorResponse'
         "404":
@@ -1422,14 +1077,15 @@ paths:
             $ref: '#/definitions/ErrorResponse'
       security:
       - ApiKeyAuth: []
-      summary: Send Text Message
+      summary: Send text message
       tags:
       - Messages
   /sessions/{sessionId}/send/message/video:
     post:
       consumes:
       - application/json
-      description: Send a video message to a WhatsApp contact with optional caption
+      description: Send a video message to a WhatsApp contact with optional caption.
+        Supports reply/quote using contextInfo.
       parameters:
       - description: Session ID
         in: path
@@ -1453,63 +1109,13 @@ paths:
           description: Invalid request
           schema:
             $ref: '#/definitions/ErrorResponse'
-        "404":
-          description: Session not found
+        "401":
+          description: Unauthorized
           schema:
             $ref: '#/definitions/ErrorResponse'
-        "412":
-          description: Session not connected
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/ErrorResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Send video message
-      tags:
-      - Messages
-  /sessions/{sessionId}/send/message/viewonce:
-    post:
-      consumes:
-      - application/json
-      description: Send a media message that can only be viewed once (disappears after
-        viewing)
-      parameters:
-      - description: Session ID
-        in: path
-        name: sessionId
-        required: true
-        type: string
-      - description: View once message data
-        in: body
-        name: message
-        required: true
-        schema:
-          $ref: '#/definitions/SendViewOnceMessageRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: View once message sent successfully
-          schema:
-            $ref: '#/definitions/SendMessageResponse'
-        "400":
-          description: Invalid request
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "404":
-          description: Session not found
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "412":
-          description: Session not connected
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/ErrorResponse'
-      summary: Send view once message
       tags:
       - Messages
   /sessions/create:
