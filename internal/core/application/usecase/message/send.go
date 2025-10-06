@@ -92,9 +92,12 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 	}
 
 	return &dto.SendMessageResponse{
-		MessageID: finalMessageID,
+		Success:   true,
+		ID:        finalMessageID,
+		To:        "",
+		Type:      "",
+		Timestamp: messageResult.SentAt.Unix(),
 		Status:    messageResult.Status,
-		SentAt:    messageResult.SentAt,
 	}, nil
 }
 

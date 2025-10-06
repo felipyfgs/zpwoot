@@ -38,16 +38,16 @@ type MessageUseCases interface {
 }
 
 type MessageService interface {
-	SendTextMessage(ctx context.Context, sessionID, to, text string) error
-	SendMediaMessage(ctx context.Context, sessionID, to string, media *output.MediaData) error
-	SendLocationMessage(ctx context.Context, sessionID, to string, latitude, longitude float64, name string) error
-	SendContactMessage(ctx context.Context, sessionID, to string, contact *ContactInfo) error
-	SendReactionMessage(ctx context.Context, sessionID, to, messageID, reaction string) error
-	SendPollMessage(ctx context.Context, sessionID, to, name string, options []string, selectableCount int) error
-	SendButtonsMessage(ctx context.Context, sessionID, to, text string, buttons []ButtonInfo) error
-	SendListMessage(ctx context.Context, sessionID, to, text, title string, sections []ListSectionInfo) error
-	SendTemplateMessage(ctx context.Context, sessionID, to string, template TemplateInfo) error
-	SendViewOnceMessage(ctx context.Context, sessionID, to string, media *output.MediaData) error
+	SendTextMessage(ctx context.Context, sessionID, to, text string, contextInfo *output.MessageContextInfo) (*output.MessageResult, error)
+	SendMediaMessage(ctx context.Context, sessionID, to string, media *output.MediaData, contextInfo *output.MessageContextInfo) (*output.MessageResult, error)
+	SendLocationMessage(ctx context.Context, sessionID, to string, latitude, longitude float64, name string, contextInfo *output.MessageContextInfo) (*output.MessageResult, error)
+	SendContactMessage(ctx context.Context, sessionID, to string, contact *ContactInfo, contextInfo *output.MessageContextInfo) (*output.MessageResult, error)
+	SendReactionMessage(ctx context.Context, sessionID, to, messageID, reaction string) (*output.MessageResult, error)
+	SendPollMessage(ctx context.Context, sessionID, to, name string, options []string, selectableCount int) (*output.MessageResult, error)
+	SendButtonsMessage(ctx context.Context, sessionID, to, text string, buttons []ButtonInfo) (*output.MessageResult, error)
+	SendListMessage(ctx context.Context, sessionID, to, text, title string, sections []ListSectionInfo) (*output.MessageResult, error)
+	SendTemplateMessage(ctx context.Context, sessionID, to string, template TemplateInfo) (*output.MessageResult, error)
+	SendViewOnceMessage(ctx context.Context, sessionID, to string, media *output.MediaData) (*output.MessageResult, error)
 	GetChatInfo(ctx context.Context, sessionID, chatJID string) (*ChatInfo, error)
 	GetContacts(ctx context.Context, sessionID string) ([]*ContactInfo, error)
 	GetChats(ctx context.Context, sessionID string) ([]*ChatInfo, error)

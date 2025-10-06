@@ -18,6 +18,10 @@ func NewWAClientAdapter(client *WAClient) *WAClientAdapter {
 	}
 }
 
+func (w *WAClientAdapter) GetWAClient() *WAClient {
+	return w.client
+}
+
 func (w *WAClientAdapter) CreateSession(ctx context.Context, sessionID string) error {
 	config := &SessionConfig{
 		SessionID: sessionID,
@@ -89,7 +93,7 @@ func (w *WAClientAdapter) GetQRCode(ctx context.Context, sessionID string) (*out
 
 func (w *WAClientAdapter) SendTextMessage(ctx context.Context, sessionID, to, text string) (*output.MessageResult, error) {
 	messageSender := NewMessageSender(w.client)
-	resp, err := messageSender.SendTextMessage(ctx, sessionID, to, text)
+	resp, err := messageSender.SendTextMessage(ctx, sessionID, to, text, nil)
 	if err != nil {
 		return nil, w.convertError(err)
 	}

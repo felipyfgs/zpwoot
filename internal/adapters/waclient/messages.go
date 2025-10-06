@@ -2,8 +2,11 @@ package waclient
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"strings"
+	"time"
 
 	"zpwoot/internal/core/ports/input"
 	"zpwoot/internal/core/ports/output"
@@ -22,9 +25,13 @@ func NewMessageSender(waClient *WAClient) *MessageSenderImpl {
 	return &MessageSenderImpl{waClient: waClient}
 }
 
-func (ms *MessageSenderImpl) SendTextMessage(ctx context.Context, sessionID string, to string, text string) (*whatsmeow.SendResponse, error) {
+func (ms *MessageSenderImpl) SendTextMessage(ctx context.Context, sessionID string, to string, text string, contextInfo *output.MessageContextInfo) (*whatsmeow.SendResponse, error) {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := ms.waitForConnection(client, 10*time.Second); err != nil {
 		return nil, err
 	}
 
@@ -33,7 +40,19 @@ func (ms *MessageSenderImpl) SendTextMessage(ctx context.Context, sessionID stri
 		return nil, ErrInvalidJID
 	}
 
-	message := &waE2E.Message{Conversation: proto.String(text)}
+	var message *waE2E.Message
+
+	if contextInfo != nil && contextInfo.StanzaID != "" {
+		message = &waE2E.Message{
+			ExtendedTextMessage: &waE2E.ExtendedTextMessage{
+				Text:        proto.String(text),
+				ContextInfo: buildContextInfo(contextInfo),
+			},
+		}
+	} else {
+
+		message = &waE2E.Message{Conversation: proto.String(text)}
+	}
 
 	resp, err := client.WAClient.SendMessage(ctx, recipientJID, message)
 	if err != nil {
@@ -217,11 +236,30 @@ func (ms *MessageSenderImpl) getConnectedClient(ctx context.Context, sessionID s
 		return nil, err
 	}
 
-	if !client.IsConnected() {
-		return nil, ErrNotConnected
+	return client, nil
+}
+
+func (ms *MessageSenderImpl) waitForConnection(client *Client, timeout time.Duration) error {
+	if client.WAClient.IsConnected() {
+		return nil
 	}
 
-	return client, nil
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	timeoutTimer := time.NewTimer(timeout)
+	defer timeoutTimer.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			if client.WAClient.IsConnected() {
+				return nil
+			}
+		case <-timeoutTimer.C:
+			return fmt.Errorf("timeout waiting for websocket connection")
+		}
+	}
 }
 
 func (ms *MessageSenderImpl) generateVCard(name, phone string) string {
@@ -390,29 +428,82 @@ func NewMessageServiceWrapper(messageSender *MessageSenderImpl) input.MessageSer
 	}
 }
 
-func (w *MessageServiceWrapper) SendTextMessage(ctx context.Context, sessionID string, to string, text string) error {
-	_, err := w.MessageSenderImpl.SendTextMessage(ctx, sessionID, to, text)
-	return err
+func (w *MessageServiceWrapper) SendTextMessage(ctx context.Context, sessionID string, to string, text string, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
+	resp, err := w.MessageSenderImpl.SendTextMessage(ctx, sessionID, to, text, contextInfo)
+	if err != nil {
+		return nil, err
+	}
+	return &output.MessageResult{
+		MessageID: string(resp.ID),
+		Status:    "sent",
+		SentAt:    resp.Timestamp,
+	}, nil
 }
 
-func (w *MessageServiceWrapper) SendMediaMessage(ctx context.Context, sessionID string, to string, media *output.MediaData) error {
-	_, err := w.MessageSenderImpl.SendMediaMessage(ctx, sessionID, to, media)
-	return err
+func (w *MessageServiceWrapper) SendMediaMessage(ctx context.Context, sessionID string, to string, media *output.MediaData, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
+	// TODO: Implement contextInfo support for media messages
+	resp, err := w.MessageSenderImpl.SendMediaMessage(ctx, sessionID, to, media)
+	if err != nil {
+		return nil, err
+	}
+	return &output.MessageResult{
+		MessageID: string(resp.ID),
+		Status:    "sent",
+		SentAt:    resp.Timestamp,
+	}, nil
 }
 
-func (w *MessageServiceWrapper) SendContactMessage(ctx context.Context, sessionID string, to string, contact *input.ContactInfo) error {
-	return w.SendContactMessageFromInput(ctx, sessionID, to, contact)
+func (w *MessageServiceWrapper) SendLocationMessage(ctx context.Context, sessionID, to string, latitude, longitude float64, name string, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
+	// TODO: Implement contextInfo support for location messages
+	err := w.MessageSenderImpl.SendLocationMessage(ctx, sessionID, to, latitude, longitude, name)
+	if err != nil {
+		return nil, err
+	}
+	return &output.MessageResult{
+		MessageID: generateFallbackMessageID(),
+		Status:    "sent",
+		SentAt:    time.Now(),
+	}, nil
 }
 
-func (w *MessageServiceWrapper) SendReactionMessage(ctx context.Context, sessionID, to, messageID, reaction string) error {
-	return w.MessageSenderImpl.SendReactionMessage(ctx, sessionID, to, messageID, reaction)
+func (w *MessageServiceWrapper) SendContactMessage(ctx context.Context, sessionID string, to string, contact *input.ContactInfo, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
+	// TODO: Implement contextInfo support for contact messages
+	err := w.SendContactMessageFromInput(ctx, sessionID, to, contact)
+	if err != nil {
+		return nil, err
+	}
+	return &output.MessageResult{
+		MessageID: generateFallbackMessageID(),
+		Status:    "sent",
+		SentAt:    time.Now(),
+	}, nil
 }
 
-func (w *MessageServiceWrapper) SendPollMessage(ctx context.Context, sessionID, to, name string, options []string, selectableCount int) error {
-	return w.MessageSenderImpl.SendPollMessage(ctx, sessionID, to, name, options, selectableCount)
+func (w *MessageServiceWrapper) SendReactionMessage(ctx context.Context, sessionID, to, messageID, reaction string) (*output.MessageResult, error) {
+	err := w.MessageSenderImpl.SendReactionMessage(ctx, sessionID, to, messageID, reaction)
+	if err != nil {
+		return nil, err
+	}
+	return &output.MessageResult{
+		MessageID: generateFallbackMessageID(),
+		Status:    "sent",
+		SentAt:    time.Now(),
+	}, nil
 }
 
-func (w *MessageServiceWrapper) SendButtonsMessage(ctx context.Context, sessionID, to, text string, buttons []input.ButtonInfo) error {
+func (w *MessageServiceWrapper) SendPollMessage(ctx context.Context, sessionID, to, name string, options []string, selectableCount int) (*output.MessageResult, error) {
+	err := w.MessageSenderImpl.SendPollMessage(ctx, sessionID, to, name, options, selectableCount)
+	if err != nil {
+		return nil, err
+	}
+	return &output.MessageResult{
+		MessageID: generateFallbackMessageID(),
+		Status:    "sent",
+		SentAt:    time.Now(),
+	}, nil
+}
+
+func (w *MessageServiceWrapper) SendButtonsMessage(ctx context.Context, sessionID, to, text string, buttons []input.ButtonInfo) (*output.MessageResult, error) {
 
 	var waButtons []ButtonInfo
 	for _, btn := range buttons {
@@ -421,10 +512,18 @@ func (w *MessageServiceWrapper) SendButtonsMessage(ctx context.Context, sessionI
 			Text: btn.Text,
 		})
 	}
-	return w.MessageSenderImpl.SendButtonsMessage(ctx, sessionID, to, text, waButtons)
+	err := w.MessageSenderImpl.SendButtonsMessage(ctx, sessionID, to, text, waButtons)
+	if err != nil {
+		return nil, err
+	}
+	return &output.MessageResult{
+		MessageID: generateFallbackMessageID(),
+		Status:    "sent",
+		SentAt:    time.Now(),
+	}, nil
 }
 
-func (w *MessageServiceWrapper) SendListMessage(ctx context.Context, sessionID, to, text, title string, sections []input.ListSectionInfo) error {
+func (w *MessageServiceWrapper) SendListMessage(ctx context.Context, sessionID, to, text, title string, sections []input.ListSectionInfo) (*output.MessageResult, error) {
 
 	var waSections []ListSection
 	for _, section := range sections {
@@ -441,19 +540,43 @@ func (w *MessageServiceWrapper) SendListMessage(ctx context.Context, sessionID, 
 			Rows:  rows,
 		})
 	}
-	return w.MessageSenderImpl.SendListMessage(ctx, sessionID, to, text, title, "", waSections)
+	err := w.MessageSenderImpl.SendListMessage(ctx, sessionID, to, text, title, "", waSections)
+	if err != nil {
+		return nil, err
+	}
+	return &output.MessageResult{
+		MessageID: generateFallbackMessageID(),
+		Status:    "sent",
+		SentAt:    time.Now(),
+	}, nil
 }
 
-func (w *MessageServiceWrapper) SendTemplateMessage(ctx context.Context, sessionID, to string, template input.TemplateInfo) error {
+func (w *MessageServiceWrapper) SendTemplateMessage(ctx context.Context, sessionID, to string, template input.TemplateInfo) (*output.MessageResult, error) {
 	waTemplate := TemplateInfo{
 		Content: template.Content,
 		Footer:  template.Footer,
 	}
-	return w.MessageSenderImpl.SendTemplateMessage(ctx, sessionID, to, waTemplate)
+	err := w.MessageSenderImpl.SendTemplateMessage(ctx, sessionID, to, waTemplate)
+	if err != nil {
+		return nil, err
+	}
+	return &output.MessageResult{
+		MessageID: generateFallbackMessageID(),
+		Status:    "sent",
+		SentAt:    time.Now(),
+	}, nil
 }
 
-func (w *MessageServiceWrapper) SendViewOnceMessage(ctx context.Context, sessionID, to string, media *output.MediaData) error {
-	return w.MessageSenderImpl.SendViewOnceMessage(ctx, sessionID, to, media)
+func (w *MessageServiceWrapper) SendViewOnceMessage(ctx context.Context, sessionID, to string, media *output.MediaData) (*output.MessageResult, error) {
+	err := w.MessageSenderImpl.SendViewOnceMessage(ctx, sessionID, to, media)
+	if err != nil {
+		return nil, err
+	}
+	return &output.MessageResult{
+		MessageID: generateFallbackMessageID(),
+		Status:    "sent",
+		SentAt:    time.Now(),
+	}, nil
 }
 
 func (w *MessageServiceWrapper) GetChatInfo(ctx context.Context, sessionID, chatJID string) (*input.ChatInfo, error) {
@@ -734,4 +857,28 @@ type ListRow struct {
 type TemplateInfo struct {
 	Content string
 	Footer  string
+}
+
+func generateFallbackMessageID() string {
+	bytes := make([]byte, 16)
+	rand.Read(bytes)
+	return strings.ToUpper(hex.EncodeToString(bytes))
+}
+
+func buildContextInfo(contextInfo *output.MessageContextInfo) *waE2E.ContextInfo {
+	if contextInfo == nil {
+		return nil
+	}
+
+	ctx := &waE2E.ContextInfo{}
+
+	if contextInfo.StanzaID != "" {
+		ctx.StanzaID = proto.String(contextInfo.StanzaID)
+	}
+
+	if contextInfo.Participant != "" {
+		ctx.Participant = proto.String(contextInfo.Participant)
+	}
+
+	return ctx
 }

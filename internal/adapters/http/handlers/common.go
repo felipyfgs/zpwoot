@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"zpwoot/internal/adapters/database"
-	"zpwoot/internal/adapters/database/repository"
 	"zpwoot/internal/adapters/logger"
 	"zpwoot/internal/adapters/waclient"
 	"zpwoot/internal/config"
 	"zpwoot/internal/core/ports/input"
+	"zpwoot/internal/core/ports/output"
 )
 
 type Handlers struct {
@@ -21,29 +21,26 @@ func NewHandlers(
 	cfg *config.Config,
 	sessionUseCases input.SessionUseCases,
 	messageUseCases input.MessageUseCases,
+	waClient output.WhatsAppClient,
 ) *Handlers {
 	return &Handlers{
-		Session: createSessionHandler(db, logger, cfg, sessionUseCases),
-		Message: createMessageHandler(db, logger, cfg),
+		Session: createSessionHandler(logger, sessionUseCases, waClient),
+		Message: createMessageHandler(logger, waClient),
 		Health:  NewHealthHandler(db),
 	}
 }
 
 func createSessionHandler(
-	db *database.Database,
 	logger *logger.Logger,
-	cfg *config.Config,
 	sessionUseCases input.SessionUseCases,
+	waClient output.WhatsAppClient,
 ) *SessionHandler {
-	sessionRepository := repository.NewSessionRepository(db.DB)
-	sessionRepo := repository.NewSessionRepo(sessionRepository)
-	waContainer := waclient.NewWAStoreContainer(
-		db.DB,
-		logger,
-		cfg.Database.URL,
-	)
-	waClient := waclient.NewWAClient(waContainer, logger, sessionRepo)
-	sessionManager := waclient.NewSessionManagerAdapter(waClient)
+
+	waClientAdapter, ok := waClient.(*waclient.WAClientAdapter)
+	if !ok {
+		panic("waClient is not a WAClientAdapter")
+	}
+	sessionManager := waclient.NewSessionManagerAdapter(waClientAdapter.GetWAClient())
 
 	return NewSessionHandler(
 		sessionUseCases,
@@ -53,20 +50,16 @@ func createSessionHandler(
 }
 
 func createMessageHandler(
-	db *database.Database,
 	logger *logger.Logger,
-	cfg *config.Config,
+	waClient output.WhatsAppClient,
 ) *MessageHandler {
-	sessionRepository := repository.NewSessionRepository(db.DB)
-	sessionRepo := repository.NewSessionRepo(sessionRepository)
-	waContainer := waclient.NewWAStoreContainer(
-		db.DB,
-		logger,
-		cfg.Database.URL,
-	)
-	waClient := waclient.NewWAClient(waContainer, logger, sessionRepo)
 
-	messageSender := waclient.NewMessageSender(waClient)
+	waClientAdapter, ok := waClient.(*waclient.WAClientAdapter)
+	if !ok {
+		panic("waClient is not a WAClientAdapter")
+	}
+
+	messageSender := waclient.NewMessageSender(waClientAdapter.GetWAClient())
 	messageService := waclient.NewMessageServiceWrapper(messageSender)
 
 	return NewMessageHandler(

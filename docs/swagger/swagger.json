@@ -30,7 +30,7 @@
                     "200": {
                         "description": "Service information",
                         "schema": {
-                            "$ref": "#/definitions/internal_adapters_http_handlers.InfoResponse"
+                            "$ref": "#/definitions/InfoResponse"
                         }
                     }
                 }
@@ -50,7 +50,7 @@
                     "200": {
                         "description": "Service is healthy",
                         "schema": {
-                            "$ref": "#/definitions/internal_adapters_http_handlers.HealthResponse"
+                            "$ref": "#/definitions/HealthResponse"
                         }
                     },
                     "503": {
@@ -494,6 +494,986 @@
                     }
                 }
             }
+        },
+        "/sessions/{sessionId}/send/message/audio": {
+            "post": {
+                "description": "Send an audio/voice message to a WhatsApp contact",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send audio message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Audio message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SendAudioMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/SendMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Session not connected",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/send/message/buttons": {
+            "post": {
+                "description": "Send an interactive message with buttons (max 3 buttons)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send buttons message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Buttons message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SendButtonsMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Buttons sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/SendMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Session not connected",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/send/message/contact": {
+            "post": {
+                "description": "Send a contact card to a WhatsApp contact",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send contact message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Contact message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SendContactMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/SendMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Session not connected",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/send/message/contacts": {
+            "post": {
+                "description": "Send multiple contact cards to a WhatsApp contact",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send multiple contacts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Contacts array message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SendContactsArrayMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/SendMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Session not connected",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/send/message/document": {
+            "post": {
+                "description": "Send a document/file message to a WhatsApp contact",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send document message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Document message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SendDocumentMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/SendMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Session not connected",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/send/message/image": {
+            "post": {
+                "description": "Send an image message to a WhatsApp contact with optional caption",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send image message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Image message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SendImageMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/SendMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Session not connected",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/send/message/list": {
+            "post": {
+                "description": "Send an interactive list message with sections and rows",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send list message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "List message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SendListMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/SendMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Session not connected",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/send/message/location": {
+            "post": {
+                "description": "Send a location message with GPS coordinates to a WhatsApp contact",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send location message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Location message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SendLocationMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/SendMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Session not connected",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/send/message/poll": {
+            "post": {
+                "description": "Send a poll/survey with multiple options to a WhatsApp contact",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send poll message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Poll message data (2-12 options)",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SendPollMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Poll sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/SendMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Session not connected",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/send/message/reaction": {
+            "post": {
+                "description": "React to a message with an emoji",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send reaction to message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Reaction message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SendReactionMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reaction sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/SendMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Session not connected",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/send/message/sticker": {
+            "post": {
+                "description": "Send a sticker message to a WhatsApp contact",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send sticker message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Sticker message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SendStickerMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/SendMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Session not connected",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/send/message/template": {
+            "post": {
+                "description": "Send a WhatsApp Business template message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send template message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Template message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SendTemplateMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Template sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/SendMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Session not connected",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/send/message/text": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Send a text message to a WhatsApp contact",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send Text Message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Text message request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SendTextMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/SendMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Session not connected",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/send/message/video": {
+            "post": {
+                "description": "Send a video message to a WhatsApp contact with optional caption",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send video message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Video message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SendVideoMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/SendMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Session not connected",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/send/message/viewonce": {
+            "post": {
+                "description": "Send a media message that can only be viewed once (disappears after viewing)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Messages"
+                ],
+                "summary": "Send view once message",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Session ID",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "View once message data",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/SendViewOnceMessageRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "View once message sent successfully",
+                        "schema": {
+                            "$ref": "#/definitions/SendMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "412": {
+                        "description": "Session not connected",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -511,6 +1491,44 @@
                 "timestamp": {
                     "type": "string",
                     "example": "2025-01-15T10:30:00Z"
+                }
+            }
+        },
+        "Button": {
+            "type": "object",
+            "required": [
+                "id",
+                "text"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "btn_1"
+                },
+                "text": {
+                    "type": "string",
+                    "example": "Click Me"
+                }
+            }
+        },
+        "ContactInfo": {
+            "type": "object",
+            "required": [
+                "name",
+                "phone"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "phone": {
+                    "type": "string",
+                    "example": "5511999999999"
+                },
+                "vcard": {
+                    "type": "string",
+                    "example": "BEGIN:VCARD\nVERSION:3.0\nFN:John Doe\nTEL:+5511999999999\nEND:VCARD"
                 }
             }
         },
@@ -562,6 +1580,106 @@
                 "message": {
                     "type": "string",
                     "example": "name is required"
+                }
+            }
+        },
+        "HealthResponse": {
+            "type": "object",
+            "properties": {
+                "service": {
+                    "type": "string",
+                    "example": "zpwoot"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "ok"
+                },
+                "version": {
+                    "type": "string",
+                    "example": "1.0.0"
+                }
+            }
+        },
+        "InfoResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "zpwoot WhatsApp API is running"
+                },
+                "service": {
+                    "type": "string",
+                    "example": "zpwoot"
+                },
+                "version": {
+                    "type": "string",
+                    "example": "1.0.0"
+                }
+            }
+        },
+        "ListRow": {
+            "type": "object",
+            "required": [
+                "id",
+                "title"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Description for option 1"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "row_1"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Option 1"
+                }
+            }
+        },
+        "ListSection": {
+            "type": "object",
+            "required": [
+                "rows",
+                "title"
+            ],
+            "properties": {
+                "rows": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/ListRow"
+                    }
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Section 1"
+                }
+            }
+        },
+        "MediaData": {
+            "type": "object",
+            "properties": {
+                "base64": {
+                    "type": "string",
+                    "example": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+                },
+                "caption": {
+                    "type": "string",
+                    "example": "Check out this image!"
+                },
+                "fileName": {
+                    "type": "string",
+                    "example": "image.jpg"
+                },
+                "mimeType": {
+                    "type": "string",
+                    "example": "image/jpeg"
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://example.com/image.jpg"
                 }
             }
         },
@@ -617,6 +1735,354 @@
                 "status": {
                     "type": "string",
                     "example": "generated"
+                }
+            }
+        },
+        "SendAudioMessageRequest": {
+            "type": "object",
+            "required": [
+                "audio",
+                "to"
+            ],
+            "properties": {
+                "audio": {
+                    "$ref": "#/definitions/MediaData"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
+        "SendButtonsMessageRequest": {
+            "type": "object",
+            "required": [
+                "buttons",
+                "text",
+                "to"
+            ],
+            "properties": {
+                "buttons": {
+                    "type": "array",
+                    "maxItems": 3,
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/Button"
+                    }
+                },
+                "text": {
+                    "type": "string",
+                    "example": "Please choose an option:"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
+        "SendContactMessageRequest": {
+            "type": "object",
+            "required": [
+                "contact",
+                "to"
+            ],
+            "properties": {
+                "contact": {
+                    "$ref": "#/definitions/ContactInfo"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
+        "SendContactsArrayMessageRequest": {
+            "type": "object",
+            "required": [
+                "contacts",
+                "to"
+            ],
+            "properties": {
+                "contacts": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/ContactInfo"
+                    }
+                },
+                "to": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
+        "SendDocumentMessageRequest": {
+            "type": "object",
+            "required": [
+                "document",
+                "to"
+            ],
+            "properties": {
+                "caption": {
+                    "type": "string",
+                    "example": "Important document attached"
+                },
+                "document": {
+                    "$ref": "#/definitions/MediaData"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
+        "SendImageMessageRequest": {
+            "type": "object",
+            "required": [
+                "image",
+                "to"
+            ],
+            "properties": {
+                "caption": {
+                    "type": "string",
+                    "example": "Check out this beautiful image!"
+                },
+                "image": {
+                    "$ref": "#/definitions/MediaData"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
+        "SendListMessageRequest": {
+            "type": "object",
+            "required": [
+                "sections",
+                "text",
+                "title",
+                "to"
+            ],
+            "properties": {
+                "sections": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/ListSection"
+                    }
+                },
+                "text": {
+                    "type": "string",
+                    "example": "Please select an option from the list"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Menu Options"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
+        "SendLocationMessageRequest": {
+            "type": "object",
+            "required": [
+                "latitude",
+                "longitude",
+                "to"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "Av. Paulista, 1578 - Bela Vista, São Paulo - SP"
+                },
+                "latitude": {
+                    "type": "number",
+                    "maximum": 90,
+                    "minimum": -90,
+                    "example": -23.55052
+                },
+                "longitude": {
+                    "type": "number",
+                    "maximum": 180,
+                    "minimum": -180,
+                    "example": -46.633308
+                },
+                "name": {
+                    "type": "string",
+                    "example": "São Paulo"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
+        "SendMessageResponse": {
+            "type": "object",
+            "properties": {
+                "messageId": {
+                    "type": "string",
+                    "example": "msg_123456789"
+                },
+                "sentAt": {
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "sent"
+                }
+            }
+        },
+        "SendPollMessageRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "options",
+                "selectableOptionsCount",
+                "to"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "What's your favorite color?"
+                },
+                "options": {
+                    "type": "array",
+                    "maxItems": 12,
+                    "minItems": 2,
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "Red",
+                        "Blue",
+                        "Green",
+                        "Yellow"
+                    ]
+                },
+                "selectableOptionsCount": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "example": 1
+                },
+                "to": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
+        "SendReactionMessageRequest": {
+            "type": "object",
+            "required": [
+                "messageId",
+                "reaction",
+                "to"
+            ],
+            "properties": {
+                "messageId": {
+                    "type": "string",
+                    "example": "3EB0C767D0D1A6F4FD29"
+                },
+                "reaction": {
+                    "type": "string",
+                    "example": "👍"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
+        "SendStickerMessageRequest": {
+            "type": "object",
+            "required": [
+                "sticker",
+                "to"
+            ],
+            "properties": {
+                "sticker": {
+                    "$ref": "#/definitions/MediaData"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
+        "SendTemplateMessageRequest": {
+            "type": "object",
+            "required": [
+                "template",
+                "to"
+            ],
+            "properties": {
+                "template": {
+                    "$ref": "#/definitions/TemplateMessage"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
+        "SendTextMessageRequest": {
+            "type": "object",
+            "required": [
+                "text",
+                "to"
+            ],
+            "properties": {
+                "text": {
+                    "type": "string",
+                    "example": "Hello! This is a test message from zpwoot API."
+                },
+                "to": {
+                    "type": "string",
+                    "example": "5511999999999"
+                }
+            }
+        },
+        "SendVideoMessageRequest": {
+            "type": "object",
+            "required": [
+                "to",
+                "video"
+            ],
+            "properties": {
+                "caption": {
+                    "type": "string",
+                    "example": "Watch this amazing video!"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "5511999999999"
+                },
+                "video": {
+                    "$ref": "#/definitions/MediaData"
+                }
+            }
+        },
+        "SendViewOnceMessageRequest": {
+            "type": "object",
+            "required": [
+                "media",
+                "to"
+            ],
+            "properties": {
+                "caption": {
+                    "type": "string",
+                    "example": "This message will disappear after viewing"
+                },
+                "media": {
+                    "$ref": "#/definitions/MediaData"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "5511999999999"
                 }
             }
         },
@@ -752,6 +2218,63 @@
                 }
             }
         },
+        "TemplateComponent": {
+            "type": "object",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "parameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/TemplateParameter"
+                    }
+                },
+                "type": {
+                    "type": "string",
+                    "example": "body"
+                }
+            }
+        },
+        "TemplateMessage": {
+            "type": "object",
+            "required": [
+                "language",
+                "name"
+            ],
+            "properties": {
+                "components": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/TemplateComponent"
+                    }
+                },
+                "language": {
+                    "type": "string",
+                    "example": "en_US"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "hello_world"
+                }
+            }
+        },
+        "TemplateParameter": {
+            "type": "object",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "text": {
+                    "type": "string",
+                    "example": "John"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "text"
+                }
+            }
+        },
         "WebhookSettings": {
             "type": "object",
             "properties": {
@@ -777,34 +2300,6 @@
                 "url": {
                     "type": "string",
                     "example": "https://api.example.com/webhook"
-                }
-            }
-        },
-        "internal_adapters_http_handlers.HealthResponse": {
-            "type": "object",
-            "properties": {
-                "service": {
-                    "type": "string"
-                },
-                "status": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
-                }
-            }
-        },
-        "internal_adapters_http_handlers.InfoResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                },
-                "service": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
                 }
             }
         }

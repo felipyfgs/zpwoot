@@ -16,6 +16,7 @@ const (
 	EventConnected    EventType = "Connected"
 	EventDisconnected EventType = "Disconnected"
 	EventQR           EventType = "QR"
+	EventReceipt      EventType = "Receipt"
 	EventReadReceipt  EventType = "ReadReceipt"
 	EventPresence     EventType = "Presence"
 	EventChatPresence EventType = "ChatPresence"
@@ -88,7 +89,11 @@ type Client struct {
 }
 
 func (c *Client) IsConnected() bool {
-	return c.Status == session.StatusConnected
+
+	if c.WAClient == nil {
+		return false
+	}
+	return c.WAClient.IsConnected()
 }
 
 func (c *Client) IsLoggedIn() bool {

@@ -105,9 +105,7 @@ func (wac *WAClient) autoReconnect(client *Client) {
 		client.Status = session.StatusDisconnected
 	} else {
 		wac.logger.Debug().Str("session_id", client.SessionID).Msg("Auto-reconnected")
-		client.Status = session.StatusConnected
-		client.ConnectedAt = time.Now()
-		client.LastSeen = time.Now()
+
 	}
 	wac.updateSessionStatus(client.ctx, client)
 }
@@ -186,12 +184,6 @@ func (wac *WAClient) CreateSession(ctx context.Context, config *SessionConfig) (
 	}
 
 	deviceStore := wac.container.NewDevice()
-	wac.logger.Debug().
-		Str("session_id", config.SessionID).
-		Str("session_name", sess.Name).
-		Str("device_id", fmt.Sprintf("%p", deviceStore)).
-		Msg("Created new device for session")
-
 	client := wac.createClient(ctx, sess, deviceStore)
 	client.Config = config
 	client.Events = config.Events
@@ -289,11 +281,6 @@ func (wac *WAClient) recreateClient(ctx context.Context, sess *session.Session) 
 	}
 
 	deviceStore := wac.container.NewDevice()
-	wac.logger.Debug().
-		Str("session_id", sess.ID).
-		Str("session_name", sess.Name).
-		Msg("Recreating client with new device")
-
 	client := wac.createClient(ctx, sess, deviceStore)
 	wac.sessions[sess.ID] = client
 
@@ -401,6 +388,12 @@ func (wac *WAClient) createEventHandler(client *Client) func(interface{}) {
 			wac.handleQREvent(client, v)
 		case *events.Message:
 			wac.handleMessage(client, v)
+		case *events.Receipt:
+			wac.handleReceipt(client, v)
+		case *events.Presence:
+			wac.handlePresence(client, v)
+		case *events.ChatPresence:
+			wac.handleChatPresence(client, v)
 		default:
 			if wac.eventHandler != nil {
 				if err := wac.eventHandler.HandleEvent(client, evt); err != nil {
@@ -430,7 +423,7 @@ func (wac *WAClient) handleDisconnected(client *Client, evt *events.Disconnected
 	client.Status = session.StatusDisconnected
 	client.LastSeen = time.Now()
 
-	wac.logger.Debug().Str("session_id", client.SessionID).Msg("Disconnected")
+	wac.logger.Warn().Str("session_id", client.SessionID).Msg("Disconnected from WhatsApp")
 
 	go func() {
 		wac.updateSessionStatus(context.Background(), client)
@@ -540,7 +533,16 @@ func (wac *WAClient) processAllQRCodesFromEvent(ctx context.Context, client *Cli
 func (wac *WAClient) handleMessage(client *Client, evt *events.Message) {
 	client.LastSeen = time.Now()
 
-	wac.logger.Debug().Str("session_id", client.SessionID).Str("msg_id", evt.Info.ID).Msg("Message")
+	wac.logger.Info().
+		Str("session_id", client.SessionID).
+		Str("msg_id", evt.Info.ID).
+		Str("from", evt.Info.Sender.String()).
+		Str("chat", evt.Info.Chat.String()).
+		Bool("from_me", evt.Info.IsFromMe).
+		Bool("is_group", evt.Info.IsGroup).
+		Str("type", string(evt.Info.Type)).
+		Msg("Message received")
+
 	wac.sendWebhook(client, EventMessage, evt)
 
 	if wac.eventHandler != nil {
@@ -548,6 +550,51 @@ func (wac *WAClient) handleMessage(client *Client, evt *events.Message) {
 			wac.logger.Error().Err(err).Str("session_id", client.SessionID).Msg("Event handler error for message")
 		}
 	}
+}
+
+func (wac *WAClient) handleReceipt(client *Client, evt *events.Receipt) {
+	client.LastSeen = time.Now()
+
+	wac.logger.Info().
+		Str("session_id", client.SessionID).
+		Str("type", string(evt.Type)).
+		Strs("message_ids", evt.MessageIDs).
+		Str("from", evt.Sender.String()).
+		Str("chat", evt.Chat.String()).
+		Msg("Receipt received")
+
+	wac.sendWebhook(client, EventReceipt, evt)
+}
+
+func (wac *WAClient) handlePresence(client *Client, evt *events.Presence) {
+	client.LastSeen = time.Now()
+
+	status := "online"
+	if evt.Unavailable {
+		status = "offline"
+	}
+
+	wac.logger.Info().
+		Str("session_id", client.SessionID).
+		Str("from", evt.From.String()).
+		Str("status", status).
+		Msg("Presence update")
+
+	wac.sendWebhook(client, EventPresence, evt)
+}
+
+func (wac *WAClient) handleChatPresence(client *Client, evt *events.ChatPresence) {
+	client.LastSeen = time.Now()
+
+	wac.logger.Info().
+		Str("session_id", client.SessionID).
+		Str("chat", evt.MessageSource.Chat.String()).
+		Str("sender", evt.MessageSource.Sender.String()).
+		Str("state", string(evt.State)).
+		Str("media", string(evt.Media)).
+		Msg("Chat presence update")
+
+	wac.sendWebhook(client, EventChatPresence, evt)
 }
 
 func (wac *WAClient) sendWebhook(client *Client, eventType EventType, event interface{}) {
@@ -573,15 +620,6 @@ func (wac *WAClient) updateSessionStatus(ctx context.Context, client *Client) {
 	if client.WAClient.Store.ID != nil {
 		deviceJID = client.WAClient.Store.ID.String()
 	}
-
-	wac.logger.Debug().
-		Str("session_id", client.SessionID).
-		Str("session_name", client.Name).
-		Str("device_jid", deviceJID).
-		Str("status", string(client.Status)).
-		Str("qr_code", client.QRCode).
-		Time("qr_expires_at", client.QRExpiresAt).
-		Msg("Updating session status")
 
 	now := time.Now()
 	sess := &session.Session{

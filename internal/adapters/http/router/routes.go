@@ -24,6 +24,7 @@ func NewRouter(c *container.Container) http.Handler {
 		c.GetConfig(),
 		c.GetSessionUseCases(),
 		c.GetMessageUseCases(),
+		c.GetWhatsAppClient(),
 	)
 
 	setupPublicRoutes(r, h)
@@ -60,8 +61,6 @@ func setupSessionRoutes(r chi.Router, h *handlers.Handlers) {
 		r.Post("/{sessionId}/disconnect", h.Session.DisconnectSession)
 		r.Post("/{sessionId}/logout", h.Session.LogoutSession)
 		r.Get("/{sessionId}/qr", h.Session.GetQRCode)
-
-		r.Post("/{sessionId}/messages", h.Message.SendMessage)
 	})
 
 	setupMessageRoutes(r, h)
@@ -69,7 +68,7 @@ func setupSessionRoutes(r chi.Router, h *handlers.Handlers) {
 
 func setupMessageRoutes(r chi.Router, h *handlers.Handlers) {
 	r.Route("/sessions/{sessionId}/send/message", func(r chi.Router) {
-		r.Post("/text", h.Message.SendText)
+		r.Post("/text", h.Message.SendTextMessage)
 		r.Post("/image", h.Message.SendImage)
 		r.Post("/audio", h.Message.SendAudio)
 		r.Post("/video", h.Message.SendVideo)

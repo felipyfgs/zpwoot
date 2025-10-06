@@ -41,9 +41,16 @@ type QRCodeInfo struct {
 }
 
 type MessageResult struct {
-	MessageID string    `json:"messageId"`
-	Status    string    `json:"status"`
-	SentAt    time.Time `json:"sentAt"`
+	MessageID   string              `json:"messageId"`
+	Status      string              `json:"status"`
+	SentAt      time.Time           `json:"sentAt"`
+	ContextInfo *MessageContextInfo `json:"contextInfo,omitempty"`
+}
+
+type MessageContextInfo struct {
+	StanzaID    string `json:"stanzaId,omitempty"`
+	Participant string `json:"participant,omitempty"`
+	QuotedID    string `json:"quotedId,omitempty"`
 }
 
 type MediaData struct {
