@@ -2,8 +2,8 @@ package dto
 
 // CreateCommunityRequest - Requisição para criar comunidade
 type CreateCommunityRequest struct {
-	Name        string   `json:"name" binding:"required" example:"Minha Comunidade"`
-	Description string   `json:"description,omitempty" example:"Descrição da comunidade"`
+	Name         string   `json:"name" binding:"required" example:"Minha Comunidade"`
+	Description  string   `json:"description,omitempty" example:"Descrição da comunidade"`
 	Participants []string `json:"participants,omitempty" example:"5511999999999,5511888888888"`
 } //@name CreateCommunityRequest
 
