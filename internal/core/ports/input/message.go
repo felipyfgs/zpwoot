@@ -42,9 +42,36 @@ type MessageService interface {
 	SendMediaMessage(ctx context.Context, sessionID, to string, media *output.MediaData) error
 	SendLocationMessage(ctx context.Context, sessionID, to string, latitude, longitude float64, name string) error
 	SendContactMessage(ctx context.Context, sessionID, to string, contact *ContactInfo) error
+	SendReactionMessage(ctx context.Context, sessionID, to, messageID, reaction string) error
+	SendPollMessage(ctx context.Context, sessionID, to, name string, options []string, selectableCount int) error
+	SendButtonsMessage(ctx context.Context, sessionID, to, text string, buttons []ButtonInfo) error
+	SendListMessage(ctx context.Context, sessionID, to, text, title string, sections []ListSectionInfo) error
+	SendTemplateMessage(ctx context.Context, sessionID, to string, template TemplateInfo) error
+	SendViewOnceMessage(ctx context.Context, sessionID, to string, media *output.MediaData) error
 	GetChatInfo(ctx context.Context, sessionID, chatJID string) (*ChatInfo, error)
 	GetContacts(ctx context.Context, sessionID string) ([]*ContactInfo, error)
 	GetChats(ctx context.Context, sessionID string) ([]*ChatInfo, error)
+}
+
+type ButtonInfo struct {
+	ID   string
+	Text string
+}
+
+type ListSectionInfo struct {
+	Title string
+	Rows  []ListRowInfo
+}
+
+type ListRowInfo struct {
+	ID          string
+	Title       string
+	Description string
+}
+
+type TemplateInfo struct {
+	Content string
+	Footer  string
 }
 
 type ContactInfo struct {

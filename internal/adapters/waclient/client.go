@@ -89,29 +89,29 @@ func (w *WAClientAdapter) GetQRCode(ctx context.Context, sessionID string) (*out
 
 func (w *WAClientAdapter) SendTextMessage(ctx context.Context, sessionID, to, text string) (*output.MessageResult, error) {
 	messageSender := NewMessageSender(w.client)
-	err := messageSender.SendTextMessage(ctx, sessionID, to, text)
+	resp, err := messageSender.SendTextMessage(ctx, sessionID, to, text)
 	if err != nil {
 		return nil, w.convertError(err)
 	}
 
 	return &output.MessageResult{
-		MessageID: generateMessageID(),
+		MessageID: string(resp.ID),
 		Status:    "sent",
-		SentAt:    time.Now(),
+		SentAt:    resp.Timestamp,
 	}, nil
 }
 
 func (w *WAClientAdapter) SendMediaMessage(ctx context.Context, sessionID, to string, media *output.MediaData) (*output.MessageResult, error) {
 	messageSender := NewMessageSender(w.client)
-	err := messageSender.SendMediaMessage(ctx, sessionID, to, media)
+	resp, err := messageSender.SendMediaMessage(ctx, sessionID, to, media)
 	if err != nil {
 		return nil, w.convertError(err)
 	}
 
 	return &output.MessageResult{
-		MessageID: generateMessageID(),
+		MessageID: string(resp.ID),
 		Status:    "sent",
-		SentAt:    time.Now(),
+		SentAt:    resp.Timestamp,
 	}, nil
 }
 

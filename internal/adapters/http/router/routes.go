@@ -71,7 +71,9 @@ func setupSessionRoutes(r chi.Router, h *handlers.Handlers) {
 		r.Get("/{sessionId}/chat-info", h.Message.GetChatInfo)
 	})
 
-	
+	setupMessageRoutes(r, h)
+}
+
 func setupMessageRoutes(r chi.Router, h *handlers.Handlers) {
 	r.Route("/sessions/{sessionId}/send/message", func(r chi.Router) {
 		r.Post("/text", h.Message.SendText)
@@ -90,6 +92,4 @@ func setupMessageRoutes(r chi.Router, h *handlers.Handlers) {
 		r.Post("/poll", h.Message.SendPoll)
 		r.Post("/viewonce", h.Message.SendViewOnce)
 	})
-}
-
 }
