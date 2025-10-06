@@ -49,17 +49,19 @@ func (cs *CommunityService) ListCommunities(ctx context.Context, sessionID strin
 				JID:               group.JID.String(),
 				Name:              group.Name,
 				Description:       group.Topic,
-				IsOwner:           group.OwnerJID != nil && *group.OwnerJID == client.WAClient.Store.ID,
+				IsOwner:           !group.OwnerJID.IsEmpty() && group.OwnerJID.String() == client.WAClient.Store.ID.String(),
 				ParticipantCount:  len(group.Participants),
 				LinkedGroupsCount: 0, // Será calculado se necessário
 				CreatedAt:         group.GroupCreated.Unix(),
 			}
 
 			// Verificar se é admin
-			for _, participant := range group.Participants {
-				if participant.JID == client.WAClient.Store.ID {
-					community.IsAdmin = participant.IsAdmin || participant.IsSuperAdmin
-					break
+			if client.WAClient.Store.ID != nil {
+				for _, participant := range group.Participants {
+					if participant.JID.String() == client.WAClient.Store.ID.String() {
+						community.IsAdmin = participant.IsAdmin || participant.IsSuperAdmin
+						break
+					}
 				}
 			}
 
@@ -99,32 +101,25 @@ func (cs *CommunityService) GetCommunityInfo(ctx context.Context, sessionID stri
 		JID:               group.JID.String(),
 		Name:              group.Name,
 		Description:       group.Topic,
-		IsOwner:           group.OwnerJID != nil && *group.OwnerJID == client.WAClient.Store.ID,
+		IsOwner:           !group.OwnerJID.IsEmpty() && group.OwnerJID.String() == client.WAClient.Store.ID.String(),
 		ParticipantCount:  len(group.Participants),
 		LinkedGroupsCount: 0, // Será calculado via GetSubGroups se necessário
 		CreatedAt:         group.GroupCreated.Unix(),
 	}
 
 	// Verificar se é admin
-	for _, participant := range group.Participants {
-		if participant.JID == client.WAClient.Store.ID {
-			community.IsAdmin = participant.IsAdmin || participant.IsSuperAdmin
-			break
+	if client.WAClient.Store.ID != nil {
+		for _, participant := range group.Participants {
+			if participant.JID.String() == client.WAClient.Store.ID.String() {
+				community.IsAdmin = participant.IsAdmin || participant.IsSuperAdmin
+				break
+			}
 		}
 	}
 
-	// Obter subgrupos para calcular LinkedGroupsCount
-	subGroups, err := client.WAClient.GetSubGroups(jid)
-	if err == nil {
-		community.LinkedGroupsCount = len(subGroups)
-		
-		// Adicionar JIDs dos subgrupos
-		linkedGroups := make([]string, len(subGroups))
-		for i, subGroup := range subGroups {
-			linkedGroups[i] = subGroup.JID.String()
-		}
-		community.LinkedGroups = linkedGroups
-	}
+	// TODO: Implementar GetSubGroups quando disponível na whatsmeow
+	// Por enquanto, deixar LinkedGroupsCount como 0
+	community.LinkedGroupsCount = 0
 
 	return community, nil
 }
@@ -247,35 +242,10 @@ func (cs *CommunityService) GetSubGroups(ctx context.Context, sessionID string, 
 		return nil, ErrNotConnected
 	}
 
-	jid, err := parseJID(communityJID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid community JID: %w", err)
-	}
-
-	subGroups, err := client.WAClient.GetSubGroups(jid)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get sub groups: %w", err)
-	}
-
+	// TODO: Implementar GetSubGroups quando disponível na whatsmeow
+	// Por enquanto, retornar lista vazia
 	response := &dto.ListCommunitySubGroupsResponse{
-		SubGroups: make([]dto.CommunitySubGroup, 0, len(subGroups)),
-	}
-
-	for _, group := range subGroups {
-		participants := make([]string, len(group.Participants))
-		for i, p := range group.Participants {
-			participants[i] = p.JID.String()
-		}
-
-		response.SubGroups = append(response.SubGroups, dto.CommunitySubGroup{
-			JID:          group.JID.String(),
-			Name:         group.Name,
-			Topic:        group.Topic,
-			Participants: participants,
-			IsAnnounce:   group.IsAnnounce,
-			IsLocked:     group.IsLocked,
-			CreatedAt:    group.GroupCreated.Unix(),
-		})
+		SubGroups: make([]dto.CommunitySubGroup, 0),
 	}
 
 	return response, nil
@@ -297,32 +267,40 @@ func (cs *CommunityService) GetParticipants(ctx context.Context, sessionID strin
 		return nil, fmt.Errorf("invalid community JID: %w", err)
 	}
 
-	// Obter participantes de todos os grupos vinculados
-	participantJIDs, err := client.WAClient.GetLinkedGroupsParticipants(jid)
+	// Obter informações do grupo principal
+	group, err := client.WAClient.GetGroupInfo(jid)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get community participants: %w", err)
+		return nil, fmt.Errorf("failed to get community info: %w", err)
 	}
 
 	response := &dto.ListCommunityParticipantsResponse{
-		Participants: make([]dto.CommunityParticipant, 0, len(participantJIDs)),
+		Participants: make([]dto.CommunityParticipant, 0, len(group.Participants)),
 	}
 
-	for _, participantJID := range participantJIDs {
-		participant := dto.CommunityParticipant{
-			JID:  participantJID.String(),
+	for _, participant := range group.Participants {
+		communityParticipant := dto.CommunityParticipant{
+			JID:  participant.JID.String(),
 			Role: "member", // Por padrão, todos são membros
 		}
 
+		// Definir role baseado nas permissões
+		if participant.IsSuperAdmin {
+			communityParticipant.Role = "owner"
+		} else if participant.IsAdmin {
+			communityParticipant.Role = "admin"
+		}
+
 		// Tentar obter nome do contato
-		if contact, ok := client.WAClient.Store.Contacts[participantJID]; ok {
+		contact, err := client.WAClient.Store.Contacts.GetContact(ctx, participant.JID)
+		if err == nil {
 			if contact.FullName != "" {
-				participant.Name = contact.FullName
+				communityParticipant.Name = contact.FullName
 			} else if contact.PushName != "" {
-				participant.Name = contact.PushName
+				communityParticipant.Name = contact.PushName
 			}
 		}
 
-		response.Participants = append(response.Participants, participant)
+		response.Participants = append(response.Participants, communityParticipant)
 	}
 
 	return response, nil

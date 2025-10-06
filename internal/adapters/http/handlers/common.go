@@ -10,12 +10,14 @@ import (
 )
 
 type Handlers struct {
-	Session *SessionHandler
-	Message *MessageHandler
-	Group   *GroupHandler
-	Contact *ContactHandler
-	Health  *HealthHandler
-	Webhook *WebhookHandler
+	Session    *SessionHandler
+	Message    *MessageHandler
+	Group      *GroupHandler
+	Contact    *ContactHandler
+	Community  *CommunityHandler
+	Newsletter *NewsletterHandler
+	Health     *HealthHandler
+	Webhook    *WebhookHandler
 }
 
 func NewHandlers(
@@ -28,12 +30,14 @@ func NewHandlers(
 	waClient output.WhatsAppClient,
 ) *Handlers {
 	return &Handlers{
-		Session: createSessionHandler(logger, sessionUseCases, waClient),
-		Message: createMessageHandler(logger, waClient),
-		Group:   createGroupHandler(logger, waClient),
-		Contact: createContactHandler(logger, waClient),
-		Health:  NewHealthHandler(db),
-		Webhook: NewWebhookHandler(webhookUseCases, logger),
+		Session:    createSessionHandler(logger, sessionUseCases, waClient),
+		Message:    createMessageHandler(logger, waClient),
+		Group:      createGroupHandler(logger, waClient),
+		Contact:    createContactHandler(logger, waClient),
+		Community:  createCommunityHandler(logger, waClient),
+		Newsletter: createNewsletterHandler(logger, waClient),
+		Health:     NewHealthHandler(db),
+		Webhook:    NewWebhookHandler(webhookUseCases, logger),
 	}
 }
 
@@ -107,6 +111,42 @@ func createContactHandler(
 
 	return NewContactHandler(
 		contactService,
+		logger,
+	)
+}
+
+func createCommunityHandler(
+	logger *logger.Logger,
+	waClient output.WhatsAppClient,
+) *CommunityHandler {
+
+	waClientAdapter, ok := waClient.(*waclient.WAClientAdapter)
+	if !ok {
+		panic("waClient is not a WAClientAdapter")
+	}
+
+	communityService := waclient.NewCommunityService(waClientAdapter.GetWAClient())
+
+	return NewCommunityHandler(
+		communityService,
+		logger,
+	)
+}
+
+func createNewsletterHandler(
+	logger *logger.Logger,
+	waClient output.WhatsAppClient,
+) *NewsletterHandler {
+
+	waClientAdapter, ok := waClient.(*waclient.WAClientAdapter)
+	if !ok {
+		panic("waClient is not a WAClientAdapter")
+	}
+
+	newsletterService := waclient.NewNewsletterService(waClientAdapter.GetWAClient())
+
+	return NewNewsletterHandler(
+		newsletterService,
 		logger,
 	)
 }

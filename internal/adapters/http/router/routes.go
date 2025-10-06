@@ -83,6 +83,28 @@ func NewRouter(c *container.Container) http.Handler {
 		r.Post("/sessions/{sessionId}/groups/photo", h.Group.SetGroupPhoto)
 		r.Delete("/sessions/{sessionId}/groups/photo", h.Group.RemoveGroupPhoto)
 
+		// --- COMUNIDADES ---
+		r.Get("/sessions/{sessionId}/communities", h.Community.ListCommunities)
+		r.Get("/sessions/{sessionId}/communities/info", h.Community.GetCommunityInfo)
+		r.Post("/sessions/{sessionId}/communities", h.Community.CreateCommunity)
+		r.Get("/sessions/{sessionId}/communities/{communityJid}/groups", h.Community.GetSubGroups)
+		r.Get("/sessions/{sessionId}/communities/{communityJid}/participants", h.Community.GetParticipants)
+		r.Post("/sessions/{sessionId}/communities/{communityJid}/link", h.Community.LinkGroup)
+		r.Post("/sessions/{sessionId}/communities/{communityJid}/unlink", h.Community.UnlinkGroup)
+
+		// --- NEWSLETTERS ---
+		r.Get("/sessions/{sessionId}/newsletters", h.Newsletter.ListNewsletters)
+		r.Get("/sessions/{sessionId}/newsletters/info", h.Newsletter.GetNewsletterInfo)
+		r.Post("/sessions/{sessionId}/newsletters/info-invite", h.Newsletter.GetNewsletterInfoWithInvite)
+		r.Post("/sessions/{sessionId}/newsletters", h.Newsletter.CreateNewsletter)
+		r.Post("/sessions/{sessionId}/newsletters/follow", h.Newsletter.FollowNewsletter)
+		r.Post("/sessions/{sessionId}/newsletters/{newsletterJid}/unfollow", h.Newsletter.UnfollowNewsletter)
+		r.Get("/sessions/{sessionId}/newsletters/{newsletterJid}/messages", h.Newsletter.GetMessages)
+		r.Post("/sessions/{sessionId}/newsletters/{newsletterJid}/mark-viewed", h.Newsletter.MarkViewed)
+		r.Post("/sessions/{sessionId}/newsletters/{newsletterJid}/react", h.Newsletter.SendReaction)
+		r.Post("/sessions/{sessionId}/newsletters/{newsletterJid}/mute", h.Newsletter.ToggleMute)
+		r.Post("/sessions/{sessionId}/newsletters/{newsletterJid}/send", h.Newsletter.SendMessage)
+
 		// --- WEBHOOKS ---
 		r.Post("/sessions/{sessionId}/webhooks", h.Webhook.SetWebhook)
 		r.Get("/sessions/{sessionId}/webhooks", h.Webhook.GetWebhook)

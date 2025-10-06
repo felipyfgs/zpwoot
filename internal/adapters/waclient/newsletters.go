@@ -3,10 +3,12 @@ package waclient
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"zpwoot/internal/core/application/dto"
 	"zpwoot/internal/core/ports/input"
 
+	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/types"
 )
 
@@ -42,14 +44,14 @@ func (ns *NewsletterService) ListNewsletters(ctx context.Context, sessionID stri
 
 	for _, newsletter := range newsletters {
 		info := dto.NewsletterInfo{
-			JID:             newsletter.JID.String(),
-			Name:            newsletter.Name,
-			Description:     newsletter.Description,
-			SubscriberCount: int(newsletter.SubscriberCount),
-			IsOwner:         newsletter.ViewerMetadata != nil && newsletter.ViewerMetadata.Role == "OWNER",
+			JID:             newsletter.ID.String(),
+			Name:            newsletter.ThreadMeta.Name.Text,
+			Description:     newsletter.ThreadMeta.Description.Text,
+			SubscriberCount: newsletter.ThreadMeta.SubscriberCount,
+			IsOwner:         newsletter.ViewerMeta != nil && newsletter.ViewerMeta.Role == "owner",
 			IsFollowing:     true, // Se está na lista, está seguindo
-			IsMuted:         newsletter.ViewerMetadata != nil && newsletter.ViewerMetadata.Mute == "ON",
-			CreatedAt:       newsletter.CreationTime,
+			IsMuted:         newsletter.ViewerMeta != nil && newsletter.ViewerMeta.Mute == "on",
+			CreatedAt:       newsletter.ThreadMeta.CreationTime.Unix(),
 		}
 
 		response.Newsletters = append(response.Newsletters, info)
@@ -80,14 +82,14 @@ func (ns *NewsletterService) GetNewsletterInfo(ctx context.Context, sessionID st
 	}
 
 	return &dto.NewsletterInfo{
-		JID:             newsletter.JID.String(),
-		Name:            newsletter.Name,
-		Description:     newsletter.Description,
-		SubscriberCount: int(newsletter.SubscriberCount),
-		IsOwner:         newsletter.ViewerMetadata != nil && newsletter.ViewerMetadata.Role == "OWNER",
-		IsFollowing:     newsletter.ViewerMetadata != nil,
-		IsMuted:         newsletter.ViewerMetadata != nil && newsletter.ViewerMetadata.Mute == "ON",
-		CreatedAt:       newsletter.CreationTime,
+		JID:             newsletter.ID.String(),
+		Name:            newsletter.ThreadMeta.Name.Text,
+		Description:     newsletter.ThreadMeta.Description.Text,
+		SubscriberCount: newsletter.ThreadMeta.SubscriberCount,
+		IsOwner:         newsletter.ViewerMeta != nil && newsletter.ViewerMeta.Role == "owner",
+		IsFollowing:     newsletter.ViewerMeta != nil,
+		IsMuted:         newsletter.ViewerMeta != nil && newsletter.ViewerMeta.Mute == "on",
+		CreatedAt:       newsletter.ThreadMeta.CreationTime.Unix(),
 	}, nil
 }
 
@@ -112,14 +114,14 @@ func (ns *NewsletterService) GetNewsletterInfoWithInvite(ctx context.Context, se
 	}
 
 	return &dto.NewsletterInfo{
-		JID:             newsletter.JID.String(),
-		Name:            newsletter.Name,
-		Description:     newsletter.Description,
-		SubscriberCount: int(newsletter.SubscriberCount),
-		IsOwner:         newsletter.ViewerMetadata != nil && newsletter.ViewerMetadata.Role == "OWNER",
-		IsFollowing:     newsletter.ViewerMetadata != nil,
-		IsMuted:         newsletter.ViewerMetadata != nil && newsletter.ViewerMetadata.Mute == "ON",
-		CreatedAt:       newsletter.CreationTime,
+		JID:             newsletter.ID.String(),
+		Name:            newsletter.ThreadMeta.Name.Text,
+		Description:     newsletter.ThreadMeta.Description.Text,
+		SubscriberCount: newsletter.ThreadMeta.SubscriberCount,
+		IsOwner:         newsletter.ViewerMeta != nil && newsletter.ViewerMeta.Role == "owner",
+		IsFollowing:     newsletter.ViewerMeta != nil,
+		IsMuted:         newsletter.ViewerMeta != nil && newsletter.ViewerMeta.Mute == "on",
+		CreatedAt:       newsletter.ThreadMeta.CreationTime.Unix(),
 	}, nil
 }
 
@@ -174,7 +176,7 @@ func (ns *NewsletterService) FollowNewsletter(ctx context.Context, sessionID str
 		}
 
 		// Depois seguir
-		err = client.WAClient.FollowNewsletter(newsletter.JID)
+		err = client.WAClient.FollowNewsletter(newsletter.ID)
 		if err != nil {
 			return fmt.Errorf("failed to follow newsletter: %w", err)
 		}
@@ -225,15 +227,18 @@ func (ns *NewsletterService) GetMessages(ctx context.Context, sessionID string, 
 		return nil, fmt.Errorf("invalid newsletter JID: %w", err)
 	}
 
-	// Preparar parâmetros
-	params := &types.GetNewsletterMessagesParams{}
+	// Preparar parâmetros para GetNewsletterMessages
+	params := &whatsmeow.GetNewsletterMessagesParams{
+		Count: 50, // Padrão
+	}
 	if req.Count > 0 {
-		params.Count = int32(req.Count)
-	} else {
-		params.Count = 50 // Padrão
+		params.Count = req.Count
 	}
 	if req.Before != "" {
-		params.Before = req.Before
+		// Converter string para MessageServerID
+		if beforeID, err := strconv.Atoi(req.Before); err == nil {
+			params.Before = types.MessageServerID(beforeID)
+		}
 	}
 
 	messages, err := client.WAClient.GetNewsletterMessages(jid, params)
@@ -242,19 +247,19 @@ func (ns *NewsletterService) GetMessages(ctx context.Context, sessionID string, 
 	}
 
 	response := &dto.ListNewsletterMessagesResponse{
-		Messages: make([]dto.NewsletterMessage, 0, len(messages.Messages)),
-		HasMore:  messages.HasMore,
-		Cursor:   messages.Cursor,
+		Messages: make([]dto.NewsletterMessage, 0, len(messages)),
+		HasMore:  false, // TODO: Implementar paginação se disponível
+		Cursor:   "",    // TODO: Implementar cursor se disponível
 	}
 
-	for _, msg := range messages.Messages {
+	for _, msg := range messages {
 		message := dto.NewsletterMessage{
-			ID:        msg.MessageID.String(),
-			ServerID:  msg.ServerID.String(),
+			ID:        string(msg.MessageID),
+			ServerID:  string(msg.MessageServerID),
 			Content:   "", // TODO: Extrair conteúdo baseado no tipo
-			Type:      "text", // TODO: Determinar tipo da mensagem
+			Type:      msg.Type,
 			Timestamp: msg.Timestamp.Unix(),
-			ViewCount: int(msg.ViewsCount),
+			ViewCount: msg.ViewsCount,
 		}
 
 		response.Messages = append(response.Messages, message)
@@ -279,10 +284,13 @@ func (ns *NewsletterService) MarkViewed(ctx context.Context, sessionID string, n
 		return fmt.Errorf("invalid newsletter JID: %w", err)
 	}
 
-	// Converter server IDs para tipos.MessageServerID
+	// Converter server IDs para tipos corretos
 	serverIDs := make([]types.MessageServerID, len(req.ServerIDs))
-	for i, serverID := range req.ServerIDs {
-		serverIDs[i] = types.MessageServerID(serverID)
+	for i, serverIDStr := range req.ServerIDs {
+		// Converter string para int
+		if serverID, err := strconv.Atoi(serverIDStr); err == nil {
+			serverIDs[i] = types.MessageServerID(serverID)
+		}
 	}
 
 	err = client.WAClient.NewsletterMarkViewed(jid, serverIDs)
@@ -309,7 +317,12 @@ func (ns *NewsletterService) SendReaction(ctx context.Context, sessionID string,
 		return fmt.Errorf("invalid newsletter JID: %w", err)
 	}
 
-	serverID := types.MessageServerID(req.ServerID)
+	// Converter server ID string para int
+	serverIDInt, err := strconv.Atoi(req.ServerID)
+	if err != nil {
+		return fmt.Errorf("invalid server ID: %w", err)
+	}
+	serverID := types.MessageServerID(serverIDInt)
 	messageID := types.MessageID(req.MessageID)
 
 	err = client.WAClient.NewsletterSendReaction(jid, serverID, req.Reaction, messageID)

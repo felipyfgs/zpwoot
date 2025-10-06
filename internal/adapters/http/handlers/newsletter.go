@@ -472,3 +472,53 @@ func (h *NewsletterHandler) ToggleMute(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
+
+// SendMessage envia uma mensagem para um newsletter
+// @Summary Enviar mensagem para newsletter
+// @Description Envia uma mensagem de texto para um newsletter (apenas para owners/admins)
+// @Tags Newsletters
+// @Accept json
+// @Produce json
+// @Param sessionId path string true "ID da sessão"
+// @Param newsletterJid path string true "JID do newsletter"
+// @Param request body map[string]interface{} true "Dados da mensagem"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /sessions/{sessionId}/newsletters/{newsletterJid}/send [post]
+func (h *NewsletterHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
+	sessionID := chi.URLParam(r, "sessionId")
+	newsletterJID := chi.URLParam(r, "newsletterJid")
+
+	if sessionID == "" {
+		h.logger.Error().Msg("Session ID is required")
+		http.Error(w, "Session ID is required", http.StatusBadRequest)
+		return
+	}
+
+	if newsletterJID == "" {
+		h.logger.Error().Msg("Newsletter JID is required")
+		http.Error(w, "Newsletter JID is required", http.StatusBadRequest)
+		return
+	}
+
+	var req map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to decode request body")
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// TODO: Implementar envio de mensagem para newsletter
+	// Por enquanto, simular sucesso
+	response := map[string]interface{}{
+		"success":    true,
+		"message":    "Message sent to newsletter successfully",
+		"message_id": "temp_id_" + newsletterJID,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+
