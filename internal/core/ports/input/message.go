@@ -42,6 +42,7 @@ type MessageService interface {
 	SendMediaMessage(ctx context.Context, sessionID, to string, media *output.MediaData, contextInfo *output.MessageContextInfo) (*output.MessageResult, error)
 	SendLocationMessage(ctx context.Context, sessionID, to string, latitude, longitude float64, name string, contextInfo *output.MessageContextInfo) (*output.MessageResult, error)
 	SendContactMessage(ctx context.Context, sessionID, to string, contact *ContactInfo, contextInfo *output.MessageContextInfo) (*output.MessageResult, error)
+	SendContactsArrayMessage(ctx context.Context, sessionID, to string, contacts []*ContactInfo) (*output.MessageResult, error)
 	SendReactionMessage(ctx context.Context, sessionID, to, messageID, reaction string, fromMe bool) (*output.MessageResult, error)
 	SendPollMessage(ctx context.Context, sessionID, to, name string, options []string, selectableCount int) (*output.MessageResult, error)
 	SendButtonsMessage(ctx context.Context, sessionID, to, text string, buttons []ButtonInfo) (*output.MessageResult, error)

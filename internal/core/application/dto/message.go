@@ -1,7 +1,9 @@
 package dto
 
 import (
+	"encoding/base64"
 	"errors"
+	"strings"
 	"time"
 
 	"zpwoot/internal/core/application/validators"
@@ -56,7 +58,7 @@ type ContextInfo struct {
 } //@name ContextInfo
 
 type SendTextMessageRequest struct {
-	To          string              `json:"to" validate:"required" example:"5511999999999"`
+	Phone       string              `json:"phone" validate:"required" example:"5511999999999"`
 	Text        string              `json:"text" validate:"required" example:"Hello! This is a test message from zpwoot API."`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
 } //@name SendTextMessageRequest
@@ -67,40 +69,50 @@ type ContextInfoRequest struct {
 } //@name ContextInfoRequest
 
 type SendImageMessageRequest struct {
-	To          string              `json:"to" validate:"required" example:"5511999999999"`
-	Image       *MediaData          `json:"image" validate:"required"`
+	Phone       string              `json:"phone" validate:"required" example:"5511999999999"`
+	File        string              `json:"file" validate:"required" example:"https://example.com/image.jpg"`
+	MimeType    string              `json:"mimeType,omitempty" example:"image/jpeg"`
+	FileName    string              `json:"fileName,omitempty" example:"image.jpg"`
 	Caption     string              `json:"caption,omitempty" example:"Check out this beautiful image!"`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
 } //@name SendImageMessageRequest
 
 type SendAudioMessageRequest struct {
-	To          string              `json:"to" validate:"required" example:"5511999999999"`
-	Audio       *MediaData          `json:"audio" validate:"required"`
+	Phone       string              `json:"phone" validate:"required" example:"5511999999999"`
+	File        string              `json:"file" validate:"required" example:"https://example.com/audio.mp3"`
+	MimeType    string              `json:"mimeType,omitempty" example:"audio/mpeg"`
+	FileName    string              `json:"fileName,omitempty" example:"audio.mp3"`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
 } //@name SendAudioMessageRequest
 
 type SendVideoMessageRequest struct {
-	To          string              `json:"to" validate:"required" example:"5511999999999"`
-	Video       *MediaData          `json:"video" validate:"required"`
+	Phone       string              `json:"phone" validate:"required" example:"5511999999999"`
+	File        string              `json:"file" validate:"required" example:"https://example.com/video.mp4"`
+	MimeType    string              `json:"mimeType,omitempty" example:"video/mp4"`
+	FileName    string              `json:"fileName,omitempty" example:"video.mp4"`
 	Caption     string              `json:"caption,omitempty" example:"Watch this amazing video!"`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
 } //@name SendVideoMessageRequest
 
 type SendDocumentMessageRequest struct {
-	To          string              `json:"to" validate:"required" example:"5511999999999"`
-	Document    *MediaData          `json:"document" validate:"required"`
+	Phone       string              `json:"phone" validate:"required" example:"5511999999999"`
+	File        string              `json:"file" validate:"required" example:"https://example.com/document.pdf"`
+	MimeType    string              `json:"mimeType,omitempty" example:"application/pdf"`
+	FileName    string              `json:"fileName,omitempty" example:"document.pdf"`
 	Caption     string              `json:"caption,omitempty" example:"Important document attached"`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
 } //@name SendDocumentMessageRequest
 
 type SendStickerMessageRequest struct {
-	To          string              `json:"to" validate:"required" example:"5511999999999"`
-	Sticker     *MediaData          `json:"sticker" validate:"required"`
+	Phone       string              `json:"phone" validate:"required" example:"5511999999999"`
+	File        string              `json:"file" validate:"required" example:"https://example.com/sticker.webp"`
+	MimeType    string              `json:"mimeType,omitempty" example:"image/webp"`
+	FileName    string              `json:"fileName,omitempty" example:"sticker.webp"`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
 } //@name SendStickerMessageRequest
 
 type SendLocationMessageRequest struct {
-	To          string              `json:"to" validate:"required" example:"5511999999999"`
+	Phone       string              `json:"phone" validate:"required" example:"5511999999999"`
 	Latitude    float64             `json:"latitude" validate:"required,min=-90,max=90" example:"-23.550520"`
 	Longitude   float64             `json:"longitude" validate:"required,min=-180,max=180" example:"-46.633308"`
 	Name        string              `json:"name,omitempty" example:"São Paulo"`
@@ -109,13 +121,13 @@ type SendLocationMessageRequest struct {
 } //@name SendLocationMessageRequest
 
 type SendContactMessageRequest struct {
-	To          string              `json:"to" validate:"required" example:"5511999999999"`
+	Phone       string              `json:"phone" validate:"required" example:"5511999999999"`
 	Contact     *ContactInfo        `json:"contact" validate:"required"`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
 } //@name SendContactMessageRequest
 
 type SendReactionMessageRequest struct {
-	To        string `json:"to" validate:"required" example:"5511999999999"`
+	Phone     string `json:"phone" validate:"required" example:"5511999999999"`
 	MessageID string `json:"messageId" validate:"required" example:"3EB0C767D0D1A6F4FD29"`
 	Reaction  string `json:"reaction" validate:"required" example:"👍"`
 	// FromMe indicates if the message being reacted to was sent by us
@@ -125,7 +137,7 @@ type SendReactionMessageRequest struct {
 } //@name SendReactionMessageRequest
 
 type SendPollMessageRequest struct {
-	To                     string   `json:"to" validate:"required" example:"5511999999999"`
+	Phone                  string   `json:"phone" validate:"required" example:"5511999999999"`
 	Name                   string   `json:"name" validate:"required" example:"What's your favorite color?"`
 	Options                []string `json:"options" validate:"required,min=2,max=12" example:"Red,Blue,Green,Yellow"`
 	SelectableOptionsCount int      `json:"selectableOptionsCount" validate:"required,min=1" example:"1"`
@@ -267,6 +279,30 @@ func (m *MediaData) ToInterfacesMediaData() *output.MediaData {
 	}
 
 	var data []byte
+	var err error
+
+	// Process Base64 data if provided
+	if m.Base64 != "" {
+		// Remove data URL prefix if present (e.g., "data:image/jpeg;base64,")
+		base64Data := m.Base64
+		if strings.Contains(base64Data, ",") {
+			parts := strings.Split(base64Data, ",")
+			if len(parts) > 1 {
+				base64Data = parts[1]
+			}
+		}
+
+		data, err = base64.StdEncoding.DecodeString(base64Data)
+		if err != nil {
+			// If base64 decode fails, leave data empty
+			data = []byte{}
+		}
+	} else if m.URL != "" {
+		// For URL, we'll need to download it
+		// For now, we'll leave this as a TODO and return empty data
+		// The WhatsApp client should handle URL downloading
+		data = []byte{}
+	}
 
 	return &output.MediaData{
 		MimeType: m.MimeType,
@@ -307,8 +343,8 @@ func (c *ContactInfo) ToInterfacesContactInfo() *output.ContactInfo {
 }
 
 type SendContactsArrayMessageRequest struct {
-	To       string         `json:"to" validate:"required" example:"5511999999999"`
-	Contacts []*ContactInfo `json:"contacts" validate:"required,min=1"`
+	Phone    string         `json:"phone" validate:"required" example:"5511999999999"`
+	Contacts []*ContactInfo `json:"contacts" validate:"required,min=1"` // Array of contacts sent in a single message
 } //@name SendContactsArrayMessageRequest
 
 type Button struct {
@@ -317,7 +353,7 @@ type Button struct {
 } //@name Button
 
 type SendButtonsMessageRequest struct {
-	To      string    `json:"to" validate:"required" example:"5511999999999"`
+	Phone   string    `json:"phone" validate:"required" example:"5511999999999"`
 	Text    string    `json:"text" validate:"required" example:"Please choose an option:"`
 	Buttons []*Button `json:"buttons" validate:"required,min=1,max=3"`
 } //@name SendButtonsMessageRequest
@@ -334,7 +370,7 @@ type ListSection struct {
 } //@name ListSection
 
 type SendListMessageRequest struct {
-	To       string         `json:"to" validate:"required" example:"5511999999999"`
+	Phone    string         `json:"phone" validate:"required" example:"5511999999999"`
 	Text     string         `json:"text" validate:"required" example:"Please select an option from the list"`
 	Title    string         `json:"title" validate:"required" example:"Menu Options"`
 	Sections []*ListSection `json:"sections" validate:"required,min=1"`
@@ -357,12 +393,14 @@ type TemplateMessage struct {
 } //@name TemplateMessage
 
 type SendTemplateMessageRequest struct {
-	To       string           `json:"to" validate:"required" example:"5511999999999"`
+	Phone    string           `json:"phone" validate:"required" example:"5511999999999"`
 	Template *TemplateMessage `json:"template" validate:"required"`
 } //@name SendTemplateMessageRequest
 
 type SendViewOnceMessageRequest struct {
-	To      string     `json:"to" validate:"required" example:"5511999999999"`
-	Media   *MediaData `json:"media" validate:"required"`
-	Caption string     `json:"caption,omitempty" example:"This message will disappear after viewing"`
+	Phone    string `json:"phone" validate:"required" example:"5511999999999"`
+	File     string `json:"file" validate:"required" example:"https://example.com/image.jpg"` // Supports Base64, URL, or file path
+	MimeType string `json:"mimeType,omitempty" example:"image/jpeg"`                          // Auto-detected if not provided
+	FileName string `json:"fileName,omitempty" example:"image.jpg"`
+	Caption  string `json:"caption,omitempty" example:"This message will disappear after viewing"`
 } //@name SendViewOnceMessageRequest

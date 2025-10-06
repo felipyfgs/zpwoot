@@ -366,6 +366,47 @@ func (ms *Sender) SendContactMessageFromInput(ctx context.Context, sessionID str
 	return ms.SendContactMessage(ctx, sessionID, to, internalContact)
 }
 
+func (ms *Sender) SendContactsArrayMessage(ctx context.Context, sessionID string, to string, contacts []*input.ContactInfo) error {
+	client, err := ms.getConnectedClient(ctx, sessionID)
+	if err != nil {
+		return err
+	}
+
+	recipientJID, err := parseJID(to)
+	if err != nil {
+		return ErrInvalidJID
+	}
+
+	// Build array of ContactMessage
+	contactMessages := make([]*waE2E.ContactMessage, len(contacts))
+	for i, contact := range contacts {
+		vcard := contact.VCard
+		if vcard == "" {
+			vcard = ms.generateVCard(contact.Name, contact.Phone)
+		}
+
+		contactMessages[i] = &waE2E.ContactMessage{
+			DisplayName: proto.String(contact.Name),
+			Vcard:       proto.String(vcard),
+		}
+	}
+
+	// Create ContactsArrayMessage
+	message := &waE2E.Message{
+		ContactsArrayMessage: &waE2E.ContactsArrayMessage{
+			DisplayName: proto.String("Contacts"),
+			Contacts:    contactMessages,
+		},
+	}
+
+	_, err = client.WAClient.SendMessage(ctx, recipientJID, message)
+	if err != nil {
+		return fmt.Errorf("failed to send contacts array message: %w", err)
+	}
+
+	return nil
+}
+
 func (ms *Sender) GetChatInfoAsInput(ctx context.Context, sessionID, chatJID string) (*input.ChatInfo, error) {
 	chatInfo, err := ms.GetChatInfo(ctx, sessionID, chatJID)
 	if err != nil {
@@ -470,6 +511,18 @@ func (w *MessageService) SendLocationMessage(ctx context.Context, sessionID, to 
 func (w *MessageService) SendContactMessage(ctx context.Context, sessionID string, to string, contact *input.ContactInfo, contextInfo *output.MessageContextInfo) (*output.MessageResult, error) {
 	// TODO: Implement contextInfo support for contact messages
 	err := w.SendContactMessageFromInput(ctx, sessionID, to, contact)
+	if err != nil {
+		return nil, err
+	}
+	return &output.MessageResult{
+		MessageID: fallbackID(),
+		Status:    "sent",
+		SentAt:    time.Now(),
+	}, nil
+}
+
+func (w *MessageService) SendContactsArrayMessage(ctx context.Context, sessionID, to string, contacts []*input.ContactInfo) (*output.MessageResult, error) {
+	err := w.Sender.SendContactsArrayMessage(ctx, sessionID, to, contacts)
 	if err != nil {
 		return nil, err
 	}
