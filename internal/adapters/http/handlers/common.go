@@ -29,7 +29,6 @@ func NewHandlers(
 	}
 }
 
-// createSessionHandler creates a session handler with all dependencies
 func createSessionHandler(
 	db *database.Database,
 	logger *logger.Logger,
@@ -53,7 +52,6 @@ func createSessionHandler(
 	)
 }
 
-// createMessageHandler creates a message handler with all dependencies
 func createMessageHandler(
 	db *database.Database,
 	logger *logger.Logger,

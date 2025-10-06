@@ -7,9 +7,10 @@ import (
 	"zpwoot/internal/adapters/http/middleware"
 	"zpwoot/internal/container"
 
+	_ "zpwoot/docs/swagger"
+
 	"github.com/go-chi/chi/v5"
 	httpSwagger "github.com/swaggo/http-swagger"
-	_ "zpwoot/docs/swagger"
 )
 
 func NewRouter(container *container.Container) http.Handler {
@@ -17,7 +18,6 @@ func NewRouter(container *container.Container) http.Handler {
 
 	middleware.SetupMiddleware(r)
 
-	// Initialize handlers
 	h := handlers.NewHandlers(
 		container.GetDatabase(),
 		container.GetLogger(),
@@ -70,4 +70,26 @@ func setupSessionRoutes(r chi.Router, h *handlers.Handlers) {
 		r.Get("/{sessionId}/contacts", h.Message.GetContacts)
 		r.Get("/{sessionId}/chat-info", h.Message.GetChatInfo)
 	})
+
+	
+func setupMessageRoutes(r chi.Router, h *handlers.Handlers) {
+	r.Route("/sessions/{sessionId}/send/message", func(r chi.Router) {
+		r.Post("/text", h.Message.SendText)
+		r.Post("/image", h.Message.SendImage)
+		r.Post("/audio", h.Message.SendAudio)
+		r.Post("/video", h.Message.SendVideo)
+		r.Post("/document", h.Message.SendDocument)
+		r.Post("/sticker", h.Message.SendSticker)
+		r.Post("/location", h.Message.SendLocation)
+		r.Post("/contact", h.Message.SendContact)
+		r.Post("/contacts", h.Message.SendContactsArray)
+		r.Post("/reaction", h.Message.SendReaction)
+		r.Post("/template", h.Message.SendTemplate)
+		r.Post("/buttons", h.Message.SendButtons)
+		r.Post("/list", h.Message.SendList)
+		r.Post("/poll", h.Message.SendPoll)
+		r.Post("/viewonce", h.Message.SendViewOnce)
+	})
+}
+
 }

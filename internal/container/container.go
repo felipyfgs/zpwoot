@@ -6,7 +6,6 @@ import (
 
 	"zpwoot/internal/adapters/database"
 	"zpwoot/internal/adapters/database/repository"
-	"zpwoot/internal/adapters/http/handlers"
 	"zpwoot/internal/adapters/logger"
 	"zpwoot/internal/adapters/waclient"
 	"zpwoot/internal/config"
@@ -126,41 +125,4 @@ func (c *Container) GetSessionUseCases() input.SessionUseCases {
 
 func (c *Container) GetMessageUseCases() input.MessageUseCases {
 	return c.messageUseCases
-}
-
-func (c *Container) CreateSessionHandler() *handlers.SessionHandler {
-	sessionRepository := repository.NewSessionRepository(c.database.DB)
-	sessionRepo := repository.NewSessionRepo(sessionRepository)
-	waContainer := waclient.NewWAStoreContainer(
-		c.database.DB,
-		c.logger,
-		c.config.Database.URL,
-	)
-	waClient := waclient.NewWAClient(waContainer, c.logger, sessionRepo)
-	sessionManager := waclient.NewSessionManagerAdapter(waClient)
-
-	return handlers.NewSessionHandler(
-		c.sessionUseCases,
-		sessionManager,
-		c.logger,
-	)
-}
-
-func (c *Container) CreateMessageHandler() *handlers.MessageHandler {
-	sessionRepository := repository.NewSessionRepository(c.database.DB)
-	sessionRepo := repository.NewSessionRepo(sessionRepository)
-	waContainer := waclient.NewWAStoreContainer(
-		c.database.DB,
-		c.logger,
-		c.config.Database.URL,
-	)
-	waClient := waclient.NewWAClient(waContainer, c.logger, sessionRepo)
-
-	messageSender := waclient.NewMessageSender(waClient)
-	messageService := waclient.NewMessageServiceWrapper(messageSender)
-
-	return handlers.NewMessageHandler(
-		messageService,
-		c.logger,
-	)
 }
