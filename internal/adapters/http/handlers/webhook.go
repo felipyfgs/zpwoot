@@ -1,0 +1,182 @@
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+
+	"zpwoot/internal/adapters/logger"
+	"zpwoot/internal/core/application/dto"
+	"zpwoot/internal/core/ports/input"
+
+	"github.com/go-chi/chi/v5"
+)
+
+// WebhookHandler gerencia as requisições HTTP relacionadas a webhooks
+type WebhookHandler struct {
+	webhookUseCases input.WebhookUseCases
+	logger          *logger.Logger
+}
+
+// NewWebhookHandler cria uma nova instância do handler
+func NewWebhookHandler(webhookUseCases input.WebhookUseCases, logger *logger.Logger) *WebhookHandler {
+	return &WebhookHandler{
+		webhookUseCases: webhookUseCases,
+		logger:          logger,
+	}
+}
+
+// SetWebhook configura ou atualiza um webhook para uma sessão
+// @Summary		Configure Webhook
+// @Description	Configure or update webhook for a session
+// @Tags			Webhook
+// @Accept			json
+// @Produce		json
+// @Param			sessionId	path		string						true	"Session ID"
+// @Param			request		body		dto.CreateWebhookRequest	true	"Webhook configuration"
+// @Success		200			{object}	dto.WebhookResponse			"Webhook configured successfully"
+// @Failure		400			{object}	dto.ErrorResponse			"Invalid request"
+// @Failure		500			{object}	dto.ErrorResponse			"Internal server error"
+// @Router			/sessions/{sessionId}/webhook/create [post]
+// @Security		ApiKeyAuth
+func (h *WebhookHandler) SetWebhook(w http.ResponseWriter, r *http.Request) {
+	sessionID := chi.URLParam(r, "sessionId")
+	if sessionID == "" {
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeValidation, "sessionId is required")
+		return
+	}
+
+	var req dto.CreateWebhookRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to decode webhook request")
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeBadRequest, "Invalid JSON body")
+		return
+	}
+
+	// Usar Upsert para criar ou atualizar
+	response, err := h.webhookUseCases.Upsert(r.Context(), sessionID, &req)
+	if err != nil {
+		h.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to set webhook")
+		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, err.Error())
+		return
+	}
+
+	h.logger.Info().
+		Str("session_id", sessionID).
+		Str("webhook_url", req.URL).
+		Msg("Webhook configured successfully")
+
+	h.writeJSON(w, http.StatusOK, response)
+}
+
+// GetWebhook busca a configuração de webhook de uma sessão
+// @Summary		Get Webhook Configuration
+// @Description	Get webhook configuration for a session
+// @Tags			Webhook
+// @Produce		json
+// @Param			sessionId	path		string				true	"Session ID"
+// @Success		200			{object}	dto.WebhookResponse	"Webhook configuration"
+// @Failure		404			{object}	dto.ErrorResponse	"Webhook not found"
+// @Failure		500			{object}	dto.ErrorResponse	"Internal server error"
+// @Router			/sessions/{sessionId}/webhook/info [get]
+// @Security		ApiKeyAuth
+func (h *WebhookHandler) GetWebhook(w http.ResponseWriter, r *http.Request) {
+	sessionID := chi.URLParam(r, "sessionId")
+	if sessionID == "" {
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeValidation, "sessionId is required")
+		return
+	}
+
+	response, err := h.webhookUseCases.Get(r.Context(), sessionID)
+	if err != nil {
+		h.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to get webhook")
+		if err.Error() == "webhook not found" {
+			h.writeError(w, http.StatusNotFound, dto.ErrorCodeNotFound, "Webhook not found for this session")
+			return
+		}
+		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, err.Error())
+		return
+	}
+
+	h.writeJSON(w, http.StatusOK, response)
+}
+
+// DeleteWebhook remove a configuração de webhook de uma sessão
+// @Summary		Delete Webhook Configuration
+// @Description	Delete webhook configuration for a session
+// @Tags			Webhook
+// @Produce		json
+// @Param			sessionId	path		string			true	"Session ID"
+// @Success		200			{object}	dto.SuccessResponse	"Webhook deleted successfully"
+// @Failure		404			{object}	dto.ErrorResponse	"Webhook not found"
+// @Failure		500			{object}	dto.ErrorResponse	"Internal server error"
+// @Router			/sessions/{sessionId}/webhook/delete [delete]
+// @Security		ApiKeyAuth
+func (h *WebhookHandler) DeleteWebhook(w http.ResponseWriter, r *http.Request) {
+	sessionID := chi.URLParam(r, "sessionId")
+	if sessionID == "" {
+		h.writeError(w, http.StatusBadRequest, dto.ErrorCodeValidation, "sessionId is required")
+		return
+	}
+
+	err := h.webhookUseCases.Delete(r.Context(), sessionID)
+	if err != nil {
+		h.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to delete webhook")
+		if err.Error() == "webhook not found" {
+			h.writeError(w, http.StatusNotFound, dto.ErrorCodeNotFound, "Webhook not found for this session")
+			return
+		}
+		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, err.Error())
+		return
+	}
+
+	h.logger.Info().Str("session_id", sessionID).Msg("Webhook deleted successfully")
+
+	h.writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"message": "Webhook deleted successfully",
+	})
+}
+
+// ListEvents lista todos os eventos disponíveis para webhook
+// @Summary		List Available Events
+// @Description	List all available webhook event types
+// @Tags			Webhook
+// @Produce		json
+// @Success		200	{object}	dto.ListEventsResponse	"Available events"
+// @Failure		500	{object}	dto.ErrorResponse		"Internal server error"
+// @Router			/webhook/events [get]
+// @Security		ApiKeyAuth
+func (h *WebhookHandler) ListEvents(w http.ResponseWriter, r *http.Request) {
+	response, err := h.webhookUseCases.ListEvents(r.Context())
+	if err != nil {
+		h.logger.Error().Err(err).Msg("Failed to list webhook events")
+		h.writeError(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, err.Error())
+		return
+	}
+
+	h.writeJSON(w, http.StatusOK, response)
+}
+
+// writeJSON escreve uma resposta JSON
+func (h *WebhookHandler) writeJSON(w http.ResponseWriter, statusCode int, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode JSON response")
+	}
+}
+
+// writeError escreve uma resposta de erro
+func (h *WebhookHandler) writeError(w http.ResponseWriter, statusCode int, errorCode, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	
+	errorResponse := dto.ErrorResponse{
+		Error:   errorCode,
+		Message: message,
+	}
+	
+	if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
+		h.logger.Error().Err(err).Msg("Failed to encode error response")
+	}
+}

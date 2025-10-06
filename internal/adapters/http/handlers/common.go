@@ -15,6 +15,7 @@ type Handlers struct {
 	Group   *GroupHandler
 	Contact *ContactHandler
 	Health  *HealthHandler
+	Webhook *WebhookHandler
 }
 
 func NewHandlers(
@@ -23,6 +24,7 @@ func NewHandlers(
 	cfg *config.Config,
 	sessionUseCases input.SessionUseCases,
 	messageUseCases input.MessageUseCases,
+	webhookUseCases input.WebhookUseCases,
 	waClient output.WhatsAppClient,
 ) *Handlers {
 	return &Handlers{
@@ -31,6 +33,7 @@ func NewHandlers(
 		Group:   createGroupHandler(logger, waClient),
 		Contact: createContactHandler(logger, waClient),
 		Health:  NewHealthHandler(db),
+		Webhook: NewWebhookHandler(webhookUseCases, logger),
 	}
 }
 

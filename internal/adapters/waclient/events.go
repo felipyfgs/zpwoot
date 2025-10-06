@@ -7,19 +7,24 @@ import (
 	"time"
 
 	"zpwoot/internal/adapters/logger"
+	"zpwoot/internal/core/domain/webhook"
+	"zpwoot/internal/core/ports/output"
 
+	"github.com/google/uuid"
 	"go.mau.fi/whatsmeow/types/events"
 )
 
 type DefaultEventHandler struct {
 	logger        *logger.Logger
-	webhookSender WebhookSender
+	webhookSender output.WebhookSender
+	webhookRepo   webhook.Repository
 }
 
-func NewDefaultEventHandler(logger *logger.Logger, webhookSender WebhookSender) *DefaultEventHandler {
+func NewDefaultEventHandler(logger *logger.Logger, webhookSender output.WebhookSender, webhookRepo webhook.Repository) *DefaultEventHandler {
 	return &DefaultEventHandler{
 		logger:        logger,
 		webhookSender: webhookSender,
+		webhookRepo:   webhookRepo,
 	}
 }
 
@@ -172,23 +177,41 @@ func (eh *DefaultEventHandler) logUnhandledEvent(event interface{}) {
 }
 
 func (eh *DefaultEventHandler) sendWebhookIfEnabled(client *Client, eventType EventType, eventData interface{}) error {
-	if !eh.shouldSendWebhook(client, eventType) {
+	// Carregar configuração de webhook do banco de dados
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	webhookConfig, err := eh.webhookRepo.GetBySessionID(ctx, client.SessionID)
+	if err != nil {
+		// Se não encontrar webhook configurado, não é erro
+		if err.Error() == "webhook not found" {
+			return nil
+		}
+		eh.logger.Error().Err(err).Str("session_id", client.SessionID).Msg("Failed to load webhook config")
+		return nil // Não falhar o processamento do evento por causa do webhook
+	}
+
+	if !eh.shouldSendWebhook(webhookConfig, eventType) {
 		return nil
 	}
-	return eh.sendWebhook(client, eventType, eventData)
+
+	return eh.sendWebhook(webhookConfig, eventType, eventData, client.SessionID)
 }
 
-func (eh *DefaultEventHandler) shouldSendWebhook(client *Client, eventType EventType) bool {
-	if eh.webhookSender == nil || client.WebhookURL == "" {
+func (eh *DefaultEventHandler) shouldSendWebhook(webhookConfig *webhook.Webhook, eventType EventType) bool {
+	if eh.webhookSender == nil || !webhookConfig.Enabled {
 		return false
 	}
 
-	if len(client.Events) == 0 {
+	// Se não especificou eventos, aceita todos
+	if len(webhookConfig.Events) == 0 {
 		return true
 	}
 
-	for _, subscribedEvent := range client.Events {
-		if subscribedEvent == eventType {
+	// Verificar se o evento está na lista configurada
+	eventTypeStr := string(eventType)
+	for _, subscribedEvent := range webhookConfig.Events {
+		if subscribedEvent == eventTypeStr {
 			return true
 		}
 	}
@@ -196,18 +219,40 @@ func (eh *DefaultEventHandler) shouldSendWebhook(client *Client, eventType Event
 	return false
 }
 
-func (eh *DefaultEventHandler) sendWebhook(client *Client, eventType EventType, eventData interface{}) error {
-	webhookEvent := &WebhookEvent{
-		Type:      eventType,
-		SessionID: client.SessionID,
-		Event:     eventData,
-		Timestamp: time.Now(),
+func (eh *DefaultEventHandler) sendWebhook(webhookConfig *webhook.Webhook, eventType EventType, eventData interface{}, sessionID string) error {
+	// Converter eventData para map[string]interface{}
+	var data map[string]interface{}
+
+	// Se eventData já é um map, usar diretamente
+	if mapData, ok := eventData.(map[string]interface{}); ok {
+		data = mapData
+	} else {
+		// Serializar para JSON e deserializar para map
+		jsonData, err := json.Marshal(eventData)
+		if err != nil {
+			eh.logger.Error().Err(err).Msg("Failed to marshal event data")
+			return err
+		}
+
+		if err := json.Unmarshal(jsonData, &data); err != nil {
+			eh.logger.Error().Err(err).Msg("Failed to unmarshal event data")
+			return err
+		}
 	}
 
-	ctx, cancel := context.WithTimeout(client.ctx, 30*time.Second)
+	// Criar evento usando nossa interface padrão
+	webhookEvent := &output.WebhookEvent{
+		ID:        uuid.New().String(),
+		Type:      string(eventType),
+		SessionID: sessionID,
+		Timestamp: time.Now(),
+		Data:      data,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	return eh.webhookSender.SendWebhook(ctx, webhookEvent)
+	return eh.webhookSender.SendWebhook(ctx, webhookConfig.URL, webhookConfig.Secret, webhookEvent)
 }
 
 func getMessageType(msg interface{}) string {

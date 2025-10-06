@@ -3,15 +3,20 @@ package container
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"time"
 
 	"zpwoot/internal/adapters/database"
 	"zpwoot/internal/adapters/database/repository"
+	"zpwoot/internal/adapters/integration/webhook"
 	"zpwoot/internal/adapters/logger"
 	"zpwoot/internal/adapters/waclient"
 	"zpwoot/internal/config"
 	"zpwoot/internal/core/application/usecase/message"
 	"zpwoot/internal/core/application/usecase/session"
+	webhookUseCase "zpwoot/internal/core/application/usecase/webhook"
 	domainSession "zpwoot/internal/core/domain/session"
+	domainWebhook "zpwoot/internal/core/domain/webhook"
 	"zpwoot/internal/core/ports/input"
 	"zpwoot/internal/core/ports/output"
 )
@@ -23,11 +28,14 @@ type Container struct {
 	migrator *database.Migrator
 
 	sessionService *domainSession.Service
+	webhookService *domainWebhook.Service
 
 	whatsappClient output.WhatsAppClient
+	webhookSender  output.WebhookSender
 
 	sessionUseCases input.SessionUseCases
 	messageUseCases input.MessageUseCases
+	webhookUseCases input.WebhookUseCases
 }
 
 func NewContainer(cfg *config.Config) *Container {
@@ -60,6 +68,10 @@ func (c *Container) Init() error {
 	c.logger.Info().Msg("Initializing domain services")
 	sessionRepo := repository.NewSessionRepository(c.database.DB)
 	c.sessionService = domainSession.NewService(sessionRepo)
+	c.webhookService = domainWebhook.NewService()
+
+	c.logger.Info().Msg("Initializing webhook sender")
+	c.initWebhookSender()
 
 	c.logger.Info().Msg("Initializing WhatsApp client")
 	c.initWAClient()
@@ -67,6 +79,7 @@ func (c *Container) Init() error {
 	c.logger.Info().Msg("Initializing use cases")
 	c.sessionUseCases = session.NewUseCases(c.sessionService, c.whatsappClient)
 	c.messageUseCases = message.NewMessageUseCases(c.sessionService, c.whatsappClient)
+	c.webhookUseCases = c.initWebhookUseCases()
 
 	c.logger.Info().Msg("Container initialization completed successfully")
 	return nil
@@ -75,12 +88,14 @@ func (c *Container) Init() error {
 func (c *Container) initWAClient() {
 	sessionRepository := repository.NewSessionRepository(c.database.DB)
 	sessionRepo := repository.NewSessionRepo(sessionRepository)
+	webhookRepo := repository.NewWebhookRepository(c.database.DB)
+
 	waContainer := waclient.NewWAStoreContainer(
 		c.database.DB,
 		c.logger,
 		c.config.Database.URL,
 	)
-	waClient := waclient.NewWAClient(waContainer, c.logger, sessionRepo)
+	waClient := waclient.NewWAClient(waContainer, c.logger, sessionRepo, c.webhookSender, webhookRepo)
 	c.whatsappClient = waclient.NewWAClientAdapter(waClient)
 }
 
@@ -126,3 +141,25 @@ func (c *Container) GetSessionUseCases() input.SessionUseCases {
 func (c *Container) GetMessageUseCases() input.MessageUseCases {
 	return c.messageUseCases
 }
+
+func (c *Container) GetWebhookUseCases() input.WebhookUseCases {
+	return c.webhookUseCases
+}
+
+func (c *Container) GetWebhookSender() output.WebhookSender {
+	return c.webhookSender
+}
+
+func (c *Container) initWebhookSender() {
+	httpClient := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+	c.webhookSender = webhook.NewHTTPWebhookSender(httpClient, c.logger)
+}
+
+func (c *Container) initWebhookUseCases() input.WebhookUseCases {
+	webhookRepo := repository.NewWebhookRepository(c.database.DB)
+	return webhookUseCase.NewWebhookUseCases(webhookRepo, c.webhookService)
+}
+
+

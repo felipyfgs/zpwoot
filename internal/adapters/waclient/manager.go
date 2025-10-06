@@ -11,6 +11,8 @@ import (
 
 	"zpwoot/internal/adapters/logger"
 	"zpwoot/internal/core/domain/session"
+	"zpwoot/internal/core/domain/webhook"
+	"zpwoot/internal/core/ports/output"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/mdp/qrterminal/v3"
@@ -49,13 +51,20 @@ type SessionRepository interface {
 	List(ctx context.Context, limit, offset int) ([]*session.Session, error)
 }
 
-func NewWAClient(container *sqlstore.Container, logger *logger.Logger, sessionRepo SessionRepository) *WAClient {
+func NewWAClient(container *sqlstore.Container, logger *logger.Logger, sessionRepo SessionRepository, webhookSender output.WebhookSender, webhookRepo webhook.Repository) *WAClient {
 	wac := &WAClient{
 		sessions:    make(map[string]*Client),
 		container:   container,
 		logger:      logger,
 		sessionRepo: sessionRepo,
 	}
+
+	// Configurar EventHandler com webhook
+	if webhookSender != nil && webhookRepo != nil {
+		eventHandler := NewDefaultEventHandler(logger, webhookSender, webhookRepo)
+		wac.SetEventHandler(eventHandler)
+	}
+
 	go wac.loadSessionsFromDatabase()
 	return wac
 }

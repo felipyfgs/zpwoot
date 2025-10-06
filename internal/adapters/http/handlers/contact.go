@@ -253,7 +253,7 @@ func (h *ContactHandler) GetContacts(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  dto.ErrorResponse
 // @Failure      404  {object}  dto.ErrorResponse
 // @Failure      500  {object}  dto.ErrorResponse
-// @Router       /sessions/{sessionId}/presence [post]
+// @Router       /sessions/{sessionId}/status/presence [post]
 func (h *ContactHandler) SendPresence(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
@@ -304,7 +304,7 @@ func (h *ContactHandler) SendPresence(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  dto.ErrorResponse
 // @Failure      404  {object}  dto.ErrorResponse
 // @Failure      500  {object}  dto.ErrorResponse
-// @Router       /sessions/{sessionId}/presence/chat [post]
+// @Router       /sessions/{sessionId}/chat/presence [post]
 func (h *ContactHandler) ChatPresence(w http.ResponseWriter, r *http.Request) {
 	sessionID := chi.URLParam(r, "sessionId")
 	if sessionID == "" {
