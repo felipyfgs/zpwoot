@@ -254,7 +254,6 @@ func ToStatusResponse(s *session.Session) *SessionStatusResponse {
 		Connected: s.IsConnected,
 	}
 
-	// Include QR code if available
 	if s.QRCode != "" {
 		response.QRCode = s.QRCode
 		response.QRCodeBase64 = QRBase64(s.QRCode)

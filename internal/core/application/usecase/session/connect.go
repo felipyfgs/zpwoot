@@ -43,16 +43,14 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 	if response, err := uc.performWhatsAppConnection(ctx, sessionID, domainSession); err != nil {
 		return response, err
 	} else if response != nil {
-		// Connection was already established, return the response
+
 		return response, nil
 	}
 
 	uc.updateConnectionStatus(ctx, sessionID)
 
-	// Wait a bit for QR code to be generated and saved
 	time.Sleep(1 * time.Second)
 
-	// Get updated session with QR code
 	updatedSession, err := uc.sessionService.Get(ctx, sessionID)
 	if err == nil && updatedSession != nil {
 		domainSession = updatedSession
@@ -125,7 +123,6 @@ func (uc *ConnectUseCase) performWhatsAppConnection(ctx context.Context, session
 		return nil, fmt.Errorf("failed to connect WhatsApp session: %w", err)
 	}
 
-	// Connection completed successfully, return nil to continue with status update
 	return nil, nil
 }
 

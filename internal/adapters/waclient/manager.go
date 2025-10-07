@@ -32,17 +32,17 @@ const (
 )
 
 type WAClient struct {
-	sessions       map[string]*Client
-	sessionsMutex  sync.RWMutex
-	container      *sqlstore.Container
-	sessionContainers map[string]*sqlstore.Container // Session-specific containers
+	sessions          map[string]*Client
+	sessionsMutex     sync.RWMutex
+	container         *sqlstore.Container
+	sessionContainers map[string]*sqlstore.Container
 	containersMutex   sync.RWMutex
-	logger         *logger.Logger
-	eventHandler   EventHandler
-	mediaProcessor MediaProcessor
-	webhookSender  WebhookSender
-	sessionRepo    SessionRepository
-	dbURL          string // Store DB URL for creating session-specific containers
+	logger            *logger.Logger
+	eventHandler      EventHandler
+	mediaProcessor    MediaProcessor
+	webhookSender     WebhookSender
+	sessionRepo       SessionRepository
+	dbURL             string
 }
 
 type SessionRepository interface {
@@ -164,27 +164,32 @@ func getTimeValue(t *time.Time) time.Time {
 }
 
 func (wac *WAClient) getOrCreateDeviceStore(ctx context.Context, sessionID string, deviceJID string) *store.Device {
-	// ONLY use existing device if we have a deviceJID for this specific session
-	if deviceJID != "" {
-		jid, err := types.ParseJID(deviceJID)
-		if err == nil {
-			deviceStore, err := wac.container.GetDevice(ctx, jid)
-			if err == nil {
-				wac.logger.Debug().Str("jid", deviceJID).Str("session_id", sessionID).Msg("Found existing device store for session")
-				return deviceStore
-			}
+	var deviceStore *store.Device
+	var err error
 
-			wac.logger.Warn().Err(err).Str("jid", deviceJID).Str("session_id", sessionID).Msg("Failed to get device by JID, creating new one")
+	if deviceJID != "" {
+		jid, parseErr := types.ParseJID(deviceJID)
+		if parseErr == nil {
+			deviceStore, err = wac.container.GetDevice(ctx, jid)
+			if err != nil {
+				wac.logger.Error().Err(err).Str("jid", deviceJID).Str("session_id", sessionID).Msg("Failed to get device")
+				deviceStore = wac.container.NewDevice()
+			} else {
+				wac.logger.Debug().Str("jid", deviceJID).Str("session_id", sessionID).Msg("Found existing device store for session")
+			}
 		} else {
-			wac.logger.Warn().Err(err).Str("jid", deviceJID).Str("session_id", sessionID).Msg("Failed to parse JID, creating new device")
+			wac.logger.Warn().Err(parseErr).Str("jid", deviceJID).Str("session_id", sessionID).Msg("Failed to parse JID, creating new device")
+			deviceStore = wac.container.NewDevice()
 		}
+	} else {
+		wac.logger.Warn().Str("session_id", sessionID).Msg("No jid found. Creating new device")
+		deviceStore = wac.container.NewDevice()
 	}
 
-	// For sessions without deviceJID, create a new device store
-	// This will generate new credentials and ensure isolation
-	deviceStore := wac.container.NewDevice()
-
-	wac.logger.Info().Str("session_id", sessionID).Msg("Created new device store for session")
+	if deviceStore == nil {
+		wac.logger.Warn().Str("session_id", sessionID).Msg("No store found. Creating new one")
+		deviceStore = wac.container.NewDevice()
+	}
 
 	return deviceStore
 }
@@ -202,7 +207,6 @@ func (wac *WAClient) CreateSession(ctx context.Context, config *SessionConfig) (
 		return nil, fmt.Errorf("failed to get session from database: %w", err)
 	}
 
-	// Create isolated device store for this session
 	deviceStore := wac.getOrCreateDeviceStore(ctx, config.SessionID, sess.DeviceJID)
 	client := wac.createClient(ctx, sess, deviceStore)
 	client.Config = config
@@ -277,25 +281,36 @@ func (wac *WAClient) ConnectSession(ctx context.Context, sessionID string) error
 	wac.updateSessionStatus(ctx, client)
 
 	if client.WAClient.Store.ID == nil {
-		if err = client.WAClient.Connect(); err != nil {
-			// Check if already connected
-			if strings.Contains(err.Error(), "websocket is already connected") {
-				wac.logger.Info().Str("session_id", client.SessionID).Msg("WebSocket already connected")
-				client.Status = session.StatusConnected
+
+		qrChan, err := client.WAClient.GetQRChannel(ctx)
+		if err != nil {
+
+			if !errors.Is(err, whatsmeow.ErrQRStoreContainsID) {
+				wac.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to get QR channel")
+				client.Status = session.StatusError
 				wac.updateSessionStatus(ctx, client)
-				return nil
+				return fmt.Errorf("failed to get QR channel: %w", err)
+			}
+		} else {
+
+			err = client.WAClient.Connect()
+			if err != nil {
+				wac.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to connect client")
+				client.Status = session.StatusError
+				wac.updateSessionStatus(ctx, client)
+				return fmt.Errorf("failed to connect client: %w", err)
 			}
 
-			wac.logger.Error().Err(err).Msg("Failed to connect client")
-			client.Status = session.StatusError
-			wac.updateSessionStatus(ctx, client)
-			return fmt.Errorf("failed to connect: %w", err)
-		}
+			wac.logger.Info().Str("session_id", client.SessionID).Msg("Connected - waiting for QR codes via events")
 
-		wac.logger.Info().Str("session_id", client.SessionID).Msg("Connected - waiting for QR codes via events")
+			go wac.processQRCodes(ctx, client, qrChan)
+		}
 	} else {
-		if err = client.WAClient.Connect(); err != nil {
-			// Check if already connected
+
+		wac.logger.Info().Str("session_id", sessionID).Msg("Already logged in, just connect")
+		err = client.WAClient.Connect()
+		if err != nil {
+
 			if strings.Contains(err.Error(), "websocket is already connected") {
 				wac.logger.Info().Str("session_id", client.SessionID).Msg("WebSocket already connected")
 				client.Status = session.StatusConnected
@@ -312,6 +327,28 @@ func (wac *WAClient) ConnectSession(ctx context.Context, sessionID string) error
 	return nil
 }
 
+func (wac *WAClient) processQRCodes(ctx context.Context, client *Client, qrChan <-chan whatsmeow.QRChannelItem) {
+	for evt := range qrChan {
+		if evt.Event == "code" {
+
+			wac.updateClientWithQRCode(ctx, client, evt.Code, 1)
+
+			wac.displayQRCode(evt.Code, client.SessionID, 1, 1, 1)
+
+			wac.logger.Info().
+				Str("session_id", client.SessionID).
+				Str("qr_number", "1").
+				Int("timeout_seconds", int(evt.Timeout.Seconds())).
+				Msg("📱 Scan QR code")
+		} else {
+			wac.logger.Info().
+				Str("session_id", client.SessionID).
+				Str("event", evt.Event).
+				Msg("QR channel event")
+		}
+	}
+}
+
 func (wac *WAClient) recreateClient(ctx context.Context, sess *session.Session) (*Client, error) {
 	wac.sessionsMutex.Lock()
 	defer wac.sessionsMutex.Unlock()
@@ -320,7 +357,6 @@ func (wac *WAClient) recreateClient(ctx context.Context, sess *session.Session) 
 		return existing, nil
 	}
 
-	// Create isolated device store for this session
 	deviceStore := wac.getOrCreateDeviceStore(ctx, sess.ID, sess.DeviceJID)
 	client := wac.createClient(ctx, sess, deviceStore)
 	wac.sessions[sess.ID] = client
@@ -754,9 +790,7 @@ func NewWAStoreContainer(db *sqlx.DB, logger *logger.Logger, dbURL string) *sqls
 	return container
 }
 
-// NewWAStoreContainerForSession creates a session-specific store container
 func NewWAStoreContainerForSession(db *sqlx.DB, logger *logger.Logger, dbURL string, sessionID string) *sqlstore.Container {
-	// Create a session-specific database URL or table prefix
-	// For now, we'll use the same container but rely on device isolation
+
 	return NewWAStoreContainer(db, logger, dbURL)
 }

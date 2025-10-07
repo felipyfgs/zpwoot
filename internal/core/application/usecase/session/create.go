@@ -65,15 +65,14 @@ func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateRequest) (*
 	}
 
 	if req.GenerateQRCode {
-		// Connect and get QR code directly using WhatsApp Meow's QR channel
+
 		qrInfo, err := uc.whatsappClient.ConnectAndGetQRCode(ctx, sessionID)
 		if err != nil {
 			uc.logger.Warn().Err(err).Str("session_id", sessionID).Msg("Failed to connect and get QR code")
 		} else if qrInfo != nil && qrInfo.Code != "" {
-			// Set QR code in domain session
+
 			domainSession.SetQRCode(qrInfo.Code, qrInfo.ExpiresAt)
 
-			// Save to database
 			if updateErr := uc.sessionService.Update(ctx, domainSession); updateErr != nil {
 				uc.logger.Error().Err(updateErr).Str("session_id", sessionID).Msg("Failed to update session with QR code")
 			} else {
