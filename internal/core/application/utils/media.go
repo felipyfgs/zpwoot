@@ -131,7 +131,21 @@ func (mp *MediaProcessor) downloadFromURL(url string) ([]byte, string, string, e
 	return data, mimeType, fileName, nil
 }
 func (mp *MediaProcessor) readFromFile(filePath string) ([]byte, string, string, error) {
-	data, err := os.ReadFile(filePath)
+
+	cleanPath := filepath.Clean(filePath)
+	if strings.Contains(cleanPath, "..") {
+		return nil, "", "", fmt.Errorf("invalid file path: directory traversal not allowed")
+	}
+
+	fileInfo, err := os.Stat(cleanPath)
+	if err != nil {
+		return nil, "", "", fmt.Errorf("file not found or inaccessible: %w", err)
+	}
+	if !fileInfo.Mode().IsRegular() {
+		return nil, "", "", fmt.Errorf("path is not a regular file")
+	}
+
+	data, err := os.ReadFile(cleanPath)
 	if err != nil {
 		return nil, "", "", err
 	}

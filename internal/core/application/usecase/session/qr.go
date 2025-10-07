@@ -50,7 +50,7 @@ func (uc *QRUseCase) GetQRCode(ctx context.Context, sessionID string) (*dto.QRCo
 		var waErr *output.WhatsAppError
 		if errors.As(err, &waErr) {
 			switch waErr.Code {
-			case "SESSION_NOT_FOUND":
+			case sessionNotFoundCode:
 				return nil, dto.ErrSessionNotFound
 			case alreadyConnectedCode:
 				return nil, fmt.Errorf("session is already connected")

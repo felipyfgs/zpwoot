@@ -296,15 +296,7 @@ func (m *MediaData) ToInterfacesMediaData() *output.MediaData {
 	var err error
 
 	if m.Base64 != "" {
-		base64Data := m.Base64
-		if strings.Contains(base64Data, ",") {
-			parts := strings.Split(base64Data, ",")
-			if len(parts) > 1 {
-				base64Data = parts[1]
-			}
-		}
-
-		data, err = base64.StdEncoding.DecodeString(base64Data)
+		data, err = m.decodeBase64Data()
 		if err != nil {
 			data = []byte{}
 		}
@@ -439,3 +431,16 @@ type HistorySyncResponse struct {
 	Success   bool  `json:"success" example:"true"`
 	Timestamp int64 `json:"timestamp" example:"1696570882"`
 } //@name HistorySyncResponse
+
+// decodeBase64Data extracts and decodes base64 data, handling data URI format
+func (m *MediaData) decodeBase64Data() ([]byte, error) {
+	base64Data := m.Base64
+	if strings.Contains(base64Data, ",") {
+		parts := strings.Split(base64Data, ",")
+		if len(parts) > 1 {
+			base64Data = parts[1]
+		}
+	}
+
+	return base64.StdEncoding.DecodeString(base64Data)
+}

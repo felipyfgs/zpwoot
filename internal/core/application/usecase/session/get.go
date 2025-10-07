@@ -87,6 +87,7 @@ func (uc *GetUseCase) ExecuteWithSync(ctx context.Context, sessionID string) (*d
 
 	waStatus, err := uc.whatsappClient.GetSessionStatus(ctx, sessionID)
 	if err != nil {
+
 		return response, nil
 	}
 
@@ -94,13 +95,7 @@ func (uc *GetUseCase) ExecuteWithSync(ctx context.Context, sessionID string) (*d
 		response.DeviceJID = waStatus.DeviceJID
 		response.Connected = waStatus.Connected
 
-		if waStatus.Connected {
-			response.Status = "connected"
-		} else if waStatus.LoggedIn {
-			response.Status = "disconnected"
-		} else {
-			response.Status = "qr_code"
-		}
+		response.Status = uc.determineSessionStatus(waStatus)
 
 		if !waStatus.ConnectedAt.IsZero() {
 			response.ConnectedAt = &waStatus.ConnectedAt
