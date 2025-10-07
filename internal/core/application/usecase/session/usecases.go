@@ -24,17 +24,18 @@ type UseCases struct {
 func NewUseCases(
 	sessionService *session.Service,
 	whatsappClient output.WhatsAppClient,
+	logger output.Logger,
 ) *UseCases {
 	return &UseCases{
-		Create:     NewCreateUseCase(sessionService, whatsappClient),
-		Connect:    NewConnectUseCase(sessionService, whatsappClient),
-		Disconnect: NewDisconnectUseCase(sessionService, whatsappClient),
-		Logout:     NewLogoutUseCase(sessionService, whatsappClient),
-		Get:        NewGetUseCase(sessionService, whatsappClient),
-		List:       NewListUseCase(sessionService, whatsappClient),
-		Delete:     NewDeleteUseCase(sessionService, whatsappClient),
-		QR:         NewQRUseCase(sessionService, whatsappClient),
-		Pair:       NewPairUseCase(whatsappClient),
+		Create:     NewCreateUseCase(sessionService, whatsappClient, logger),
+		Connect:    NewConnectUseCase(sessionService, whatsappClient, logger),
+		Disconnect: NewDisconnectUseCase(sessionService, whatsappClient, logger),
+		Logout:     NewLogoutUseCase(sessionService, whatsappClient, logger),
+		Get:        NewGetUseCase(sessionService, whatsappClient, logger),
+		List:       NewListUseCase(sessionService, whatsappClient, logger),
+		Delete:     NewDeleteUseCase(sessionService, whatsappClient, logger),
+		QR:         NewQRUseCase(sessionService, whatsappClient, logger),
+		Pair:       NewPairUseCase(whatsappClient, logger),
 	}
 }
 

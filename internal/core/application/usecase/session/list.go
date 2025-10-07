@@ -12,15 +12,18 @@ import (
 type ListUseCase struct {
 	sessionService *session.Service
 	whatsappClient output.WhatsAppClient
+	logger         output.Logger
 }
 
 func NewListUseCase(
 	sessionService *session.Service,
 	whatsappClient output.WhatsAppClient,
+	logger output.Logger,
 ) *ListUseCase {
 	return &ListUseCase{
 		sessionService: sessionService,
 		whatsappClient: whatsappClient,
+		logger:         logger,
 	}
 }
 

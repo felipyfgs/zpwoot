@@ -14,15 +14,18 @@ import (
 type DisconnectUseCase struct {
 	sessionService *session.Service
 	whatsappClient output.WhatsAppClient
+	logger         output.Logger
 }
 
 func NewDisconnectUseCase(
 	sessionService *session.Service,
 	whatsappClient output.WhatsAppClient,
+	logger output.Logger,
 ) *DisconnectUseCase {
 	return &DisconnectUseCase{
 		sessionService: sessionService,
 		whatsappClient: whatsappClient,
+		logger:         logger,
 	}
 }
 
@@ -115,7 +118,7 @@ func (uc *DisconnectUseCase) finalizeDisconnection(ctx context.Context, sessionI
 	domainSession.SetDisconnected()
 
 	if err := uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected); err != nil {
-		fmt.Printf("Failed to update session status to disconnected: %v\n", err)
+		uc.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to update session status to disconnected")
 	}
 }
 

@@ -15,15 +15,18 @@ import (
 type QRUseCase struct {
 	sessionService *session.Service
 	whatsappClient output.WhatsAppClient
+	logger         output.Logger
 }
 
 func NewQRUseCase(
 	sessionService *session.Service,
 	whatsappClient output.WhatsAppClient,
+	logger output.Logger,
 ) *QRUseCase {
 	return &QRUseCase{
 		sessionService: sessionService,
 		whatsappClient: whatsappClient,
+		logger:         logger,
 	}
 }
 

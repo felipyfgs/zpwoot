@@ -1,10 +1,10 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
 	"strings"
 
+	"zpwoot/internal/adapters/logger"
 	"zpwoot/internal/config"
 )
 
@@ -33,7 +33,7 @@ func AuthMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 
 				errorMsg := `{"error":"unauthorized","message":"invalid or missing API key. Use 'Authorization: YOUR_API_KEY' or 'X-API-Key: YOUR_API_KEY' header"}`
 				if _, err := w.Write([]byte(errorMsg)); err != nil {
-					log.Printf("Failed to write unauthorized response: %v", err)
+					logger.Error().Err(err).Msg("Failed to write unauthorized response")
 				}
 
 				return

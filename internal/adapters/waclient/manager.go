@@ -527,8 +527,12 @@ func (wac *WAClient) displayQRCode(code, sessionID string, qrNumber, totalCodes,
 	qrterminal.GenerateHalfBlock(code, qrterminal.L, os.Stdout)
 
 	timeout := wac.getQRTimeout(index)
-	fmt.Printf("\n📱 Scan QR code | Session: %s | QR: %d/%d | Timeout: %d seconds\n\n",
-		sessionID, qrNumber, totalCodes, int(timeout.Seconds()))
+	wac.logger.Info().
+		Str("session_id", sessionID).
+		Int("qr_number", qrNumber).
+		Int("total_codes", totalCodes).
+		Int("timeout_seconds", int(timeout.Seconds())).
+		Msg("📱 Scan QR code")
 }
 
 func (wac *WAClient) getQRTimeout(index int) time.Duration {

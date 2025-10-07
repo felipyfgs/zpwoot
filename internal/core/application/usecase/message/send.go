@@ -16,15 +16,18 @@ import (
 type SendUseCase struct {
 	sessionService *session.Service
 	whatsappClient output.WhatsAppClient
+	logger         output.Logger
 }
 
 func NewSendUseCase(
 	sessionService *session.Service,
 	whatsappClient output.WhatsAppClient,
+	logger output.Logger,
 ) *SendUseCase {
 	return &SendUseCase{
 		sessionService: sessionService,
 		whatsappClient: whatsappClient,
+		logger:         logger,
 	}
 }
 
@@ -161,7 +164,7 @@ func (uc *SendUseCase) handleWhatsAppError(err error) error {
 func (uc *SendUseCase) updateSessionStatusAsync(ctx context.Context, sessionID string) {
 	go func(ctx context.Context) {
 		if err := uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnected); err != nil {
-			fmt.Printf("Failed to update session status: %v\n", err)
+			uc.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to update session status")
 		}
 	}(ctx)
 }

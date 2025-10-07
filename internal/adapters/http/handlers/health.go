@@ -2,20 +2,22 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"zpwoot/internal/adapters/database"
+	"zpwoot/internal/adapters/logger"
 	"zpwoot/internal/core/application/dto"
 )
 
 type HealthHandler struct {
 	database *database.Database
+	logger   *logger.Logger
 }
 
-func NewHealthHandler(db *database.Database) *HealthHandler {
+func NewHealthHandler(db *database.Database, log *logger.Logger) *HealthHandler {
 	return &HealthHandler{
 		database: db,
+		logger:   log,
 	}
 }
 
@@ -49,7 +51,7 @@ func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
 				Error:   "database_unhealthy",
 				Message: "Database connection is unhealthy",
 			}); err != nil {
-				log.Printf("Failed to encode error response: %v", err)
+				h.logger.Error().Err(err).Msg("Failed to encode error response")
 			}
 
 			return
@@ -63,7 +65,7 @@ func (h *HealthHandler) Health(w http.ResponseWriter, r *http.Request) {
 		Service: "zpwoot",
 		Version: "1.0.0",
 	}); err != nil {
-		log.Printf("Failed to encode health response: %v", err)
+		h.logger.Error().Err(err).Msg("Failed to encode health response")
 	}
 }
 
@@ -82,6 +84,6 @@ func (h *HealthHandler) Info(w http.ResponseWriter, r *http.Request) {
 		Version: "1.0.0",
 		Service: "zpwoot",
 	}); err != nil {
-		log.Printf("Failed to encode system info response: %v", err)
+		h.logger.Error().Err(err).Msg("Failed to encode system info response")
 	}
 }

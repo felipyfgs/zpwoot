@@ -84,8 +84,8 @@ func (c *Container) InitWithContext(ctx context.Context) error {
 	c.initWAClient()
 
 	c.logger.Info().Msg("Initializing use cases")
-	c.sessionUseCases = session.NewUseCases(c.sessionService, c.whatsappClient)
-	c.messageUseCases = message.NewUseCases(c.sessionService, c.whatsappClient)
+	c.sessionUseCases = session.NewUseCases(c.sessionService, c.whatsappClient, c.logger)
+	c.messageUseCases = message.NewUseCases(c.sessionService, c.whatsappClient, c.logger)
 	c.webhookUseCases = c.initWebhookUseCases()
 
 	c.logger.Info().Msg("Container initialization completed successfully")

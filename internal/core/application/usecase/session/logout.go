@@ -14,15 +14,18 @@ import (
 type LogoutUseCase struct {
 	sessionService *session.Service
 	whatsappClient output.WhatsAppClient
+	logger         output.Logger
 }
 
 func NewLogoutUseCase(
 	sessionService *session.Service,
 	whatsappClient output.WhatsAppClient,
+	logger output.Logger,
 ) *LogoutUseCase {
 	return &LogoutUseCase{
 		sessionService: sessionService,
 		whatsappClient: whatsappClient,
+		logger:         logger,
 	}
 }
 

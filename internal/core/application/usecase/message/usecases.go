@@ -15,10 +15,10 @@ type UseCases struct {
 	receive *ReceiveUseCase
 }
 
-func NewUseCases(sessionService *domainSession.Service, whatsappClient output.WhatsAppClient) input.MessageUseCases {
+func NewUseCases(sessionService *domainSession.Service, whatsappClient output.WhatsAppClient, logger output.Logger) input.MessageUseCases {
 	return &UseCases{
-		send:    NewSendUseCase(sessionService, whatsappClient),
-		receive: NewReceiveUseCase(sessionService),
+		send:    NewSendUseCase(sessionService, whatsappClient, logger),
+		receive: NewReceiveUseCase(sessionService, logger),
 	}
 }
 

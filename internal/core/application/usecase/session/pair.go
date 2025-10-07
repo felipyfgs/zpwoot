@@ -11,11 +11,13 @@ import (
 
 type PairUseCase struct {
 	whatsappClient output.WhatsAppClient
+	logger         output.Logger
 }
 
-func NewPairUseCase(whatsappClient output.WhatsAppClient) *PairUseCase {
+func NewPairUseCase(whatsappClient output.WhatsAppClient, logger output.Logger) *PairUseCase {
 	return &PairUseCase{
 		whatsappClient: whatsappClient,
+		logger:         logger,
 	}
 }
 func (uc *PairUseCase) Execute(ctx context.Context, sessionID string, phone string) (*dto.PairPhoneResponse, error) {

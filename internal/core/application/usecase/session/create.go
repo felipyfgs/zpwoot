@@ -15,15 +15,18 @@ import (
 type CreateUseCase struct {
 	sessionService *session.Service
 	whatsappClient output.WhatsAppClient
+	logger         output.Logger
 }
 
 func NewCreateUseCase(
 	sessionService *session.Service,
 	whatsappClient output.WhatsAppClient,
+	logger output.Logger,
 ) *CreateUseCase {
 	return &CreateUseCase{
 		sessionService: sessionService,
 		whatsappClient: whatsappClient,
+		logger:         logger,
 	}
 }
 
@@ -46,7 +49,7 @@ func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateRequest) (*
 	err = uc.whatsappClient.CreateSession(ctx, sessionID)
 	if err != nil {
 		if rollbackErr := uc.sessionService.Delete(ctx, sessionID); rollbackErr != nil {
-			fmt.Printf("Failed to rollback session creation: %v\n", rollbackErr)
+			uc.logger.Error().Err(rollbackErr).Str("session_id", sessionID).Msg("Failed to rollback session creation")
 		}
 
 		var waErr *output.WhatsAppError
@@ -65,7 +68,7 @@ func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateRequest) (*
 	if req.GenerateQRCode {
 		err = uc.whatsappClient.ConnectSession(ctx, sessionID)
 		if err != nil {
-			fmt.Printf("Failed to connect session for QR generation: %v\n", err)
+			uc.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to connect session for QR generation")
 		} else {
 			time.Sleep(2 * time.Second)
 

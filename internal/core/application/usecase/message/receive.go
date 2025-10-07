@@ -9,17 +9,21 @@ import (
 	"zpwoot/internal/core/application/dto"
 	"zpwoot/internal/core/domain/session"
 	"zpwoot/internal/core/domain/shared"
+	"zpwoot/internal/core/ports/output"
 )
 
 type ReceiveUseCase struct {
 	sessionService *session.Service
+	logger         output.Logger
 }
 
 func NewReceiveUseCase(
 	sessionService *session.Service,
+	logger output.Logger,
 ) *ReceiveUseCase {
 	return &ReceiveUseCase{
 		sessionService: sessionService,
+		logger:         logger,
 	}
 }
 
@@ -43,7 +47,7 @@ func (uc *ReceiveUseCase) ProcessIncomingMessage(ctx context.Context, req *dto.R
 
 	go func(ctx context.Context) {
 		if err := uc.sessionService.UpdateStatus(ctx, req.SessionID, session.StatusConnected); err != nil {
-			fmt.Printf("Failed to update session status: %v\n", err)
+			uc.logger.Error().Err(err).Str("session_id", req.SessionID).Msg("Failed to update session status")
 		}
 	}(ctx)
 
@@ -70,7 +74,7 @@ func (uc *ReceiveUseCase) ProcessIncomingMessageBatch(ctx context.Context, sessi
 
 	go func(ctx context.Context) {
 		if err := uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnected); err != nil {
-			fmt.Printf("Failed to update session status: %v\n", err)
+			uc.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to update session status")
 		}
 	}(ctx)
 
@@ -82,7 +86,7 @@ func (uc *ReceiveUseCase) ProcessIncomingMessageBatch(ctx context.Context, sessi
 
 		go func(ctx context.Context, msgReq *dto.ReceiveMessageRequest) {
 			if err := uc.ProcessIncomingMessage(ctx, msgReq); err != nil {
-				fmt.Printf("Failed to process incoming message: %v\n", err)
+				uc.logger.Error().Err(err).Str("session_id", msgReq.SessionID).Msg("Failed to process incoming message")
 			}
 		}(ctx, req)
 	}

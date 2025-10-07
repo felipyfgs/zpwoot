@@ -36,7 +36,7 @@ func NewHandlers(
 		Contact:    createContactHandler(logger, waClient),
 		Community:  createCommunityHandler(logger, waClient),
 		Newsletter: createNewsletterHandler(logger, waClient),
-		Health:     NewHealthHandler(db),
+		Health:     NewHealthHandler(db, logger),
 		Webhook:    NewWebhookHandler(webhookUseCases, logger),
 	}
 }

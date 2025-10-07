@@ -14,15 +14,18 @@ import (
 type ConnectUseCase struct {
 	sessionService *session.Service
 	whatsappClient output.WhatsAppClient
+	logger         output.Logger
 }
 
 func NewConnectUseCase(
 	sessionService *session.Service,
 	whatsappClient output.WhatsAppClient,
+	logger output.Logger,
 ) *ConnectUseCase {
 	return &ConnectUseCase{
 		sessionService: sessionService,
 		whatsappClient: whatsappClient,
+		logger:         logger,
 	}
 }
 
@@ -83,7 +86,7 @@ func (uc *ConnectUseCase) performWhatsAppConnection(ctx context.Context, session
 		domainSession.SetError(err.Error())
 
 		if updateErr := uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusError); updateErr != nil {
-			fmt.Printf("Failed to update session status: %v\n", updateErr)
+			uc.logger.Error().Err(updateErr).Str("session_id", sessionID).Msg("Failed to update session status")
 		}
 
 		var waErr *output.WhatsAppError
@@ -115,7 +118,7 @@ func (uc *ConnectUseCase) performWhatsAppConnection(ctx context.Context, session
 func (uc *ConnectUseCase) updateConnectionStatus(ctx context.Context, sessionID string) {
 	err := uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnecting)
 	if err != nil {
-		fmt.Printf("Failed to update session status to connecting: %v\n", err)
+		uc.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to update session status to connecting")
 	}
 }
 
