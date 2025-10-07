@@ -11,10 +11,6 @@ import (
 	"zpwoot/internal/core/ports/output"
 )
 
-const (
-	sessionNotFoundCode = "SESSION_NOT_FOUND"
-)
-
 type DisconnectUseCase struct {
 	sessionService *session.Service
 	whatsappClient output.WhatsAppClient
@@ -107,7 +103,7 @@ func (uc *DisconnectUseCase) ExecuteForce(ctx context.Context, sessionID string)
 
 	domainSession, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
-		if err == shared.ErrSessionNotFound {
+		if errors.Is(err, shared.ErrSessionNotFound) {
 			return nil, dto.ErrSessionNotFound
 		}
 

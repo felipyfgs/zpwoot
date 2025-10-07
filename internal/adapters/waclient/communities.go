@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	ownerRole = ownerRole
+	ownerRole = "owner"
 )
 
 type CommunityService struct {

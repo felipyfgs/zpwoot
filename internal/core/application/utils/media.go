@@ -34,22 +34,23 @@ func (mp *MediaProcessor) ProcessMedia(file, mimeType, fileName string) (*output
 	var detectedMimeType string
 
 	var detectedFileName string
-	if mp.isURL(file) {
+	switch {
+	case mp.isURL(file):
 		data, detectedMimeType, detectedFileName, err = mp.downloadFromURL(file)
 		if err != nil {
 			return nil, fmt.Errorf("failed to download from URL: %w", err)
 		}
-	} else if mp.isFilePath(file) {
+	case mp.isFilePath(file):
 		data, detectedMimeType, detectedFileName, err = mp.readFromFile(file)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read file: %w", err)
 		}
-	} else if mp.isBase64(file) {
+	case mp.isBase64(file):
 		data, err = mp.decodeBase64(file)
 		if err != nil {
 			return nil, fmt.Errorf("failed to decode base64: %w", err)
 		}
-	} else {
+	default:
 		return nil, fmt.Errorf("invalid file input: must be URL, file path, or base64")
 	}
 

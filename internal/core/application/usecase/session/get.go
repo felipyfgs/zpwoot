@@ -43,7 +43,7 @@ func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.Sessi
 	waStatus, err := uc.whatsappClient.GetSessionStatus(ctx, sessionID)
 	if err != nil {
 		var waErr *output.WhatsAppError
-		if errors.As(err, &waErr) && waErr.Code == "SESSION_NOT_FOUND" {
+		if errors.As(err, &waErr) && waErr.Code == sessionNotFoundCode {
 			return dto.ToDetailResponse(domainSession), nil
 		}
 

@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"zpwoot/internal/core/application/dto"
@@ -32,7 +33,7 @@ func (uc *LogoutUseCase) Execute(ctx context.Context, sessionID string) error {
 
 	domainSession, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
-		if err == shared.ErrSessionNotFound {
+		if errors.Is(err, shared.ErrSessionNotFound) {
 			return dto.ErrSessionNotFound
 		}
 
@@ -45,9 +46,10 @@ func (uc *LogoutUseCase) Execute(ctx context.Context, sessionID string) error {
 
 	err = uc.whatsappClient.LogoutSession(ctx, sessionID)
 	if err != nil {
-		if waErr, ok := err.(*output.WhatsAppError); ok {
+		var waErr *output.WhatsAppError
+		if errors.As(err, &waErr) {
 			switch waErr.Code {
-			case "SESSION_NOT_FOUND":
+			case sessionNotFoundCode:
 				break
 			case "ALREADY_LOGGED_OUT":
 				break

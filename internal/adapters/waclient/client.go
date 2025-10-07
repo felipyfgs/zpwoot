@@ -189,15 +189,16 @@ func (w *WAClientAdapter) convertError(err error) error {
 		return err
 	}
 
-	if errors.Is(err, ErrSessionNotFound) {
+	switch {
+	case errors.Is(err, ErrSessionNotFound):
 		return output.ErrSessionNotFound
-	} else if errors.Is(err, ErrNotConnected) {
+	case errors.Is(err, ErrNotConnected):
 		return output.ErrSessionNotConnected
-	} else if errors.Is(err, ErrInvalidJID) {
+	case errors.Is(err, ErrInvalidJID):
 		return output.ErrInvalidJID
-	} else if errors.Is(err, ErrConnectionFailed) {
+	case errors.Is(err, ErrConnectionFailed):
 		return output.ErrConnectionFailed
-	} else {
+	default:
 		return &output.WhatsAppError{
 			Code:    "INTERNAL_ERROR",
 			Message: err.Error(),

@@ -22,7 +22,7 @@ type LogFormat string
 const (
 	FormatJSON      LogFormat = "json"
 	FormatConsole   LogFormat = "console"
-	mainPackageName           = mainPackageName
+	mainPackageName           = "main"
 )
 
 type LogOutput string

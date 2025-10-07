@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,10 +10,6 @@ import (
 	"zpwoot/internal/core/domain/session"
 	"zpwoot/internal/core/domain/shared"
 	"zpwoot/internal/core/ports/output"
-)
-
-const (
-	alreadyConnectedCode = "ALREADY_CONNECTED"
 )
 
 type QRUseCase struct {
@@ -37,7 +34,7 @@ func (uc *QRUseCase) GetQRCode(ctx context.Context, sessionID string) (*dto.QRCo
 
 	domainSession, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
-		if err == shared.ErrSessionNotFound {
+		if errors.Is(err, shared.ErrSessionNotFound) {
 			return nil, dto.ErrSessionNotFound
 		}
 
@@ -50,7 +47,8 @@ func (uc *QRUseCase) GetQRCode(ctx context.Context, sessionID string) (*dto.QRCo
 
 	qrInfo, err := uc.whatsappClient.GetQRCode(ctx, sessionID)
 	if err != nil {
-		if waErr, ok := err.(*output.WhatsAppError); ok {
+		var waErr *output.WhatsAppError
+		if errors.As(err, &waErr) {
 			switch waErr.Code {
 			case "SESSION_NOT_FOUND":
 				return nil, dto.ErrSessionNotFound
@@ -86,7 +84,7 @@ func (uc *QRUseCase) RefreshQRCode(ctx context.Context, sessionID string) (*dto.
 
 	domainSession, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
-		if err == shared.ErrSessionNotFound {
+		if errors.Is(err, shared.ErrSessionNotFound) {
 			return nil, dto.ErrSessionNotFound
 		}
 
@@ -99,7 +97,8 @@ func (uc *QRUseCase) RefreshQRCode(ctx context.Context, sessionID string) (*dto.
 
 	qrInfo, err := uc.whatsappClient.GetQRCode(ctx, sessionID)
 	if err != nil {
-		if waErr, ok := err.(*output.WhatsAppError); ok {
+		var waErr *output.WhatsAppError
+		if errors.As(err, &waErr) {
 			switch waErr.Code {
 			case "SESSION_NOT_FOUND":
 				return nil, dto.ErrSessionNotFound
@@ -133,7 +132,7 @@ func (uc *QRUseCase) CheckQRCodeStatus(ctx context.Context, sessionID string) (*
 
 	domainSession, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
-		if err == shared.ErrSessionNotFound {
+		if errors.Is(err, shared.ErrSessionNotFound) {
 			return nil, dto.ErrSessionNotFound
 		}
 

@@ -11,10 +11,6 @@ import (
 	"zpwoot/internal/core/ports/output"
 )
 
-const (
-	sessionNotFoundCode = "SESSION_NOT_FOUND"
-)
-
 type DeleteUseCase struct {
 	sessionService *session.Service
 	whatsappClient output.WhatsAppClient

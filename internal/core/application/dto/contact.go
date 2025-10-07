@@ -14,33 +14,33 @@ type CheckUserResponse struct {
 } // @name CheckUserResponse
 type GetUserRequest struct {
 	Phone string `json:"phone" validate:"required" example:"5511999999999"`
-} //@name GetUserRequest
+} // @name GetUserRequest
 type GetUserResponse struct {
 	JID          string `json:"jid" example:"5511999999999@s.whatsapp.net"`
 	VerifiedName string `json:"verifiedName,omitempty" example:"John Doe Business"`
 	Status       string `json:"status,omitempty" example:"Hey there! I am using WhatsApp."`
 	PictureID    string `json:"pictureId,omitempty" example:"1234567890"`
-} //@name GetUserResponse
+} // @name GetUserResponse
 type GetAvatarRequest struct {
 	Phone   string `json:"phone" validate:"required" example:"5511999999999"`
 	Preview bool   `json:"preview,omitempty" example:"false" description:"Get preview (low quality) instead of full image"`
-} //@name GetAvatarRequest
+} // @name GetAvatarRequest
 type GetAvatarResponse struct {
 	URL       string `json:"url,omitempty" example:"https://pps.whatsapp.net/v/..."`
 	ID        string `json:"id,omitempty" example:"1234567890"`
 	Type      string `json:"type,omitempty" example:"image"`
 	DirectURL string `json:"directUrl,omitempty" example:"https://..."`
-} //@name GetAvatarResponse
+} // @name GetAvatarResponse
 type GetContactsResponse struct {
 	Contacts []ContactDetail `json:"contacts"`
-} //@name GetContactsResponse
+} // @name GetContactsResponse
 type ContactDetail struct {
 	JID          string `json:"jid" example:"5511999999999@s.whatsapp.net"`
 	Name         string `json:"name,omitempty" example:"John Doe"`
 	Notify       string `json:"notify,omitempty" example:"John"`
 	VerifiedName string `json:"verifiedName,omitempty" example:"John Doe Business"`
 	BusinessName string `json:"businessName,omitempty" example:"John's Store"`
-} //@name ContactDetail
+} // @name ContactDetail
 type SendPresenceRequest struct {
 	Presence string `json:"presence" validate:"required,oneof=available unavailable composing recording paused" example:"available" description:"Presence type: available, unavailable, composing, recording, paused"`
 } //@name SendPresenceRequest

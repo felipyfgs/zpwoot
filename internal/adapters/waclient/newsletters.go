@@ -46,7 +46,7 @@ func (ns *NewsletterService) ListNewsletters(ctx context.Context, sessionID stri
 			Name:            newsletter.ThreadMeta.Name.Text,
 			Description:     newsletter.ThreadMeta.Description.Text,
 			SubscriberCount: newsletter.ThreadMeta.SubscriberCount,
-			IsOwner:         newsletter.ViewerMeta != nil && newsletter.ViewerMeta.Role == "owner",
+			IsOwner:         newsletter.ViewerMeta != nil && newsletter.ViewerMeta.Role == ownerRole,
 			IsFollowing:     true,
 			IsMuted:         newsletter.ViewerMeta != nil && newsletter.ViewerMeta.Mute == "on",
 			CreatedAt:       newsletter.ThreadMeta.CreationTime.Unix(),
@@ -144,7 +144,8 @@ func (ns *NewsletterService) FollowNewsletter(ctx context.Context, sessionID str
 		return ErrNotConnected
 	}
 
-	if req.NewsletterJID != "" {
+	switch {
+	case req.NewsletterJID != "":
 		jid, err := parseJID(req.NewsletterJID)
 		if err != nil {
 			return fmt.Errorf("invalid newsletter JID: %w", err)
@@ -154,7 +155,7 @@ func (ns *NewsletterService) FollowNewsletter(ctx context.Context, sessionID str
 		if err != nil {
 			return fmt.Errorf("failed to follow newsletter: %w", err)
 		}
-	} else if req.InviteCode != "" {
+	case req.InviteCode != "":
 		newsletter, err := client.WAClient.GetNewsletterInfoWithInvite(req.InviteCode)
 		if err != nil {
 			return fmt.Errorf("failed to get newsletter info with invite: %w", err)
@@ -164,7 +165,7 @@ func (ns *NewsletterService) FollowNewsletter(ctx context.Context, sessionID str
 		if err != nil {
 			return fmt.Errorf("failed to follow newsletter: %w", err)
 		}
-	} else {
+	default:
 		return fmt.Errorf("either newsletter_jid or invite_code is required")
 	}
 
