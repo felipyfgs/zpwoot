@@ -88,7 +88,7 @@ type SessionFilter struct {
 	Name      string `json:"name,omitempty"`
 }
 
-func (uc *ListUseCase) updateSessionResponseFromWAClient(ctx context.Context, sessionID string, sessionResponse *dto.SessionResponse) {
+func (uc *ListUseCase) updateSessionResponseFromWAClient(ctx context.Context, sessionID string, sessionResponse *dto.SessionListInfo) {
 	waStatus, err := uc.whatsappClient.GetSessionStatus(ctx, sessionID)
 	if err != nil || waStatus == nil {
 		return
