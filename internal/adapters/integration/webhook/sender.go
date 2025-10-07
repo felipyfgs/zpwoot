@@ -44,7 +44,7 @@ func (s *HTTPWebhookSender) SendWebhook(ctx context.Context, url string, secret 
 		return fmt.Errorf("failed to marshal webhook event: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(payload))
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP request: %w", err)
 	}
@@ -85,8 +85,8 @@ func (s *HTTPWebhookSender) sendWithRetry(ctx context.Context, req *http.Request
 }
 
 type retryConfig struct {
-	maxRetries   int
-	retryDelays  []time.Duration
+	maxRetries  int
+	retryDelays []time.Duration
 }
 
 type attemptResult struct {

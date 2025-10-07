@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -647,7 +648,7 @@ func (ms *Sender) SendButtonsMessage(ctx context.Context, sessionID string, to s
 		return ErrInvalidJID
 	}
 
-	var waButtons []*waE2E.ButtonsMessage_Button
+	waButtons := make([]*waE2E.ButtonsMessage_Button, 0, len(buttons))
 	for _, btn := range buttons {
 		waButtons = append(waButtons, &waE2E.ButtonsMessage_Button{
 			ButtonID: proto.String(btn.ID),
@@ -684,7 +685,7 @@ func (ms *Sender) SendListMessage(ctx context.Context, sessionID string, to stri
 		return ErrInvalidJID
 	}
 
-	var waSections []*waE2E.ListMessage_Section
+	waSections := make([]*waE2E.ListMessage_Section, 0, len(sections))
 
 	for _, section := range sections {
 		var rows []*waE2E.ListMessage_Row
@@ -772,7 +773,7 @@ type TemplateInfo struct {
 func fallbackID() string {
 	bytes := make([]byte, 16)
 	if _, err := rand.Read(bytes); err != nil {
-		return strings.ToUpper(hex.EncodeToString([]byte(fmt.Sprintf("%d", time.Now().UnixNano()))))
+		return strings.ToUpper(hex.EncodeToString([]byte(strconv.FormatInt(time.Now().UnixNano(), 10))))
 	}
 
 	return strings.ToUpper(hex.EncodeToString(bytes))
@@ -994,8 +995,6 @@ func (ms *Sender) buildDocumentMessage(uploaded whatsmeow.UploadResponse, mimeTy
 
 	return &waE2E.Message{DocumentMessage: docMsg}
 }
-
-
 
 func (ms *Sender) setCommonMediaFields(msg interface{}, uploaded whatsmeow.UploadResponse, mimeType string, fileData []byte) {
 	switch m := msg.(type) {

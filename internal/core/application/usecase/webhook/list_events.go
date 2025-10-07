@@ -20,7 +20,7 @@ func (uc *ListEventsUseCase) Execute(ctx context.Context) (*dto.ListEventsRespon
 	categories := uc.webhookService.GetEventCategories()
 	allEvents := uc.webhookService.GetValidEventTypes()
 
-	var categoryResponses []dto.EventCategoryResponse
+	categoryResponses := make([]dto.EventCategoryResponse, 0, len(eventCategories))
 	for category, events := range categories {
 		categoryResponses = append(categoryResponses, dto.EventCategoryResponse{
 			Category: category,

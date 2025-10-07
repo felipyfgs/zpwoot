@@ -286,12 +286,11 @@ func convertMessageToMap(msg interface{}) (map[string]interface{}, bool) {
 }
 
 func detectMessageType(msgMap map[string]interface{}) string {
-	// Text message types
+
 	if hasMessageField(msgMap, "conversation", "extendedTextMessage") {
 		return "text"
 	}
 
-	// Media message types
 	if hasMessageField(msgMap, "imageMessage") {
 		return "image"
 	}
@@ -308,7 +307,6 @@ func detectMessageType(msgMap map[string]interface{}) string {
 		return "sticker"
 	}
 
-	// Location message types
 	if hasMessageField(msgMap, "locationMessage") {
 		return "location"
 	}
@@ -316,7 +314,6 @@ func detectMessageType(msgMap map[string]interface{}) string {
 		return "liveLocation"
 	}
 
-	// Contact message types
 	if hasMessageField(msgMap, "contactMessage") {
 		return "contact"
 	}
@@ -324,7 +321,6 @@ func detectMessageType(msgMap map[string]interface{}) string {
 		return "contacts"
 	}
 
-	// Interactive message types
 	if hasMessageField(msgMap, "buttonsMessage") {
 		return "buttons"
 	}

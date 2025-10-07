@@ -1,6 +1,7 @@
 package validators
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 )
@@ -24,11 +25,11 @@ var (
 
 func ValidatePhoneNumber(phone string) error {
 	if phone == "" {
-		return fmt.Errorf("phone number cannot be empty")
+		return errors.New("phone number cannot be empty")
 	}
 
 	if !PhoneNumberRegex.MatchString(phone) {
-		return fmt.Errorf("invalid phone number format (must be 10-15 digits, optional + prefix)")
+		return errors.New("invalid phone number format (must be 10-15 digits, optional + prefix)")
 	}
 
 	return nil

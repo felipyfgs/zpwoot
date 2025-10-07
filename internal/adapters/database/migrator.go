@@ -159,7 +159,7 @@ func (m *Migrator) processMigrationFiles(entries []fs.DirEntry) (map[int]map[str
 func (m *Migrator) extractVersionFromFilename(filename string) (int, error) {
 	parts := strings.Split(filename, "_")
 	if len(parts) < 2 {
-		return 0, fmt.Errorf("invalid filename format")
+		return 0, errors.New("invalid filename format")
 	}
 
 	version, err := strconv.Atoi(parts[0])
@@ -244,6 +244,10 @@ func (m *Migrator) getAppliedMigrations() (map[int]bool, error) {
 		}
 
 		applied[version] = true
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over migration rows: %w", err)
 	}
 
 	return applied, nil
