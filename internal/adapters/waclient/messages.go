@@ -933,75 +933,127 @@ func (ms *Sender) uploadMediaToWhatsApp(ctx context.Context, client *Client, fil
 func (ms *Sender) buildMediaMessage(mediaType whatsmeow.MediaType, uploaded whatsmeow.UploadResponse, mimeType string, fileData []byte, media *output.MediaData) *waE2E.Message {
 	switch mediaType {
 	case whatsmeow.MediaImage:
-		imgMsg := &waE2E.ImageMessage{
-			URL:           proto.String(uploaded.URL),
-			DirectPath:    proto.String(uploaded.DirectPath),
-			MediaKey:      uploaded.MediaKey,
-			Mimetype:      proto.String(mimeType),
-			FileEncSHA256: uploaded.FileEncSHA256,
-			FileSHA256:    uploaded.FileSHA256,
-			FileLength:    proto.Uint64(uint64(len(fileData))),
-			Caption:       proto.String(media.Caption),
-		}
-		if media.ViewOnce {
-			imgMsg.ViewOnce = proto.Bool(true)
-		}
-		return &waE2E.Message{ImageMessage: imgMsg}
-
+		return ms.buildImageMessage(uploaded, mimeType, fileData, media)
 	case whatsmeow.MediaVideo:
-		vidMsg := &waE2E.VideoMessage{
-			URL:           proto.String(uploaded.URL),
-			DirectPath:    proto.String(uploaded.DirectPath),
-			MediaKey:      uploaded.MediaKey,
-			Mimetype:      proto.String(mimeType),
-			FileEncSHA256: uploaded.FileEncSHA256,
-			FileSHA256:    uploaded.FileSHA256,
-			FileLength:    proto.Uint64(uint64(len(fileData))),
-			Caption:       proto.String(media.Caption),
-		}
-		if media.ViewOnce {
-			vidMsg.ViewOnce = proto.Bool(true)
-		}
-		return &waE2E.Message{VideoMessage: vidMsg}
-
+		return ms.buildVideoMessage(uploaded, mimeType, fileData, media)
 	case whatsmeow.MediaAudio:
-		ptt := true
-		audioMsg := &waE2E.AudioMessage{
-			URL:           proto.String(uploaded.URL),
-			DirectPath:    proto.String(uploaded.DirectPath),
-			MediaKey:      uploaded.MediaKey,
-			Mimetype:      proto.String(mimeType),
-			FileEncSHA256: uploaded.FileEncSHA256,
-			FileSHA256:    uploaded.FileSHA256,
-			FileLength:    proto.Uint64(uint64(len(fileData))),
-			PTT:           &ptt,
-		}
-		if media.ViewOnce {
-			audioMsg.ViewOnce = proto.Bool(true)
-		}
-		return &waE2E.Message{AudioMessage: audioMsg}
-
+		return ms.buildAudioMessage(uploaded, mimeType, fileData, media)
 	case whatsmeow.MediaDocument:
-		fileName := media.FileName
-		if fileName == "" {
-			fileName = "document"
-		}
-		return &waE2E.Message{
-			DocumentMessage: &waE2E.DocumentMessage{
-				URL:           proto.String(uploaded.URL),
-				DirectPath:    proto.String(uploaded.DirectPath),
-				MediaKey:      uploaded.MediaKey,
-				Mimetype:      proto.String(mimeType),
-				FileEncSHA256: uploaded.FileEncSHA256,
-				FileSHA256:    uploaded.FileSHA256,
-				FileLength:    proto.Uint64(uint64(len(fileData))),
-				FileName:      proto.String(fileName),
-				Caption:       proto.String(media.Caption),
-			},
-		}
-
+		return ms.buildDocumentMessage(uploaded, mimeType, fileData, media)
 	default:
 		return nil
+	}
+}
+
+func (ms *Sender) buildImageMessage(uploaded whatsmeow.UploadResponse, mimeType string, fileData []byte, media *output.MediaData) *waE2E.Message {
+	imgMsg := &waE2E.ImageMessage{
+		Caption: proto.String(media.Caption),
+	}
+
+	ms.setCommonMediaFields(imgMsg, uploaded, mimeType, fileData)
+	ms.setViewOnceIfNeeded(imgMsg, media.ViewOnce)
+
+	return &waE2E.Message{ImageMessage: imgMsg}
+}
+
+func (ms *Sender) buildVideoMessage(uploaded whatsmeow.UploadResponse, mimeType string, fileData []byte, media *output.MediaData) *waE2E.Message {
+	vidMsg := &waE2E.VideoMessage{
+		Caption: proto.String(media.Caption),
+	}
+
+	ms.setCommonMediaFields(vidMsg, uploaded, mimeType, fileData)
+	ms.setViewOnceIfNeeded(vidMsg, media.ViewOnce)
+
+	return &waE2E.Message{VideoMessage: vidMsg}
+}
+
+func (ms *Sender) buildAudioMessage(uploaded whatsmeow.UploadResponse, mimeType string, fileData []byte, media *output.MediaData) *waE2E.Message {
+	ptt := true
+	audioMsg := &waE2E.AudioMessage{
+		PTT: &ptt,
+	}
+
+	ms.setCommonMediaFields(audioMsg, uploaded, mimeType, fileData)
+	ms.setViewOnceIfNeeded(audioMsg, media.ViewOnce)
+
+	return &waE2E.Message{AudioMessage: audioMsg}
+}
+
+func (ms *Sender) buildDocumentMessage(uploaded whatsmeow.UploadResponse, mimeType string, fileData []byte, media *output.MediaData) *waE2E.Message {
+	fileName := media.FileName
+	if fileName == "" {
+		fileName = "document"
+	}
+
+	docMsg := &waE2E.DocumentMessage{
+		FileName: proto.String(fileName),
+		Caption:  proto.String(media.Caption),
+	}
+
+	ms.setCommonMediaFields(docMsg, uploaded, mimeType, fileData)
+
+	return &waE2E.Message{DocumentMessage: docMsg}
+}
+
+type mediaMessage interface {
+	GetURL() string
+	GetDirectPath() string
+	GetMediaKey() []byte
+	GetMimetype() string
+	GetFileEncSHA256() []byte
+	GetFileSHA256() []byte
+	GetFileLength() uint64
+}
+
+func (ms *Sender) setCommonMediaFields(msg interface{}, uploaded whatsmeow.UploadResponse, mimeType string, fileData []byte) {
+	switch m := msg.(type) {
+	case *waE2E.ImageMessage:
+		m.URL = proto.String(uploaded.URL)
+		m.DirectPath = proto.String(uploaded.DirectPath)
+		m.MediaKey = uploaded.MediaKey
+		m.Mimetype = proto.String(mimeType)
+		m.FileEncSHA256 = uploaded.FileEncSHA256
+		m.FileSHA256 = uploaded.FileSHA256
+		m.FileLength = proto.Uint64(uint64(len(fileData)))
+	case *waE2E.VideoMessage:
+		m.URL = proto.String(uploaded.URL)
+		m.DirectPath = proto.String(uploaded.DirectPath)
+		m.MediaKey = uploaded.MediaKey
+		m.Mimetype = proto.String(mimeType)
+		m.FileEncSHA256 = uploaded.FileEncSHA256
+		m.FileSHA256 = uploaded.FileSHA256
+		m.FileLength = proto.Uint64(uint64(len(fileData)))
+	case *waE2E.AudioMessage:
+		m.URL = proto.String(uploaded.URL)
+		m.DirectPath = proto.String(uploaded.DirectPath)
+		m.MediaKey = uploaded.MediaKey
+		m.Mimetype = proto.String(mimeType)
+		m.FileEncSHA256 = uploaded.FileEncSHA256
+		m.FileSHA256 = uploaded.FileSHA256
+		m.FileLength = proto.Uint64(uint64(len(fileData)))
+	case *waE2E.DocumentMessage:
+		m.URL = proto.String(uploaded.URL)
+		m.DirectPath = proto.String(uploaded.DirectPath)
+		m.MediaKey = uploaded.MediaKey
+		m.Mimetype = proto.String(mimeType)
+		m.FileEncSHA256 = uploaded.FileEncSHA256
+		m.FileSHA256 = uploaded.FileSHA256
+		m.FileLength = proto.Uint64(uint64(len(fileData)))
+	}
+}
+
+func (ms *Sender) setViewOnceIfNeeded(msg interface{}, viewOnce bool) {
+	if !viewOnce {
+		return
+	}
+
+	switch m := msg.(type) {
+	case *waE2E.ImageMessage:
+		m.ViewOnce = proto.Bool(true)
+	case *waE2E.VideoMessage:
+		m.ViewOnce = proto.Bool(true)
+	case *waE2E.AudioMessage:
+		m.ViewOnce = proto.Bool(true)
 	}
 }
 

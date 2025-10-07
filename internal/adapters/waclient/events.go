@@ -259,77 +259,92 @@ func (eh *DefaultEventHandler) sendWebhook(webhookConfig *webhook.Webhook, event
 }
 
 func getMessageType(msg interface{}) string {
-	if msg == nil {
+	msgMap, ok := convertMessageToMap(msg)
+	if !ok {
 		return unknownMessageType
+	}
+
+	return detectMessageType(msgMap)
+}
+
+func convertMessageToMap(msg interface{}) (map[string]interface{}, bool) {
+	if msg == nil {
+		return nil, false
 	}
 
 	msgJSON, err := json.Marshal(msg)
 	if err != nil {
-		return unknownMessageType
+		return nil, false
 	}
 
 	var msgMap map[string]interface{}
 	if err := json.Unmarshal(msgJSON, &msgMap); err != nil {
-		return unknownMessageType
+		return nil, false
 	}
 
-	if _, ok := msgMap["conversation"]; ok {
+	return msgMap, true
+}
+
+func detectMessageType(msgMap map[string]interface{}) string {
+	// Text message types
+	if hasMessageField(msgMap, "conversation", "extendedTextMessage") {
 		return "text"
 	}
 
-	if _, ok := msgMap["extendedTextMessage"]; ok {
-		return "text"
-	}
-
-	if _, ok := msgMap["imageMessage"]; ok {
+	// Media message types
+	if hasMessageField(msgMap, "imageMessage") {
 		return "image"
 	}
-
-	if _, ok := msgMap["audioMessage"]; ok {
+	if hasMessageField(msgMap, "audioMessage") {
 		return "audio"
 	}
-
-	if _, ok := msgMap["videoMessage"]; ok {
+	if hasMessageField(msgMap, "videoMessage") {
 		return "video"
 	}
-
-	if _, ok := msgMap["documentMessage"]; ok {
+	if hasMessageField(msgMap, "documentMessage") {
 		return "document"
 	}
-
-	if _, ok := msgMap["stickerMessage"]; ok {
+	if hasMessageField(msgMap, "stickerMessage") {
 		return "sticker"
 	}
 
-	if _, ok := msgMap["locationMessage"]; ok {
+	// Location message types
+	if hasMessageField(msgMap, "locationMessage") {
 		return "location"
 	}
-
-	if _, ok := msgMap["contactMessage"]; ok {
-		return "contact"
-	}
-
-	if _, ok := msgMap["contactsArrayMessage"]; ok {
-		return "contacts"
-	}
-
-	if _, ok := msgMap["liveLocationMessage"]; ok {
+	if hasMessageField(msgMap, "liveLocationMessage") {
 		return "liveLocation"
 	}
 
-	if _, ok := msgMap["buttonsMessage"]; ok {
+	// Contact message types
+	if hasMessageField(msgMap, "contactMessage") {
+		return "contact"
+	}
+	if hasMessageField(msgMap, "contactsArrayMessage") {
+		return "contacts"
+	}
+
+	// Interactive message types
+	if hasMessageField(msgMap, "buttonsMessage") {
 		return "buttons"
 	}
-
-	if _, ok := msgMap["listMessage"]; ok {
+	if hasMessageField(msgMap, "listMessage") {
 		return "list"
 	}
-
-	if _, ok := msgMap["templateMessage"]; ok {
+	if hasMessageField(msgMap, "templateMessage") {
 		return "template"
 	}
 
 	return unknownMessageType
+}
+
+func hasMessageField(msgMap map[string]interface{}, fields ...string) bool {
+	for _, field := range fields {
+		if _, ok := msgMap[field]; ok {
+			return true
+		}
+	}
+	return false
 }
 
 type EventFilter struct {
