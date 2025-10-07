@@ -51,27 +51,7 @@ func (uc *GetUseCase) Execute(ctx context.Context, sessionID string) (*dto.Sessi
 	}
 
 	if waStatus != nil {
-		if waStatus.Connected && !domainSession.IsConnected {
-			domainSession.SetConnected(waStatus.DeviceJID)
-		} else if !waStatus.Connected && domainSession.IsConnected {
-			domainSession.SetDisconnected()
-		}
-
-		if waStatus.DeviceJID != "" {
-			domainSession.DeviceJID = waStatus.DeviceJID
-		}
-
-		if !waStatus.LastSeen.IsZero() {
-			domainSession.UpdateLastSeen()
-		}
-
-		go func(ctx context.Context) {
-			if waStatus.Connected {
-				_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnected)
-			} else {
-				_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
-			}
-		}(ctx)
+		uc.updateSessionFromWAStatus(ctx, sessionID, domainSession, waStatus)
 	}
 
 	response := dto.ToDetailResponse(domainSession)
@@ -87,8 +67,7 @@ func (uc *GetUseCase) ExecuteWithSync(ctx context.Context, sessionID string) (*d
 
 	waStatus, err := uc.whatsappClient.GetSessionStatus(ctx, sessionID)
 	if err != nil {
-
-		return response, nil
+		return response, err
 	}
 
 	if waStatus != nil {
@@ -107,4 +86,42 @@ func (uc *GetUseCase) ExecuteWithSync(ctx context.Context, sessionID string) (*d
 	}
 
 	return response, nil
+}
+
+func (uc *GetUseCase) determineSessionStatus(waStatus *output.SessionStatus) string {
+	switch {
+	case waStatus.Connected:
+		return "connected"
+	case waStatus.LoggedIn:
+		return "disconnected"
+	default:
+		return "qr_code"
+	}
+}
+
+func (uc *GetUseCase) updateSessionFromWAStatus(ctx context.Context, sessionID string, domainSession *session.Session, waStatus *waclient.SessionStatus) {
+
+	if waStatus.Connected && !domainSession.IsConnected {
+		domainSession.SetConnected(waStatus.DeviceJID)
+	} else if !waStatus.Connected && domainSession.IsConnected {
+		domainSession.SetDisconnected()
+	}
+
+	if waStatus.DeviceJID != "" {
+		domainSession.DeviceJID = waStatus.DeviceJID
+	}
+
+	if !waStatus.LastSeen.IsZero() {
+		domainSession.UpdateLastSeen()
+	}
+
+	go func(ctx context.Context) {
+		var status session.Status
+		if waStatus.Connected {
+			status = session.StatusConnected
+		} else {
+			status = session.StatusDisconnected
+		}
+		_ = uc.sessionService.UpdateStatus(ctx, sessionID, status)
+	}(ctx)
 }

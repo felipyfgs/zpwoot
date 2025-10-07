@@ -37,28 +37,41 @@ func shortCaller(file string, line int) string {
 }
 
 func extractPackageFromFile(file string) string {
+
 	if strings.Contains(file, "/workspaces/zpwoot/") {
-		parts := strings.Split(file, "/workspaces/zpwoot/")
-		if len(parts) > 1 {
-			path := parts[1]
-
-			dir := filepath.Dir(path)
-			if dir == "." {
-				return mainPackageName
-			}
-
-			pathParts := strings.Split(dir, "/")
-			if len(pathParts) > 0 {
-				lastPart := pathParts[len(pathParts)-1]
-				if lastPart == "zpwoot" || strings.HasPrefix(dir, "cmd/") {
-					return mainPackageName
-				}
-
-				return lastPart
-			}
-		}
+		return extractPackageFromWorkspacePath(file)
 	}
 
+	return extractPackageFromGeneralPath(file)
+}
+
+func extractPackageFromWorkspacePath(file string) string {
+	parts := strings.Split(file, "/workspaces/zpwoot/")
+	if len(parts) <= 1 {
+		return mainPackageName
+	}
+
+	path := parts[1]
+	dir := filepath.Dir(path)
+
+	if dir == "." {
+		return mainPackageName
+	}
+
+	pathParts := strings.Split(dir, "/")
+	if len(pathParts) == 0 {
+		return mainPackageName
+	}
+
+	lastPart := pathParts[len(pathParts)-1]
+	if lastPart == "zpwoot" || strings.HasPrefix(dir, "cmd/") {
+		return mainPackageName
+	}
+
+	return lastPart
+}
+
+func extractPackageFromGeneralPath(file string) string {
 	dir := filepath.Dir(file)
 	if dir == "." {
 		return mainPackageName

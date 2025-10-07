@@ -49,36 +49,13 @@ func (uc *UpsertUseCase) Execute(
 	var wh *webhook.Webhook
 
 	if existingWebhook != nil {
-		existingWebhook.UpdateURL(request.URL)
-		existingWebhook.UpdateEvents(request.Events)
-
-		if request.Secret != nil && *request.Secret != "" {
-			existingWebhook.SetSecret(*request.Secret)
-		}
-
-		if err := uc.webhookRepo.Update(ctx, existingWebhook); err != nil {
-			return nil, fmt.Errorf("failed to update webhook: %w", err)
-		}
-
-		wh = existingWebhook
+		wh, err = uc.updateExistingWebhook(ctx, existingWebhook, request)
 	} else {
-		wh = webhook.NewWebhook(sessionID, request.URL, request.Events)
+		wh, err = uc.createNewWebhook(ctx, sessionID, request)
+	}
 
-		secret := request.Secret
-		if secret == nil || *secret == "" {
-			generated, err := generateSecretKey()
-			if err != nil {
-				return nil, fmt.Errorf("failed to generate secret: %w", err)
-			}
-
-			secret = &generated
-		}
-
-		wh.SetSecret(*secret)
-
-		if err := uc.webhookRepo.Create(ctx, wh); err != nil {
-			return nil, fmt.Errorf("failed to create webhook: %w", err)
-		}
+	if err != nil {
+		return nil, err
 	}
 
 	return &dto.WebhookResponse{
@@ -90,4 +67,40 @@ func (uc *UpsertUseCase) Execute(
 		CreatedAt: wh.CreatedAt,
 		UpdatedAt: wh.UpdatedAt,
 	}, nil
+}
+
+func (uc *UpsertUseCase) updateExistingWebhook(ctx context.Context, existingWebhook *webhook.Webhook, request *dto.CreateWebhookRequest) (*webhook.Webhook, error) {
+	existingWebhook.UpdateURL(request.URL)
+	existingWebhook.UpdateEvents(request.Events)
+
+	if request.Secret != nil && *request.Secret != "" {
+		existingWebhook.SetSecret(*request.Secret)
+	}
+
+	if err := uc.webhookRepo.Update(ctx, existingWebhook); err != nil {
+		return nil, fmt.Errorf("failed to update webhook: %w", err)
+	}
+
+	return existingWebhook, nil
+}
+
+func (uc *UpsertUseCase) createNewWebhook(ctx context.Context, sessionID string, request *dto.CreateWebhookRequest) (*webhook.Webhook, error) {
+	wh := webhook.NewWebhook(sessionID, request.URL, request.Events)
+
+	secret := request.Secret
+	if secret == nil || *secret == "" {
+		generated, err := generateSecretKey()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate secret: %w", err)
+		}
+		secret = &generated
+	}
+
+	wh.SetSecret(*secret)
+
+	if err := uc.webhookRepo.Create(ctx, wh); err != nil {
+		return nil, fmt.Errorf("failed to create webhook: %w", err)
+	}
+
+	return wh, nil
 }

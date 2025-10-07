@@ -42,27 +42,7 @@ func (uc *ListUseCase) Execute(ctx context.Context, pagination *dto.PaginationRe
 		sessionResponse := dto.ToListInfo(domainSession)
 
 		if uc.whatsappClient != nil {
-			waStatus, err := uc.whatsappClient.GetSessionStatus(ctx, domainSession.ID)
-			if err == nil && waStatus != nil {
-				sessionResponse.Connected = waStatus.Connected
-				sessionResponse.DeviceJID = waStatus.DeviceJID
-
-				if waStatus.Connected {
-					sessionResponse.Status = "connected"
-				} else if waStatus.LoggedIn {
-					sessionResponse.Status = "disconnected"
-				} else {
-					sessionResponse.Status = "qr_code"
-				}
-
-				if !waStatus.ConnectedAt.IsZero() {
-					sessionResponse.ConnectedAt = &waStatus.ConnectedAt
-				}
-
-				if !waStatus.LastSeen.IsZero() {
-					sessionResponse.LastSeen = &waStatus.LastSeen
-				}
-			}
+			uc.updateSessionResponseFromWAClient(ctx, domainSession.ID, sessionResponse)
 		}
 
 		sessionResponses[i] = *sessionResponse
@@ -106,4 +86,31 @@ type SessionFilter struct {
 	Status    string `json:"status,omitempty"`
 	Connected *bool  `json:"connected,omitempty"`
 	Name      string `json:"name,omitempty"`
+}
+
+func (uc *ListUseCase) updateSessionResponseFromWAClient(ctx context.Context, sessionID string, sessionResponse *dto.SessionResponse) {
+	waStatus, err := uc.whatsappClient.GetSessionStatus(ctx, sessionID)
+	if err != nil || waStatus == nil {
+		return
+	}
+
+	sessionResponse.Connected = waStatus.Connected
+	sessionResponse.DeviceJID = waStatus.DeviceJID
+
+	switch {
+	case waStatus.Connected:
+		sessionResponse.Status = "connected"
+	case waStatus.LoggedIn:
+		sessionResponse.Status = "disconnected"
+	default:
+		sessionResponse.Status = "qr_code"
+	}
+
+	if !waStatus.ConnectedAt.IsZero() {
+		sessionResponse.ConnectedAt = &waStatus.ConnectedAt
+	}
+
+	if !waStatus.LastSeen.IsZero() {
+		sessionResponse.LastSeen = &waStatus.LastSeen
+	}
 }

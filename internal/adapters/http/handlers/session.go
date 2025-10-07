@@ -243,11 +243,12 @@ func (h *SessionHandler) Logout(w http.ResponseWriter, r *http.Request) {
 			Str("session_id", sessionID).
 			Msg("Failed to logout session")
 
-		if errors.Is(err, dto.ErrSessionNotFound) {
+		switch {
+		case errors.Is(err, dto.ErrSessionNotFound):
 			h.writeErrorResponse(w, http.StatusNotFound, dto.ErrorCodeNotFound, "Session not found")
-		} else if err.Error() == "session is already logged out" {
+		case err.Error() == "session is already logged out":
 			h.writeErrorResponse(w, http.StatusConflict, dto.ErrorCodeConflict, "Session is already logged out")
-		} else {
+		default:
 			h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "Failed to logout session")
 		}
 
@@ -336,11 +337,12 @@ func (h *SessionHandler) QRCode(w http.ResponseWriter, r *http.Request) {
 			Str("session_id", sessionID).
 			Msg("Failed to get QR code")
 
-		if errors.Is(err, dto.ErrSessionNotFound) {
+		switch {
+		case errors.Is(err, dto.ErrSessionNotFound):
 			h.writeErrorResponse(w, http.StatusNotFound, dto.ErrorCodeNotFound, "session not found")
-		} else if err.Error() == "session is already connected" {
+		case err.Error() == "session is already connected":
 			h.writeErrorResponse(w, http.StatusConflict, dto.ErrorCodeConflict, "session is already connected")
-		} else {
+		default:
 			h.writeErrorResponse(w, http.StatusInternalServerError, dto.ErrorCodeInternalError, "failed to get QR code")
 		}
 

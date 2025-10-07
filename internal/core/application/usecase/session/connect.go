@@ -27,6 +27,29 @@ func NewConnectUseCase(
 }
 
 func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.SessionStatusResponse, error) {
+	domainSession, err := uc.validateSessionForConnection(ctx, sessionID)
+	if err != nil {
+		return nil, err
+	}
+
+	if response := uc.checkExistingConnection(sessionID, domainSession); response != nil {
+		return response, nil
+	}
+
+	if response, err := uc.performWhatsAppConnection(ctx, sessionID, domainSession); err != nil {
+		return response, err
+	}
+
+	uc.updateConnectionStatus(ctx, sessionID)
+
+	return uc.buildConnectionResponse(ctx, sessionID, domainSession)
+}
+
+func (uc *ConnectUseCase) ExecuteWithAutoReconnect(ctx context.Context, sessionID string, autoReconnect bool) (*dto.SessionStatusResponse, error) {
+	return uc.Execute(ctx, sessionID)
+}
+
+func (uc *ConnectUseCase) validateSessionForConnection(ctx context.Context, sessionID string) (*session.Session, error) {
 	if sessionID == "" {
 		return nil, fmt.Errorf("session ID is required")
 	}
@@ -36,20 +59,26 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 		if errors.Is(err, shared.ErrSessionNotFound) {
 			return nil, dto.ErrSessionNotFound
 		}
-
 		return nil, fmt.Errorf("failed to get session from domain: %w", err)
 	}
 
+	return domainSession, nil
+}
+
+func (uc *ConnectUseCase) checkExistingConnection(sessionID string, domainSession *session.Session) *dto.SessionStatusResponse {
 	if domainSession.IsConnected {
 		return &dto.SessionStatusResponse{
 			ID:        sessionID,
 			Status:    string(domainSession.GetStatus()),
 			Connected: true,
 			Message:   "Session is already connected",
-		}, nil
+		}
 	}
+	return nil
+}
 
-	err = uc.whatsappClient.ConnectSession(ctx, sessionID)
+func (uc *ConnectUseCase) performWhatsAppConnection(ctx context.Context, sessionID string, domainSession *session.Session) (*dto.SessionStatusResponse, error) {
+	err := uc.whatsappClient.ConnectSession(ctx, sessionID)
 	if err != nil {
 		domainSession.SetError(err.Error())
 
@@ -64,7 +93,6 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 				return nil, dto.ErrSessionNotFound
 			case "ALREADY_CONNECTED":
 				domainSession.SetConnected(domainSession.DeviceJID)
-
 				_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnected)
 
 				return &dto.SessionStatusResponse{
@@ -81,12 +109,17 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 		return nil, fmt.Errorf("failed to connect WhatsApp session: %w", err)
 	}
 
-	err = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnecting)
-	if err != nil {
+	return nil, nil
+}
 
+func (uc *ConnectUseCase) updateConnectionStatus(ctx context.Context, sessionID string) {
+	err := uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnecting)
+	if err != nil {
 		fmt.Printf("Failed to update session status to connecting: %v\n", err)
 	}
+}
 
+func (uc *ConnectUseCase) buildConnectionResponse(ctx context.Context, sessionID string, domainSession *session.Session) (*dto.SessionStatusResponse, error) {
 	waStatus, err := uc.whatsappClient.GetSessionStatus(ctx, sessionID)
 	if err != nil {
 
@@ -99,13 +132,11 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 
 	if waStatus.Connected {
 		domainSession.SetConnected(waStatus.DeviceJID)
-
 		_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnected)
 	} else if !waStatus.LoggedIn {
 		qrInfo, err := uc.whatsappClient.GetQRCode(ctx, sessionID)
 		if err == nil && qrInfo.Code != "" {
 			domainSession.SetQRCode(qrInfo.Code, qrInfo.ExpiresAt)
-
 			_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusQRCode)
 		}
 	}
@@ -115,8 +146,4 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 		Status:    string(domainSession.GetStatus()),
 		Connected: domainSession.IsConnected,
 	}, nil
-}
-
-func (uc *ConnectUseCase) ExecuteWithAutoReconnect(ctx context.Context, sessionID string, autoReconnect bool) (*dto.SessionStatusResponse, error) {
-	return uc.Execute(ctx, sessionID)
 }

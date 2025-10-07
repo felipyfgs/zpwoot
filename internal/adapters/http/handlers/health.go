@@ -23,13 +23,13 @@ type HealthResponse struct {
 	Status  string `json:"status" example:"ok"`
 	Service string `json:"service" example:"zpwoot"`
 	Version string `json:"version,omitempty" example:"1.0.0"`
-} //@name HealthResponse
+} // @name HealthResponse
 
 type SystemInfoResponse struct {
 	Message string `json:"message" example:"zpwoot WhatsApp API is running"`
 	Version string `json:"version" example:"1.0.0"`
 	Service string `json:"service" example:"zpwoot"`
-} //@name SystemInfoResponse
+} // @name SystemInfoResponse
 
 // @Summary		Health Check
 // @Description	Check if the service and database are healthy

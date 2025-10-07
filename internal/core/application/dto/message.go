@@ -432,7 +432,6 @@ type HistorySyncResponse struct {
 	Timestamp int64 `json:"timestamp" example:"1696570882"`
 } //@name HistorySyncResponse
 
-// decodeBase64Data extracts and decodes base64 data, handling data URI format
 func (m *MediaData) decodeBase64Data() ([]byte, error) {
 	base64Data := m.Base64
 	if strings.Contains(base64Data, ",") {

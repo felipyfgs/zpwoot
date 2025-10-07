@@ -87,6 +87,7 @@ func (uc *DisconnectUseCase) Execute(ctx context.Context, sessionID string) (*dt
 	err = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
 	if err != nil {
 
+		fmt.Printf("Failed to update session status to disconnected: %v\n", err)
 	}
 
 	return &dto.SessionStatusResponse{

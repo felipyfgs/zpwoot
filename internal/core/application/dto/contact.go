@@ -43,15 +43,15 @@ type ContactDetail struct {
 } // @name ContactDetail
 type SendPresenceRequest struct {
 	Presence string `json:"presence" validate:"required,oneof=available unavailable composing recording paused" example:"available" description:"Presence type: available, unavailable, composing, recording, paused"`
-} //@name SendPresenceRequest
+} // @name SendPresenceRequest
 type SendPresenceResponse struct {
 	Success bool `json:"success" example:"true"`
-} //@name SendPresenceResponse
+} // @name SendPresenceResponse
 type ChatPresenceRequest struct {
 	Phone    string `json:"phone" validate:"required" example:"5511999999999"`
 	Presence string `json:"presence" validate:"required,oneof=composing paused" example:"composing" description:"Chat presence: composing (typing), paused (stopped typing)"`
 	Media    string `json:"media,omitempty" example:"text" description:"Media type: text, audio"`
-} //@name ChatPresenceRequest
+} // @name ChatPresenceRequest
 type ChatPresenceResponse struct {
 	Success bool `json:"success" example:"true"`
-} //@name ChatPresenceResponse
+} // @name ChatPresenceResponse
