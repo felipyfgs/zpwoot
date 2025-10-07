@@ -68,7 +68,7 @@ func (uc *LogoutUseCase) Execute(ctx context.Context, sessionID string) error {
 
 	err = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
 	if err != nil {
-
+		return fmt.Errorf("failed to update session status: %w", err)
 	}
 
 	return nil

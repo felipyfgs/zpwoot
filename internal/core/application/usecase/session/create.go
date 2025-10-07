@@ -46,7 +46,6 @@ func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateRequest) (*
 	err = uc.whatsappClient.CreateSession(ctx, sessionID)
 	if err != nil {
 		if rollbackErr := uc.sessionService.Delete(ctx, sessionID); rollbackErr != nil {
-
 			fmt.Printf("Failed to rollback session creation: %v\n", rollbackErr)
 		}
 
@@ -66,7 +65,6 @@ func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateRequest) (*
 	if req.GenerateQRCode {
 		err = uc.whatsappClient.ConnectSession(ctx, sessionID)
 		if err != nil {
-
 			fmt.Printf("Failed to connect session for QR generation: %v\n", err)
 		} else {
 			time.Sleep(2 * time.Second)

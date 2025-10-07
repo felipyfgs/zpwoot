@@ -2,7 +2,7 @@ package dto
 
 type ListGroupsResponse struct {
 	Groups []WhatsAppGroupInfo `json:"groups"`
-} //@name ListGroupsResponse
+} // @name ListGroupsResponse
 type WhatsAppGroupInfo struct {
 	JID          string   `json:"jid" example:"123456789@g.us"`
 	Name         string   `json:"name" example:"Meu Grupo"`
@@ -11,54 +11,54 @@ type WhatsAppGroupInfo struct {
 	IsAnnounce   bool     `json:"isAnnounce" example:"false"`
 	IsLocked     bool     `json:"isLocked" example:"false"`
 	CreatedAt    int64    `json:"createdAt,omitempty" example:"1696570882"`
-} //@name WhatsAppGroupInfo
+} // @name WhatsAppGroupInfo
 type GetGroupInfoRequest struct {
 	GroupJID string `json:"groupJid" validate:"required" example:"123456789@g.us"`
-} //@name GetGroupInfoRequest
+} // @name GetGroupInfoRequest
 type GetGroupInviteLinkRequest struct {
 	GroupJID string `json:"groupJid" validate:"required" example:"123456789@g.us"`
 	Reset    bool   `json:"reset,omitempty" example:"false"`
-} //@name GetGroupInviteLinkRequest
+} // @name GetGroupInviteLinkRequest
 type GetInviteLinkResponse struct {
 	InviteLink string `json:"inviteLink" example:"https://chat.whatsapp.com/ABC123"`
-} //@name GetInviteLinkResponse
+} // @name GetInviteLinkResponse
 type JoinGroupRequest struct {
 	Code string `json:"code" validate:"required" example:"ABC123DEF456"`
-} //@name JoinGroupRequest
+} // @name JoinGroupRequest
 type CreateGroupRequest struct {
 	Name         string   `json:"name" validate:"required" example:"Meu Grupo"`
 	Participants []string `json:"participants" validate:"required,min=1" example:"5511999999999,5511888888888"`
-} //@name CreateGroupRequest
+} // @name CreateGroupRequest
 type SetGroupLockedRequest struct {
 	GroupJID string `json:"groupJid" validate:"required" example:"123456789@g.us"`
 	Locked   bool   `json:"locked" validate:"required" example:"true"`
-} //@name SetGroupLockedRequest
+} // @name SetGroupLockedRequest
 type SetDisappearingRequest struct {
 	GroupJID string `json:"groupJid" validate:"required" example:"123456789@g.us"`
 	Duration string `json:"duration" validate:"required,oneof=24h 7d 90d off" example:"7d"`
-} //@name SetDisappearingRequest
+} // @name SetDisappearingRequest
 type RemovePhotoRequest struct {
 	GroupJID string `json:"groupJid" validate:"required" example:"123456789@g.us"`
-} //@name RemovePhotoRequest
+} // @name RemovePhotoRequest
 type UpdateParticipantsRequest struct {
 	GroupJID     string   `json:"groupJid" validate:"required" example:"123456789@g.us"`
 	Participants []string `json:"participants" validate:"required,min=1" example:"5511999999999"`
 	Action       string   `json:"action" validate:"required,oneof=add remove promote demote" example:"add"`
-} //@name UpdateParticipantsRequest
+} // @name UpdateParticipantsRequest
 type GetInviteInfoRequest struct {
 	Code string `json:"code" validate:"required" example:"ABC123DEF456"`
-} //@name GetInviteInfoRequest
+} // @name GetInviteInfoRequest
 type SetGroupPhotoRequest struct {
 	GroupJID string `json:"groupJid" validate:"required" example:"123456789@g.us"`
 	Image    string `json:"image" validate:"required" example:"data:image/jpeg;base64,..."`
-} //@name SetGroupPhotoRequest
+} // @name SetGroupPhotoRequest
 type SetGroupPhotoResponse struct {
 	PictureID string `json:"pictureId" example:"abc123"`
-} //@name SetGroupPhotoResponse
+} // @name SetGroupPhotoResponse
 type SetGroupNameRequest struct {
 	GroupJID string `json:"groupJid" validate:"required" example:"123456789@g.us"`
 	Name     string `json:"name" validate:"required" example:"Novo Nome"`
-} //@name SetGroupNameRequest
+} // @name SetGroupNameRequest
 type SetGroupTopicRequest struct {
 	GroupJID string `json:"groupJid" validate:"required" example:"123456789@g.us"`
 	Topic    string `json:"topic" validate:"required" example:"Nova descrição"`

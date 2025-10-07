@@ -122,12 +122,11 @@ func (uc *ConnectUseCase) updateConnectionStatus(ctx context.Context, sessionID 
 func (uc *ConnectUseCase) buildConnectionResponse(ctx context.Context, sessionID string, domainSession *session.Session) (*dto.SessionStatusResponse, error) {
 	waStatus, err := uc.whatsappClient.GetSessionStatus(ctx, sessionID)
 	if err != nil {
-
 		return &dto.SessionStatusResponse{
 			ID:        sessionID,
 			Status:    string(session.StatusConnecting),
 			Connected: false,
-		}, nil
+		}, err
 	}
 
 	if waStatus.Connected {

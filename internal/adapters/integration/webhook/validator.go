@@ -29,7 +29,7 @@ func ValidateURL(webhookURL string) error {
 	}
 
 	if isLocalhost(parsedURL.Host) {
-
+		return fmt.Errorf("localhost URLs are not allowed for webhooks")
 	}
 
 	if len(webhookURL) > 2048 {

@@ -37,7 +37,6 @@ func shortCaller(file string, line int) string {
 }
 
 func extractPackageFromFile(file string) string {
-
 	if strings.Contains(file, "/workspaces/zpwoot/") {
 		return extractPackageFromWorkspacePath(file)
 	}

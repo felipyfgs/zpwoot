@@ -100,7 +100,6 @@ func (uc *GetUseCase) determineSessionStatus(waStatus *output.SessionStatus) str
 }
 
 func (uc *GetUseCase) updateSessionFromWAStatus(ctx context.Context, sessionID string, domainSession *session.Session, waStatus *output.SessionStatus) {
-
 	if waStatus.Connected && !domainSession.IsConnected {
 		domainSession.SetConnected(waStatus.DeviceJID)
 	} else if !waStatus.Connected && domainSession.IsConnected {

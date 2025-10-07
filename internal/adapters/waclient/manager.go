@@ -488,65 +488,98 @@ func (wac *WAClient) handleQREvent(client *Client, evt *events.QR) {
 func (wac *WAClient) processAllQRCodesFromEvent(ctx context.Context, client *Client, codes []string) {
 	for i, code := range codes {
 		if client.Status != session.StatusQRCode {
-			wac.logger.Info().
-				Str("session_id", client.SessionID).
-				Int("qr_number", i+1).
-				Msg("QR processing stopped - client status changed")
-
+			wac.logQRProcessingStopped(client, i+1)
 			return
 		}
 
-		wac.logger.Info().
-			Str("session_id", client.SessionID).
-			Int("qr_number", i+1).
-			Int("total_codes", len(codes)).
-			Msg("Displaying QR code")
-
-		qrterminal.GenerateHalfBlock(code, qrterminal.L, os.Stdout)
-
-		var timeout time.Duration
-		if i == 0 {
-			timeout = QRFirstTimeout
-		} else {
-			timeout = QRSubsequentTimeout
-		}
-
-		fmt.Printf("\n📱 Scan QR code | Session: %s | QR: %d/%d | Timeout: %d seconds\n\n",
-			client.SessionID, i+1, len(codes), int(timeout.Seconds()))
-
-		client.QRCode = code
-		client.QRExpiresAt = time.Now().Add(timeout)
-		wac.updateSessionStatus(ctx, client)
-
-		qrEvent := &QREvent{
-			Event:     "code",
-			Code:      code,
-			ExpiresAt: client.QRExpiresAt,
-		}
-		wac.sendWebhook(client, EventQR, qrEvent)
-
-		select {
-		case <-time.After(timeout):
-			wac.logger.Info().
-				Str("session_id", client.SessionID).
-				Int("qr_number", i+1).
-				Msg("QR code expired - showing next QR code")
-
-			wac.clearQRCode(client)
-			wac.updateSessionStatus(ctx, client)
-
-		case <-ctx.Done():
-			wac.logger.Info().
-				Str("session_id", client.SessionID).
-				Msg("QR processing canceled")
-
-			return
+		if wac.processSingleQRCode(ctx, client, code, i, len(codes)) {
+			return // Context was cancelled
 		}
 	}
 
+	wac.finalizeQRProcessing(ctx, client, len(codes))
+}
+
+func (wac *WAClient) logQRProcessingStopped(client *Client, qrNumber int) {
 	wac.logger.Info().
 		Str("session_id", client.SessionID).
-		Int("total_codes", len(codes)).
+		Int("qr_number", qrNumber).
+		Msg("QR processing stopped - client status changed")
+}
+
+func (wac *WAClient) processSingleQRCode(ctx context.Context, client *Client, code string, index, totalCodes int) bool {
+	qrNumber := index + 1
+
+	wac.logger.Info().
+		Str("session_id", client.SessionID).
+		Int("qr_number", qrNumber).
+		Int("total_codes", totalCodes).
+		Msg("Displaying QR code")
+
+	wac.displayQRCode(code, client.SessionID, qrNumber, totalCodes, index)
+	wac.updateClientWithQRCode(ctx, client, code, index)
+	wac.sendQRWebhook(client, code)
+
+	return wac.waitForQRTimeout(ctx, client, qrNumber, index)
+}
+
+func (wac *WAClient) displayQRCode(code, sessionID string, qrNumber, totalCodes, index int) {
+	qrterminal.GenerateHalfBlock(code, qrterminal.L, os.Stdout)
+
+	timeout := wac.getQRTimeout(index)
+	fmt.Printf("\n📱 Scan QR code | Session: %s | QR: %d/%d | Timeout: %d seconds\n\n",
+		sessionID, qrNumber, totalCodes, int(timeout.Seconds()))
+}
+
+func (wac *WAClient) getQRTimeout(index int) time.Duration {
+	if index == 0 {
+		return QRFirstTimeout
+	}
+	return QRSubsequentTimeout
+}
+
+func (wac *WAClient) updateClientWithQRCode(ctx context.Context, client *Client, code string, index int) {
+	timeout := wac.getQRTimeout(index)
+	client.QRCode = code
+	client.QRExpiresAt = time.Now().Add(timeout)
+	wac.updateSessionStatus(ctx, client)
+}
+
+func (wac *WAClient) sendQRWebhook(client *Client, code string) {
+	qrEvent := &QREvent{
+		Event:     "code",
+		Code:      code,
+		ExpiresAt: client.QRExpiresAt,
+	}
+	wac.sendWebhook(client, EventQR, qrEvent)
+}
+
+func (wac *WAClient) waitForQRTimeout(ctx context.Context, client *Client, qrNumber, index int) bool {
+	timeout := wac.getQRTimeout(index)
+
+	select {
+	case <-time.After(timeout):
+		wac.logger.Info().
+			Str("session_id", client.SessionID).
+			Int("qr_number", qrNumber).
+			Msg("QR code expired - showing next QR code")
+
+		wac.clearQRCode(client)
+		wac.updateSessionStatus(ctx, client)
+		return false
+
+	case <-ctx.Done():
+		wac.logger.Info().
+			Str("session_id", client.SessionID).
+			Msg("QR processing canceled")
+		return true
+	}
+}
+
+func (wac *WAClient) finalizeQRProcessing(ctx context.Context, client *Client, totalCodes int) {
+	wac.logger.Info().
+		Str("session_id", client.SessionID).
+		Int("total_codes", totalCodes).
 		Msg("All QR codes expired - disconnecting")
 
 	wac.clearQRCode(client)
