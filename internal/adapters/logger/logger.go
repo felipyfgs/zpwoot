@@ -20,8 +20,9 @@ var globalLogger zerolog.Logger
 type LogFormat string
 
 const (
-	FormatJSON    LogFormat = "json"
-	FormatConsole LogFormat = "console"
+	FormatJSON      LogFormat = "json"
+	FormatConsole   LogFormat = "console"
+	mainPackageName           = mainPackageName
 )
 
 type LogOutput string
@@ -43,14 +44,14 @@ func extractPackageFromFile(file string) string {
 
 			dir := filepath.Dir(path)
 			if dir == "." {
-				return "main"
+				return mainPackageName
 			}
 
 			pathParts := strings.Split(dir, "/")
 			if len(pathParts) > 0 {
 				lastPart := pathParts[len(pathParts)-1]
 				if lastPart == "zpwoot" || strings.HasPrefix(dir, "cmd/") {
-					return "main"
+					return mainPackageName
 				}
 
 				return lastPart
@@ -60,7 +61,7 @@ func extractPackageFromFile(file string) string {
 
 	dir := filepath.Dir(file)
 	if dir == "." {
-		return "main"
+		return mainPackageName
 	}
 
 	pathParts := strings.Split(dir, "/")
@@ -91,7 +92,7 @@ func (h packageHook) Run(e *zerolog.Event, level zerolog.Level, msg string) {
 		}
 	}
 
-	e.Str("pkg", "main")
+	e.Str("pkg", mainPackageName)
 }
 
 func Init(level string) {

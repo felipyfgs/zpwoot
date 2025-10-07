@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"zpwoot/internal/core/application/dto"
@@ -50,7 +51,8 @@ func (uc *DisconnectUseCase) Execute(ctx context.Context, sessionID string) (*dt
 
 	err = uc.whatsappClient.DisconnectSession(ctx, sessionID)
 	if err != nil {
-		if waErr, ok := err.(*output.WhatsAppError); ok {
+		var waErr *output.WhatsAppError
+		if errors.As(err, &waErr) {
 			switch waErr.Code {
 			case "SESSION_NOT_FOUND":
 				domainSession.SetDisconnected()
