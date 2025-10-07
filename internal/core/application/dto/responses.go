@@ -10,18 +10,18 @@ type APIResponse struct {
 	Data      interface{}   `json:"data,omitempty" description:"Response data (present on success)"`
 	Error     *APIErrorInfo `json:"error,omitempty" description:"Error information (present on failure)"`
 	Timestamp time.Time     `json:"timestamp" example:"2025-01-15T10:30:00Z" description:"Response timestamp"`
-} //@name APIResponse
+} // @name APIResponse
 
 type ErrorResponse struct {
 	Error   string `json:"error" example:"validation_error" description:"Error code"`
 	Message string `json:"message" example:"name is required" description:"Human readable error message"`
-} //@name ErrorResponse
+} // @name ErrorResponse
 
 type APIErrorInfo struct {
 	Code    string                 `json:"code" example:"validation_error" description:"Error code"`
 	Message string                 `json:"message" example:"Validation failed" description:"Human readable error message"`
 	Details map[string]interface{} `json:"details,omitempty" description:"Additional error details"`
-} //@name APIErrorInfo
+} // @name APIErrorInfo
 
 type ValidationError struct {
 	Field   string `json:"field" example:"name" description:"Field that failed validation"`

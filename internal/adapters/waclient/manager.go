@@ -493,7 +493,7 @@ func (wac *WAClient) processAllQRCodesFromEvent(ctx context.Context, client *Cli
 		}
 
 		if wac.processSingleQRCode(ctx, client, code, i, len(codes)) {
-			return // Context was cancelled
+			return
 		}
 	}
 

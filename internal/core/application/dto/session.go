@@ -17,25 +17,25 @@ type ProxySettings struct {
 	Port    string `json:"port,omitempty" example:"8080" description:"Proxy port"`
 	User    string `json:"user,omitempty" example:"proxyUser123" description:"Proxy username (optional)"`
 	Pass    string `json:"pass,omitempty" example:"proxyPass123" description:"Proxy password (optional)"`
-} //@name ProxySettings
+} // @name ProxySettings
 
 type WebhookSettings struct {
 	Enabled bool     `json:"enabled" example:"true" description:"Enable webhook"`
 	URL     string   `json:"url,omitempty" example:"https://api.example.com/webhook" validate:"omitempty,url" description:"Webhook URL"`
 	Events  []string `json:"events,omitempty" example:"Message,Receipt,Connected" description:"Events to subscribe (Message, Receipt, Connected, Disconnected, CallOffer, Presence, NewsletterJoin, All)"`
 	Secret  string   `json:"secret,omitempty" example:"supersecrettoken123" description:"Webhook secret for validation (optional)"`
-} //@name WebhookSettings
+} // @name WebhookSettings
 
 type SessionSettings struct {
 	Proxy   *ProxySettings   `json:"proxy,omitempty" description:"Proxy configuration"`
 	Webhook *WebhookSettings `json:"webhook,omitempty" description:"Webhook configuration"`
-} //@name SessionSettings
+} // @name SessionSettings
 
 type CreateRequest struct {
 	Name           string           `json:"name" example:"my-session" validate:"required,min=1,max=100" description:"Session name for identification"`
 	Settings       *SessionSettings `json:"settings,omitempty" description:"Session settings (proxy, webhook)"`
 	GenerateQRCode bool             `json:"qrCode,omitempty" example:"true" description:"Auto-generate QR code after creation (default: false)"`
-} //@name CreateSessionRequest
+} // @name CreateSessionRequest
 
 type UpdateRequest struct {
 	Name     *string          `json:"name,omitempty" example:"updated-session" validate:"omitempty,min=1,max=100" description:"Session name for identification"`
@@ -56,7 +56,7 @@ type SessionResponse struct {
 	UpdatedAt       time.Time        `json:"updatedAt" example:"2025-01-15T10:35:00Z" description:"Last update timestamp"`
 	ConnectedAt     *time.Time       `json:"connectedAt,omitempty" example:"2025-01-15T10:32:00Z" description:"Connection timestamp"`
 	LastSeen        *time.Time       `json:"lastSeen,omitempty" example:"2025-01-15T10:35:00Z" description:"Last activity timestamp"`
-} //@name SessionResponse
+} // @name SessionResponse
 
 type SessionListInfo struct {
 	SessionID   string           `json:"sessionId" example:"550e8400-e29b-41d4-a716-446655440000" description:"Unique session identifier"`
@@ -69,12 +69,12 @@ type SessionListInfo struct {
 	UpdatedAt   time.Time        `json:"updatedAt" example:"2025-01-15T10:35:00Z" description:"Last update timestamp"`
 	ConnectedAt *time.Time       `json:"connectedAt,omitempty" example:"2025-01-15T10:32:00Z" description:"Connection timestamp"`
 	LastSeen    *time.Time       `json:"lastSeen,omitempty" example:"2025-01-15T10:35:00Z" description:"Last activity timestamp"`
-} //@name SessionListInfo
+} // @name SessionListInfo
 
 type SessionListResponse struct {
 	Sessions []SessionListInfo `json:"sessions" description:"List of sessions (without QR codes)"`
 	Total    int               `json:"total" example:"5" description:"Total number of sessions"`
-} //@name SessionListResponse
+} // @name SessionListResponse
 
 type SessionActionResponse struct {
 	SessionID string `json:"sessionId" example:"550e8400-e29b-41d4-a716-446655440000" description:"Session ID"`
@@ -88,7 +88,7 @@ type QRCodeResponse struct {
 	QRCodeBase64 string `json:"qrCodeBase64" example:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..." description:"Base64 encoded QR code image"`
 	ExpiresAt    string `json:"expiresAt" example:"2025-01-15T10:35:00Z" description:"QR code expiration time"`
 	Status       string `json:"status" example:"generated" description:"QR code status"`
-} //@name QRCodeResponse
+} // @name QRCodeResponse
 
 type CreateSessionResponse struct {
 	ID              string     `json:"id" example:"550e8400-e29b-41d4-a716-446655440000" description:"Session identifier"`
@@ -122,7 +122,7 @@ type SessionStatusResponse struct {
 	Status    string `json:"status" example:"connected" description:"Current session status"`
 	Connected bool   `json:"connected" example:"true" description:"Whether session is connected"`
 	Message   string `json:"message,omitempty" example:"Session is already connected" description:"Additional status message"`
-} //@name SessionStatusResponse
+} // @name SessionStatusResponse
 
 func (r *CreateRequest) Validate() error {
 	if err := validators.ValidateSessionName(r.Name); err != nil {
@@ -285,10 +285,10 @@ func QRBase64(qrString string) string {
 
 type PairPhoneRequest struct {
 	Phone string `json:"phone" validate:"required" example:"5511999999999" description:"Phone number with country code"`
-} //@name PairPhoneRequest
+} // @name PairPhoneRequest
 type PairPhoneResponse struct {
 	LinkingCode string `json:"linkingCode" example:"ABCD-EFGH" description:"8-character linking code to enter on phone"`
-} //@name PairPhoneResponse
+} // @name PairPhoneResponse
 
 var (
 	ErrInvalidSessionName   = NewValidationError("name", "Session name is required")

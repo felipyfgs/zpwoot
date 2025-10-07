@@ -25,20 +25,20 @@ type MediaData struct {
 	FileName string `json:"fileName,omitempty" example:"image.jpg"`
 	MimeType string `json:"mimeType,omitempty" example:"image/jpeg"`
 	Caption  string `json:"caption,omitempty" example:"Check out this image!"`
-} //@name MediaData
+} // @name MediaData
 
 type Location struct {
 	Latitude  float64 `json:"latitude" validate:"required,min=-90,max=90" example:"-23.550520"`
 	Longitude float64 `json:"longitude" validate:"required,min=-180,max=180" example:"-46.633308"`
 	Name      string  `json:"name,omitempty" example:"São Paulo"`
 	Address   string  `json:"address,omitempty" example:"Av. Paulista, 1578 - Bela Vista, São Paulo - SP"`
-} //@name Location
+} // @name Location
 
 type ContactInfo struct {
 	Name  string `json:"name" validate:"required" example:"John Doe"`
 	Phone string `json:"phone" validate:"required" example:"5511999999999"`
 	VCard string `json:"vcard,omitempty" example:"BEGIN:VCARD\nVERSION:3.0\nFN:John Doe\nTEL:+5511999999999\nEND:VCARD"`
-} //@name ContactInfo
+} // @name ContactInfo
 
 type SendMessageResponse struct {
 	Success     bool         `json:"success" example:"true"`
@@ -49,24 +49,24 @@ type SendMessageResponse struct {
 	Timestamp   int64        `json:"timestamp" example:"1696570882"`
 	Status      string       `json:"status" example:"sent"`
 	ContextInfo *ContextInfo `json:"contextInfo,omitempty"`
-} //@name SendMessageResponse
+} // @name SendMessageResponse
 
 type ContextInfo struct {
 	StanzaID    string `json:"stanzaId,omitempty" example:"3EB0A9253FA64269E11C9D"`
 	Participant string `json:"participant,omitempty" example:"5511888888888@s.whatsapp.net"`
 	QuotedID    string `json:"quotedId,omitempty" example:"3EB0A9253FA64269E11C9D"`
-} //@name ContextInfo
+} // @name ContextInfo
 
 type SendTextMessageRequest struct {
 	Phone       string              `json:"phone" validate:"required" example:"5511999999999"`
 	Text        string              `json:"text" validate:"required" example:"Hello! This is a test message from zpwoot API."`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
-} //@name SendTextMessageRequest
+} // @name SendTextMessageRequest
 
 type ContextInfoRequest struct {
 	StanzaID    string `json:"stanzaId" example:"3EB0A9253FA64269E11C9D"`
 	Participant string `json:"participant,omitempty" example:"5511888888888@s.whatsapp.net"`
-} //@name ContextInfoRequest
+} // @name ContextInfoRequest
 
 type SendImageMessageRequest struct {
 	Phone       string              `json:"phone" validate:"required" example:"5511999999999"`
@@ -76,7 +76,7 @@ type SendImageMessageRequest struct {
 	Caption     string              `json:"caption,omitempty" example:"Check out this beautiful image!"`
 	ViewOnce    bool                `json:"viewOnce,omitempty" example:"false"`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
-} //@name SendImageMessageRequest
+} // @name SendImageMessageRequest
 
 type SendAudioMessageRequest struct {
 	Phone       string              `json:"phone" validate:"required" example:"5511999999999"`
@@ -85,7 +85,7 @@ type SendAudioMessageRequest struct {
 	FileName    string              `json:"fileName,omitempty" example:"audio.mp3"`
 	ViewOnce    bool                `json:"viewOnce,omitempty" example:"false"`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
-} //@name SendAudioMessageRequest
+} // @name SendAudioMessageRequest
 
 type SendVideoMessageRequest struct {
 	Phone       string              `json:"phone" validate:"required" example:"5511999999999"`
@@ -95,7 +95,7 @@ type SendVideoMessageRequest struct {
 	Caption     string              `json:"caption,omitempty" example:"Watch this amazing video!"`
 	ViewOnce    bool                `json:"viewOnce,omitempty" example:"false"`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
-} //@name SendVideoMessageRequest
+} // @name SendVideoMessageRequest
 
 type SendDocumentMessageRequest struct {
 	Phone       string              `json:"phone" validate:"required" example:"5511999999999"`
@@ -104,7 +104,7 @@ type SendDocumentMessageRequest struct {
 	FileName    string              `json:"fileName,omitempty" example:"document.pdf"`
 	Caption     string              `json:"caption,omitempty" example:"Important document attached"`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
-} //@name SendDocumentMessageRequest
+} // @name SendDocumentMessageRequest
 
 type SendStickerMessageRequest struct {
 	Phone       string              `json:"phone" validate:"required" example:"5511999999999"`
@@ -112,7 +112,7 @@ type SendStickerMessageRequest struct {
 	MimeType    string              `json:"mimeType,omitempty" example:"image/webp"`
 	FileName    string              `json:"fileName,omitempty" example:"sticker.webp"`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
-} //@name SendStickerMessageRequest
+} // @name SendStickerMessageRequest
 
 type SendLocationMessageRequest struct {
 	Phone       string              `json:"phone" validate:"required" example:"5511999999999"`
@@ -121,13 +121,13 @@ type SendLocationMessageRequest struct {
 	Name        string              `json:"name,omitempty" example:"São Paulo"`
 	Address     string              `json:"address,omitempty" example:"Av. Paulista, 1578 - Bela Vista, São Paulo - SP"`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
-} //@name SendLocationMessageRequest
+} // @name SendLocationMessageRequest
 
 type SendContactMessageRequest struct {
 	Phone       string              `json:"phone" validate:"required" example:"5511999999999"`
 	Contact     *ContactInfo        `json:"contact" validate:"required"`
 	ContextInfo *ContextInfoRequest `json:"contextInfo,omitempty"`
-} //@name SendContactMessageRequest
+} // @name SendContactMessageRequest
 
 type SendReactionMessageRequest struct {
 	Phone     string `json:"phone" validate:"required" example:"5511999999999"`
@@ -135,14 +135,14 @@ type SendReactionMessageRequest struct {
 	Reaction  string `json:"reaction" validate:"required" example:"👍"`
 
 	FromMe *bool `json:"fromMe,omitempty" example:"false"`
-} //@name SendReactionMessageRequest
+} // @name SendReactionMessageRequest
 
 type SendPollMessageRequest struct {
 	Phone                  string   `json:"phone" validate:"required" example:"5511999999999"`
 	Name                   string   `json:"name" validate:"required" example:"What's your favorite color?"`
 	Options                []string `json:"options" validate:"required,min=2,max=12" example:"Red,Blue,Green,Yellow"`
 	SelectableOptionsCount int      `json:"selectableOptionsCount" validate:"required,min=1" example:"1"`
-} //@name SendPollMessageRequest
+} // @name SendPollMessageRequest
 
 type MessageInfo struct {
 	ID        string    `json:"id"`
@@ -347,90 +347,90 @@ func (c *ContactInfo) ToInterfacesContactInfo() *output.ContactInfo {
 type SendMultipleContactsRequest struct {
 	Phone    string         `json:"phone" validate:"required" example:"5511999999999"`
 	Contacts []*ContactInfo `json:"contacts" validate:"required,min=1"`
-} //@name SendMultipleContactsRequest
+} // @name SendMultipleContactsRequest
 
 type Button struct {
 	ID   string `json:"id" validate:"required" example:"btn_1"`
 	Text string `json:"text" validate:"required" example:"Click Me"`
-} //@name Button
+} // @name Button
 
 type SendButtonsMessageRequest struct {
 	Phone   string    `json:"phone" validate:"required" example:"5511999999999"`
 	Text    string    `json:"text" validate:"required" example:"Please choose an option:"`
 	Buttons []*Button `json:"buttons" validate:"required,min=1,max=3"`
-} //@name SendButtonsMessageRequest
+} // @name SendButtonsMessageRequest
 
 type ListRow struct {
 	ID          string `json:"id" validate:"required" example:"row_1"`
 	Title       string `json:"title" validate:"required" example:"Option 1"`
 	Description string `json:"description,omitempty" example:"Description for option 1"`
-} //@name ListRow
+} // @name ListRow
 
 type ListSection struct {
 	Title string     `json:"title" validate:"required" example:"Section 1"`
 	Rows  []*ListRow `json:"rows" validate:"required,min=1"`
-} //@name ListSection
+} // @name ListSection
 
 type SendListMessageRequest struct {
 	Phone    string         `json:"phone" validate:"required" example:"5511999999999"`
 	Text     string         `json:"text" validate:"required" example:"Please select an option from the list"`
 	Title    string         `json:"title" validate:"required" example:"Menu Options"`
 	Sections []*ListSection `json:"sections" validate:"required,min=1"`
-} //@name SendListMessageRequest
+} // @name SendListMessageRequest
 
 type TemplateParameter struct {
 	Type string `json:"type" validate:"required" example:"text"`
 	Text string `json:"text,omitempty" example:"John"`
-} //@name TemplateParameter
+} // @name TemplateParameter
 
 type TemplateComponent struct {
 	Type       string               `json:"type" validate:"required" example:"body"`
 	Parameters []*TemplateParameter `json:"parameters,omitempty"`
-} //@name TemplateComponent
+} // @name TemplateComponent
 
 type TemplateMessage struct {
 	Name       string               `json:"name" validate:"required" example:"hello_world"`
 	Language   string               `json:"language" validate:"required" example:"en_US"`
 	Components []*TemplateComponent `json:"components,omitempty"`
-} //@name TemplateMessage
+} // @name TemplateMessage
 
 type SendTemplateMessageRequest struct {
 	Phone    string           `json:"phone" validate:"required" example:"5511999999999"`
 	Template *TemplateMessage `json:"template" validate:"required"`
-} //@name SendTemplateMessageRequest
+} // @name SendTemplateMessageRequest
 type DeleteMessageRequest struct {
 	Phone     string `json:"phone" validate:"required" example:"5511999999999"`
 	MessageID string `json:"messageId" validate:"required" example:"3EB0C767D0D1A2B5F8"`
-} //@name DeleteMessageRequest
+} // @name DeleteMessageRequest
 type DeleteMessageResponse struct {
 	Success   bool   `json:"success" example:"true"`
 	MessageID string `json:"messageId" example:"3EB0C767D0D1A2B5F8"`
 	Timestamp int64  `json:"timestamp" example:"1696570882"`
-} //@name DeleteMessageResponse
+} // @name DeleteMessageResponse
 type EditMessageRequest struct {
 	Phone     string `json:"phone" validate:"required" example:"5511999999999"`
 	MessageID string `json:"messageId" validate:"required" example:"3EB0C767D0D1A2B5F8"`
 	Text      string `json:"text" validate:"required" example:"Edited message text"`
-} //@name EditMessageRequest
+} // @name EditMessageRequest
 type EditMessageResponse struct {
 	Success   bool   `json:"success" example:"true"`
 	MessageID string `json:"messageId" example:"3EB0C767D0D1A2B5F8"`
 	Timestamp int64  `json:"timestamp" example:"1696570882"`
-} //@name EditMessageResponse
+} // @name EditMessageResponse
 type MarkReadRequest struct {
 	Phone      string   `json:"phone" validate:"required" example:"5511999999999"`
 	MessageIDs []string `json:"messageIds" validate:"required,min=1" example:"3EB0C767D0D1A2B5F8,3EB0C767D0D1A2B5F9"`
-} //@name MarkReadRequest
+} // @name MarkReadRequest
 type MarkReadResponse struct {
 	Success bool `json:"success" example:"true"`
-} //@name MarkReadResponse
+} // @name MarkReadResponse
 type HistorySyncRequest struct {
 	Count int `json:"count,omitempty" example:"50" description:"Number of messages to sync (default: 50)"`
-} //@name HistorySyncRequest
+} // @name HistorySyncRequest
 type HistorySyncResponse struct {
 	Success   bool  `json:"success" example:"true"`
 	Timestamp int64 `json:"timestamp" example:"1696570882"`
-} //@name HistorySyncResponse
+} // @name HistorySyncResponse
 
 func (m *MediaData) decodeBase64Data() ([]byte, error) {
 	base64Data := m.Base64

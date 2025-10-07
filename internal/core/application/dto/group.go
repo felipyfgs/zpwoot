@@ -62,15 +62,15 @@ type SetGroupNameRequest struct {
 type SetGroupTopicRequest struct {
 	GroupJID string `json:"groupJid" validate:"required" example:"123456789@g.us"`
 	Topic    string `json:"topic" validate:"required" example:"Nova descrição"`
-} //@name SetGroupTopicRequest
+} // @name SetGroupTopicRequest
 type LeaveGroupRequest struct {
 	GroupJID string `json:"groupJid" validate:"required" example:"123456789@g.us"`
-} //@name LeaveGroupRequest
+} // @name LeaveGroupRequest
 type SetGroupAnnounceRequest struct {
 	GroupJID string `json:"groupJid" validate:"required" example:"123456789@g.us"`
 	Announce bool   `json:"announce" validate:"required" example:"true"`
-} //@name SetGroupAnnounceRequest
+} // @name SetGroupAnnounceRequest
 type GroupActionResponse struct {
 	Success bool   `json:"success" example:"true"`
 	Message string `json:"message" example:"Operation completed successfully"`
-} //@name GroupActionResponse
+} // @name GroupActionResponse
