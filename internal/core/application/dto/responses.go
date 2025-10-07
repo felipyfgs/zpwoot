@@ -12,6 +12,12 @@ type APIResponse struct {
 	Timestamp time.Time     `json:"timestamp" example:"2025-01-15T10:30:00Z" description:"Response timestamp"`
 } // @name APIResponse
 
+type SuccessResponse struct {
+	Success bool        `json:"success" example:"true" description:"Whether the request was successful"`
+	Message string      `json:"message" example:"Operation completed successfully" description:"Success message"`
+	Data    interface{} `json:"data,omitempty" description:"Response data (optional)"`
+} // @name SuccessResponse
+
 type ErrorResponse struct {
 	Error   string `json:"error" example:"validation_error" description:"Error code"`
 	Message string `json:"message" example:"name is required" description:"Human readable error message"`
@@ -61,6 +67,21 @@ func NewSuccessResponse(data interface{}) *APIResponse {
 		Success:   true,
 		Data:      data,
 		Timestamp: time.Now(),
+	}
+}
+
+func NewSimpleSuccessResponse(message string) *SuccessResponse {
+	return &SuccessResponse{
+		Success: true,
+		Message: message,
+	}
+}
+
+func NewSimpleSuccessResponseWithData(message string, data interface{}) *SuccessResponse {
+	return &SuccessResponse{
+		Success: true,
+		Message: message,
+		Data:    data,
 	}
 }
 

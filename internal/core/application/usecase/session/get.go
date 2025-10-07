@@ -118,12 +118,6 @@ func (uc *GetUseCase) updateSessionFromWAStatus(ctx context.Context, sessionID s
 	}
 
 	go func(ctx context.Context) {
-		var status session.Status
-		if waStatus.Connected {
-			status = session.StatusConnected
-		} else {
-			status = session.StatusDisconnected
-		}
-		_ = uc.sessionService.UpdateStatus(ctx, sessionID, status)
+		_ = uc.sessionService.Update(ctx, domainSession)
 	}(ctx)
 }

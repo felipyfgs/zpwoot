@@ -69,9 +69,9 @@ func (uc *LogoutUseCase) Execute(ctx context.Context, sessionID string) error {
 	domainSession.QRCode = ""
 	domainSession.QRCodeExpiresAt = nil
 
-	err = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
+	err = uc.sessionService.Update(ctx, domainSession)
 	if err != nil {
-		return fmt.Errorf("failed to update session status: %w", err)
+		return fmt.Errorf("failed to update session: %w", err)
 	}
 
 	return nil

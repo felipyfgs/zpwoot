@@ -261,6 +261,386 @@
                 }
             }
         },
+        "/sessions/{sessionId}/communities": {
+            "get": {
+                "description": "Lista todas as comunidades que a sessão participa",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comunidades"
+                ],
+                "summary": "Lista comunidades",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ListCommunitiesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Cria uma nova comunidade WhatsApp",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comunidades"
+                ],
+                "summary": "Criar comunidade",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados da comunidade",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CreateCommunityRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/CommunityInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/communities/info": {
+            "get": {
+                "description": "Obtém informações detalhadas de uma comunidade específica",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comunidades"
+                ],
+                "summary": "Obter informações da comunidade",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "JID da comunidade",
+                        "name": "communityJid",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/CommunityInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/communities/{communityJid}/groups": {
+            "get": {
+                "description": "Lista todos os subgrupos vinculados a uma comunidade",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comunidades"
+                ],
+                "summary": "Listar subgrupos da comunidade",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "JID da comunidade",
+                        "name": "communityJid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ListCommunitySubGroupsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/communities/{communityJid}/link": {
+            "post": {
+                "description": "Vincula um grupo existente a uma comunidade",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comunidades"
+                ],
+                "summary": "Vincular grupo à comunidade",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "JID da comunidade",
+                        "name": "communityJid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados do grupo a vincular",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/LinkGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/communities/{communityJid}/participants": {
+            "get": {
+                "description": "Lista todos os participants de uma comunidade (de todos os grupos vinculados)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comunidades"
+                ],
+                "summary": "Listar participants da comunidade",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "JID da comunidade",
+                        "name": "communityJid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ListCommunityParticipantsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/communities/{communityJid}/unlink": {
+            "post": {
+                "description": "Desvincula um grupo de uma comunidade",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Comunidades"
+                ],
+                "summary": "Desvincular grupo da comunidade",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "JID da comunidade",
+                        "name": "communityJid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados do grupo a desvincular",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/UnlinkGroupRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/SuccessResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/sessions/{sessionId}/connect": {
             "post": {
                 "security": [
@@ -2757,6 +3137,631 @@
                 }
             }
         },
+        "/sessions/{sessionId}/newsletters": {
+            "get": {
+                "description": "Lista todos os newsletters que a sessão segue",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Lista newsletters",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ListNewslettersResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Cria um novo newsletter WhatsApp",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Criar newsletter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados do newsletter",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/CreateNewsletterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/NewsletterInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/newsletters/follow": {
+            "post": {
+                "description": "Segue um newsletter por JID ou código de convite",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Seguir newsletter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados para seguir newsletter",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/FollowNewsletterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/newsletters/info": {
+            "get": {
+                "description": "Obtém informações detalhadas de um newsletter específico",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Obter informações do newsletter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "JID do newsletter",
+                        "name": "newsletterJid",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/NewsletterInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/newsletters/info-invite": {
+            "post": {
+                "description": "Obtém informações de um newsletter usando código de convite",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Obter informações do newsletter via convite",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Código de convite",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/NewsletterInfoWithInviteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/NewsletterInfo"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/newsletters/{newsletterJid}/mark-viewed": {
+            "post": {
+                "description": "Marca mensagens específicas do newsletter como visualizadas",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Marcar mensagens como visualizadas",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "JID do newsletter",
+                        "name": "newsletterJid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "IDs das mensagens",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/NewsletterMarkViewedRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/newsletters/{newsletterJid}/messages": {
+            "get": {
+                "description": "Lista mensagens de um newsletter com paginação",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Obter mensagens do newsletter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "JID do newsletter",
+                        "name": "newsletterJid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Número de mensagens (padrão: 50)",
+                        "name": "count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Cursor para paginação",
+                        "name": "before",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ListNewsletterMessagesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/newsletters/{newsletterJid}/mute": {
+            "post": {
+                "description": "Alterna o estado de silenciamento de um newsletter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Silenciar/dessilenciar newsletter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "JID do newsletter",
+                        "name": "newsletterJid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Estado de silenciamento",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/NewsletterMuteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/newsletters/{newsletterJid}/react": {
+            "post": {
+                "description": "Envia uma reação (emoji) a uma mensagem específica do newsletter",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Reagir a mensagem do newsletter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "JID do newsletter",
+                        "name": "newsletterJid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados da reação",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/NewsletterReactionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/newsletters/{newsletterJid}/send": {
+            "post": {
+                "description": "Envia uma mensagem de texto para um newsletter (apenas para owners/admins)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Enviar mensagem para newsletter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "JID do newsletter",
+                        "name": "newsletterJid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados da mensagem",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sessions/{sessionId}/newsletters/{newsletterJid}/unfollow": {
+            "post": {
+                "description": "Para de seguir um newsletter específico",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Newsletters"
+                ],
+                "summary": "Deixar de seguir newsletter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID da sessão",
+                        "name": "sessionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "JID do newsletter",
+                        "name": "newsletterJid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/sessions/{sessionId}/pair": {
             "post": {
                 "security": [
@@ -3294,6 +4299,105 @@
                 }
             }
         },
+        "CommunityInfo": {
+            "type": "object",
+            "properties": {
+                "announcement_group_jid": {
+                    "type": "string",
+                    "example": "123456789@g.us"
+                },
+                "created_at": {
+                    "type": "integer",
+                    "example": 1696570882
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Descrição da comunidade"
+                },
+                "is_admin": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_owner": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "jid": {
+                    "type": "string",
+                    "example": "123456789@g.us"
+                },
+                "linked_groups": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "linked_groups_count": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Minha Comunidade"
+                },
+                "participant_count": {
+                    "type": "integer",
+                    "example": 25
+                }
+            }
+        },
+        "CommunityParticipant": {
+            "type": "object",
+            "properties": {
+                "jid": {
+                    "type": "string",
+                    "example": "5511999999999@s.whatsapp.net"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "João Silva"
+                },
+                "role": {
+                    "type": "string",
+                    "example": "member"
+                }
+            }
+        },
+        "CommunitySubGroup": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "integer",
+                    "example": 1696570882
+                },
+                "is_announce": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_locked": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "jid": {
+                    "type": "string",
+                    "example": "123456789@g.us"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Subgrupo 1"
+                },
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "topic": {
+                    "type": "string",
+                    "example": "Descrição do subgrupo"
+                }
+            }
+        },
         "ContactDetail": {
             "type": "object",
             "properties": {
@@ -3370,6 +4474,32 @@
                 }
             }
         },
+        "CreateCommunityRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Descrição da comunidade"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Minha Comunidade"
+                },
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "5511999999999",
+                        "5511888888888"
+                    ]
+                }
+            }
+        },
         "CreateGroupRequest": {
             "type": "object",
             "required": [
@@ -3391,6 +4521,22 @@
                         "5511999999999",
                         "5511888888888"
                     ]
+                }
+            }
+        },
+        "CreateNewsletterRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Descrição do newsletter"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Meu Newsletter"
                 }
             }
         },
@@ -3422,7 +4568,6 @@
             ],
             "properties": {
                 "events": {
-                    "description": "Se vazio, aceita todos os eventos",
                     "type": "array",
                     "items": {
                         "type": "string"
@@ -3533,6 +4678,19 @@
                     "items": {
                         "type": "string"
                     }
+                }
+            }
+        },
+        "FollowNewsletterRequest": {
+            "type": "object",
+            "properties": {
+                "invite_code": {
+                    "type": "string",
+                    "example": "abc123def456"
+                },
+                "newsletter_jid": {
+                    "type": "string",
+                    "example": "123456789@newsletter"
                 }
             }
         },
@@ -3714,6 +4872,51 @@
                 }
             }
         },
+        "LinkGroupRequest": {
+            "type": "object",
+            "required": [
+                "group_jid"
+            ],
+            "properties": {
+                "group_jid": {
+                    "type": "string",
+                    "example": "123456789@g.us"
+                }
+            }
+        },
+        "ListCommunitiesResponse": {
+            "type": "object",
+            "properties": {
+                "communities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/CommunityInfo"
+                    }
+                }
+            }
+        },
+        "ListCommunityParticipantsResponse": {
+            "type": "object",
+            "properties": {
+                "participants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/CommunityParticipant"
+                    }
+                }
+            }
+        },
+        "ListCommunitySubGroupsResponse": {
+            "type": "object",
+            "properties": {
+                "sub_groups": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/CommunitySubGroup"
+                    }
+                }
+            }
+        },
         "ListEventsResponse": {
             "type": "object",
             "properties": {
@@ -3738,6 +4941,36 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/WhatsAppGroupInfo"
+                    }
+                }
+            }
+        },
+        "ListNewsletterMessagesResponse": {
+            "type": "object",
+            "properties": {
+                "cursor": {
+                    "type": "string",
+                    "example": "cursor123"
+                },
+                "has_more": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/NewsletterMessage"
+                    }
+                }
+            }
+        },
+        "ListNewslettersResponse": {
+            "type": "object",
+            "properties": {
+                "newsletters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/NewsletterInfo"
                     }
                 }
             }
@@ -3772,6 +5005,133 @@
                 "success": {
                     "type": "boolean",
                     "example": true
+                }
+            }
+        },
+        "NewsletterInfo": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "integer",
+                    "example": 1696570882
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Descrição do newsletter"
+                },
+                "is_following": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "is_muted": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "is_owner": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "jid": {
+                    "type": "string",
+                    "example": "123456789@newsletter"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Meu Newsletter"
+                },
+                "subscriber_count": {
+                    "type": "integer",
+                    "example": 150
+                }
+            }
+        },
+        "NewsletterInfoWithInviteRequest": {
+            "type": "object",
+            "required": [
+                "invite_key"
+            ],
+            "properties": {
+                "invite_key": {
+                    "type": "string",
+                    "example": "abc123def456"
+                }
+            }
+        },
+        "NewsletterMarkViewedRequest": {
+            "type": "object",
+            "required": [
+                "server_ids"
+            ],
+            "properties": {
+                "server_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "srv456",
+                        "srv789"
+                    ]
+                }
+            }
+        },
+        "NewsletterMessage": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "Conteúdo da mensagem"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "msg123"
+                },
+                "server_id": {
+                    "type": "string",
+                    "example": "srv456"
+                },
+                "timestamp": {
+                    "type": "integer",
+                    "example": 1696570882
+                },
+                "type": {
+                    "type": "string",
+                    "example": "text"
+                },
+                "view_count": {
+                    "type": "integer",
+                    "example": 25
+                }
+            }
+        },
+        "NewsletterMuteRequest": {
+            "type": "object",
+            "properties": {
+                "mute": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "NewsletterReactionRequest": {
+            "type": "object",
+            "required": [
+                "message_id",
+                "reaction",
+                "server_id"
+            ],
+            "properties": {
+                "message_id": {
+                    "type": "string",
+                    "example": "msg123"
+                },
+                "reaction": {
+                    "type": "string",
+                    "example": "👍"
+                },
+                "server_id": {
+                    "type": "string",
+                    "example": "srv456"
                 }
             }
         },
@@ -4063,7 +5423,6 @@
             ],
             "properties": {
                 "contacts": {
-                    "description": "Array of contacts sent in a single message",
                     "type": "array",
                     "minItems": 1,
                     "items": {
@@ -4151,7 +5510,6 @@
             ],
             "properties": {
                 "fromMe": {
-                    "description": "FromMe indicates if the message being reacted to was sent by us\nCan be set explicitly or by using \"me:\" prefix in MessageID\nExample: \"me:3EB0C767D0D1A6F4FD29\" or set FromMe: true",
                     "type": "boolean",
                     "example": false
                 },
@@ -4502,6 +5860,20 @@
                 }
             }
         },
+        "SuccessResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string",
+                    "example": "Operation completed successfully"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
         "SystemInfoResponse": {
             "type": "object",
             "properties": {
@@ -4516,6 +5888,18 @@
                 "version": {
                     "type": "string",
                     "example": "1.0.0"
+                }
+            }
+        },
+        "UnlinkGroupRequest": {
+            "type": "object",
+            "required": [
+                "group_jid"
+            ],
+            "properties": {
+                "group_jid": {
+                    "type": "string",
+                    "example": "123456789@g.us"
                 }
             }
         },

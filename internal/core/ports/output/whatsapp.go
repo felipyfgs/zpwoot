@@ -16,6 +16,7 @@ type WhatsAppClient interface {
 	IsConnected(ctx context.Context, sessionID string) bool
 	IsLoggedIn(ctx context.Context, sessionID string) bool
 
+	ConnectAndGetQRCode(ctx context.Context, sessionID string) (*QRCodeInfo, error)
 	GetQRCode(ctx context.Context, sessionID string) (*QRCodeInfo, error)
 	PairPhone(ctx context.Context, sessionID string, phone string) (string, error)
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"zpwoot/internal/core/application/dto"
 	"zpwoot/internal/core/domain/session"
@@ -66,17 +65,19 @@ func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateRequest) (*
 	}
 
 	if req.GenerateQRCode {
-		err = uc.whatsappClient.ConnectSession(ctx, sessionID)
+		// Connect and get QR code directly using WhatsApp Meow's QR channel
+		qrInfo, err := uc.whatsappClient.ConnectAndGetQRCode(ctx, sessionID)
 		if err != nil {
-			uc.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to connect session for QR generation")
-		} else {
-			time.Sleep(2 * time.Second)
+			uc.logger.Warn().Err(err).Str("session_id", sessionID).Msg("Failed to connect and get QR code")
+		} else if qrInfo != nil && qrInfo.Code != "" {
+			// Set QR code in domain session
+			domainSession.SetQRCode(qrInfo.Code, qrInfo.ExpiresAt)
 
-			qrInfo, qrErr := uc.whatsappClient.GetQRCode(ctx, sessionID)
-			if qrErr == nil && qrInfo.Code != "" {
-				domainSession.SetQRCode(qrInfo.Code, qrInfo.ExpiresAt)
-
-				_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusQRCode)
+			// Save to database
+			if updateErr := uc.sessionService.Update(ctx, domainSession); updateErr != nil {
+				uc.logger.Error().Err(updateErr).Str("session_id", sessionID).Msg("Failed to update session with QR code")
+			} else {
+				uc.logger.Info().Str("session_id", sessionID).Msg("QR code successfully generated and stored")
 			}
 		}
 	}

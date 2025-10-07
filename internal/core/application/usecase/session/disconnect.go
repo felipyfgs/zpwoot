@@ -105,7 +105,7 @@ func (uc *DisconnectUseCase) handleWhatsAppDisconnectionError(ctx context.Contex
 
 func (uc *DisconnectUseCase) handleSessionNotFoundOrAlreadyDisconnected(ctx context.Context, sessionID string, domainSession *session.Session) *dto.SessionStatusResponse {
 	domainSession.SetDisconnected()
-	_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
+	_ = uc.sessionService.Update(ctx, domainSession)
 
 	return &dto.SessionStatusResponse{
 		ID:        sessionID,
@@ -117,7 +117,7 @@ func (uc *DisconnectUseCase) handleSessionNotFoundOrAlreadyDisconnected(ctx cont
 func (uc *DisconnectUseCase) finalizeDisconnection(ctx context.Context, sessionID string, domainSession *session.Session) {
 	domainSession.SetDisconnected()
 
-	if err := uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected); err != nil {
+	if err := uc.sessionService.Update(ctx, domainSession); err != nil {
 		uc.logger.Error().Err(err).Str("session_id", sessionID).Msg("Failed to update session status to disconnected")
 	}
 }
@@ -148,7 +148,7 @@ func (uc *DisconnectUseCase) ExecuteForce(ctx context.Context, sessionID string)
 
 	domainSession.SetDisconnected()
 
-	_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
+	_ = uc.sessionService.Update(ctx, domainSession)
 
 	return &dto.SessionStatusResponse{
 		ID:        sessionID,

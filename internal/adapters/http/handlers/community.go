@@ -105,10 +105,7 @@ func (h *CommunityHandler) handleGroupLinkOperation(
 		message = "Group unlinked from community successfully"
 	}
 
-	response := map[string]interface{}{
-		"success": true,
-		"message": message,
-	}
+	response := dto.NewSimpleSuccessResponse(message)
 
 	if err := h.writeJSON(w, response); err != nil {
 		return

@@ -55,6 +55,14 @@ func (s *Service) Get(ctx context.Context, id string) (*Session, error) {
 	return session, nil
 }
 
+func (s *Service) Update(ctx context.Context, session *Session) error {
+	if err := s.repo.Update(ctx, session); err != nil {
+		return fmt.Errorf("failed to update session: %w", err)
+	}
+
+	return nil
+}
+
 func (s *Service) UpdateStatus(ctx context.Context, id string, status Status) error {
 	if !status.IsValid() {
 		return shared.ErrInvalidStatus

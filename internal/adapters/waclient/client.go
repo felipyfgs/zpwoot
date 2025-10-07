@@ -84,6 +84,14 @@ func (w *WAClientAdapter) IsLoggedIn(ctx context.Context, sessionID string) bool
 	return client.IsLoggedIn()
 }
 
+func (w *WAClientAdapter) ConnectAndGetQRCode(ctx context.Context, sessionID string) (*output.QRCodeInfo, error) {
+	qrInfo, err := w.client.ConnectAndGetQRCode(ctx, sessionID)
+	if err != nil {
+		return nil, w.convertError(err)
+	}
+	return qrInfo, nil
+}
+
 func (w *WAClientAdapter) GetQRCode(ctx context.Context, sessionID string) (*output.QRCodeInfo, error) {
 	qrEvent, err := w.client.GetQRCodeForSession(ctx, sessionID)
 	if err != nil {

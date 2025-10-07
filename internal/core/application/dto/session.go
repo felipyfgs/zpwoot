@@ -118,10 +118,13 @@ type SessionDetailResponse struct {
 }
 
 type SessionStatusResponse struct {
-	ID        string `json:"id" example:"550e8400-e29b-41d4-a716-446655440000" description:"Session identifier"`
-	Status    string `json:"status" example:"connected" description:"Current session status"`
-	Connected bool   `json:"connected" example:"true" description:"Whether session is connected"`
-	Message   string `json:"message,omitempty" example:"Session is already connected" description:"Additional status message"`
+	ID              string     `json:"id" example:"550e8400-e29b-41d4-a716-446655440000" description:"Session identifier"`
+	Status          string     `json:"status" example:"connected" description:"Current session status"`
+	Connected       bool       `json:"connected" example:"true" description:"Whether session is connected"`
+	Message         string     `json:"message,omitempty" example:"Session is already connected" description:"Additional status message"`
+	QRCode          string     `json:"qrCode,omitempty" example:"2@abc123..." description:"QR code string (if available)"`
+	QRCodeBase64    string     `json:"qrCodeBase64,omitempty" example:"data:image/png;base64,iVBORw0KGgo..." description:"QR code as base64 image (if available)"`
+	QRCodeExpiresAt *time.Time `json:"qrCodeExpiresAt,omitempty" example:"2025-01-15T10:35:00Z" description:"QR code expiration time (if available)"`
 } // @name SessionStatusResponse
 
 func (r *CreateRequest) Validate() error {
@@ -245,11 +248,22 @@ func ToCreateResponse(s *session.Session) *CreateSessionResponse {
 }
 
 func ToStatusResponse(s *session.Session) *SessionStatusResponse {
-	return &SessionStatusResponse{
+	response := &SessionStatusResponse{
 		ID:        s.ID,
 		Status:    string(s.GetStatus()),
 		Connected: s.IsConnected,
 	}
+
+	// Include QR code if available
+	if s.QRCode != "" {
+		response.QRCode = s.QRCode
+		response.QRCodeBase64 = QRBase64(s.QRCode)
+		if s.QRCodeExpiresAt != nil {
+			response.QRCodeExpiresAt = s.QRCodeExpiresAt
+		}
+	}
+
+	return response
 }
 
 func ToListResponse(s *session.Session) *SessionResponse {

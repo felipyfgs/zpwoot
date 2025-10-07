@@ -70,7 +70,7 @@ func (uc *QRUseCase) GetQRCode(ctx context.Context, sessionID string) (*dto.QRCo
 	if qrInfo.Code != "" {
 		domainSession.SetQRCode(qrInfo.Code, qrInfo.ExpiresAt)
 
-		_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusQRCode)
+		_ = uc.sessionService.Update(ctx, domainSession)
 	}
 
 	return dto.NewQRResponse(
@@ -118,7 +118,7 @@ func (uc *QRUseCase) RefreshQRCode(ctx context.Context, sessionID string) (*dto.
 	if qrInfo.Code != "" {
 		domainSession.SetQRCode(qrInfo.Code, qrInfo.ExpiresAt)
 
-		_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusQRCode)
+		_ = uc.sessionService.Update(ctx, domainSession)
 	}
 
 	return dto.NewQRResponse(
@@ -161,7 +161,7 @@ func (uc *QRUseCase) CheckQRCodeStatus(ctx context.Context, sessionID string) (*
 	if domainSession.QRCodeExpiresAt != nil && time.Now().After(*domainSession.QRCodeExpiresAt) {
 		domainSession.ClearQRCode()
 
-		_ = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusDisconnected)
+		_ = uc.sessionService.Update(ctx, domainSession)
 
 		return dto.NewQRResponse(
 			"",

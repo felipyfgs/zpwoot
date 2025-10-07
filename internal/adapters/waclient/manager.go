@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -34,11 +35,14 @@ type WAClient struct {
 	sessions       map[string]*Client
 	sessionsMutex  sync.RWMutex
 	container      *sqlstore.Container
+	sessionContainers map[string]*sqlstore.Container // Session-specific containers
+	containersMutex   sync.RWMutex
 	logger         *logger.Logger
 	eventHandler   EventHandler
 	mediaProcessor MediaProcessor
 	webhookSender  WebhookSender
 	sessionRepo    SessionRepository
+	dbURL          string // Store DB URL for creating session-specific containers
 }
 
 type SessionRepository interface {
@@ -77,20 +81,15 @@ func (wac *WAClient) loadSessionsFromDatabase() {
 		return
 	}
 
-	wac.logger.Debug().Int("count", len(sessions)).Msg("Loading sessions from database")
-
 	for _, sess := range sessions {
-		deviceStore := wac.getOrCreateDeviceStore(ctx, sess.DeviceJID)
+		deviceStore := wac.getOrCreateDeviceStore(ctx, sess.ID, sess.DeviceJID)
 		client := wac.createClient(ctx, sess, deviceStore)
 
 		wac.sessionsMutex.Lock()
 		wac.sessions[sess.ID] = client
 		wac.sessionsMutex.Unlock()
 
-		wac.logger.Debug().Str("session_id", sess.ID).Str("name", sess.Name).Msg("Loaded session")
-
 		if sess.IsConnected && sess.DeviceJID != "" {
-			wac.logger.Debug().Str("session_id", sess.ID).Msg("Auto-reconnecting")
 			go wac.autoReconnect(client)
 		}
 	}
@@ -164,22 +163,30 @@ func getTimeValue(t *time.Time) time.Time {
 	return *t
 }
 
-func (wac *WAClient) getOrCreateDeviceStore(ctx context.Context, deviceJID string) *store.Device {
+func (wac *WAClient) getOrCreateDeviceStore(ctx context.Context, sessionID string, deviceJID string) *store.Device {
+	// ONLY use existing device if we have a deviceJID for this specific session
 	if deviceJID != "" {
 		jid, err := types.ParseJID(deviceJID)
 		if err == nil {
 			deviceStore, err := wac.container.GetDevice(ctx, jid)
 			if err == nil {
+				wac.logger.Debug().Str("jid", deviceJID).Str("session_id", sessionID).Msg("Found existing device store for session")
 				return deviceStore
 			}
 
-			wac.logger.Warn().Err(err).Str("jid", deviceJID).Msg("Failed to get device by JID, creating new one")
+			wac.logger.Warn().Err(err).Str("jid", deviceJID).Str("session_id", sessionID).Msg("Failed to get device by JID, creating new one")
 		} else {
-			wac.logger.Warn().Err(err).Str("jid", deviceJID).Msg("Failed to parse JID, creating new device")
+			wac.logger.Warn().Err(err).Str("jid", deviceJID).Str("session_id", sessionID).Msg("Failed to parse JID, creating new device")
 		}
 	}
 
-	return wac.container.NewDevice()
+	// For sessions without deviceJID, create a new device store
+	// This will generate new credentials and ensure isolation
+	deviceStore := wac.container.NewDevice()
+
+	wac.logger.Info().Str("session_id", sessionID).Msg("Created new device store for session")
+
+	return deviceStore
 }
 
 func (wac *WAClient) CreateSession(ctx context.Context, config *SessionConfig) (*Client, error) {
@@ -195,7 +202,8 @@ func (wac *WAClient) CreateSession(ctx context.Context, config *SessionConfig) (
 		return nil, fmt.Errorf("failed to get session from database: %w", err)
 	}
 
-	deviceStore := wac.container.NewDevice()
+	// Create isolated device store for this session
+	deviceStore := wac.getOrCreateDeviceStore(ctx, config.SessionID, sess.DeviceJID)
 	client := wac.createClient(ctx, sess, deviceStore)
 	client.Config = config
 	client.Events = config.Events
@@ -270,20 +278,33 @@ func (wac *WAClient) ConnectSession(ctx context.Context, sessionID string) error
 
 	if client.WAClient.Store.ID == nil {
 		if err = client.WAClient.Connect(); err != nil {
-			wac.logger.Error().Err(err).Msg("Failed to connect client")
+			// Check if already connected
+			if strings.Contains(err.Error(), "websocket is already connected") {
+				wac.logger.Info().Str("session_id", client.SessionID).Msg("WebSocket already connected")
+				client.Status = session.StatusConnected
+				wac.updateSessionStatus(ctx, client)
+				return nil
+			}
 
+			wac.logger.Error().Err(err).Msg("Failed to connect client")
 			client.Status = session.StatusError
 			wac.updateSessionStatus(ctx, client)
-
 			return fmt.Errorf("failed to connect: %w", err)
 		}
 
 		wac.logger.Info().Str("session_id", client.SessionID).Msg("Connected - waiting for QR codes via events")
 	} else {
 		if err = client.WAClient.Connect(); err != nil {
+			// Check if already connected
+			if strings.Contains(err.Error(), "websocket is already connected") {
+				wac.logger.Info().Str("session_id", client.SessionID).Msg("WebSocket already connected")
+				client.Status = session.StatusConnected
+				wac.updateSessionStatus(ctx, client)
+				return nil
+			}
+
 			client.Status = session.StatusError
 			wac.updateSessionStatus(ctx, client)
-
 			return fmt.Errorf("failed to reconnect: %w", err)
 		}
 	}
@@ -299,7 +320,8 @@ func (wac *WAClient) recreateClient(ctx context.Context, sess *session.Session) 
 		return existing, nil
 	}
 
-	deviceStore := wac.container.NewDevice()
+	// Create isolated device store for this session
+	deviceStore := wac.getOrCreateDeviceStore(ctx, sess.ID, sess.DeviceJID)
 	client := wac.createClient(ctx, sess, deviceStore)
 	wac.sessions[sess.ID] = client
 
@@ -546,6 +568,7 @@ func (wac *WAClient) updateClientWithQRCode(ctx context.Context, client *Client,
 	timeout := wac.getQRTimeout(index)
 	client.QRCode = code
 	client.QRExpiresAt = time.Now().Add(timeout)
+	client.Status = session.StatusQRCode
 	wac.updateSessionStatus(ctx, client)
 }
 
@@ -729,4 +752,11 @@ func NewWAStoreContainer(db *sqlx.DB, logger *logger.Logger, dbURL string) *sqls
 	}
 
 	return container
+}
+
+// NewWAStoreContainerForSession creates a session-specific store container
+func NewWAStoreContainerForSession(db *sqlx.DB, logger *logger.Logger, dbURL string, sessionID string) *sqlstore.Container {
+	// Create a session-specific database URL or table prefix
+	// For now, we'll use the same container but rely on device isolation
+	return NewWAStoreContainer(db, logger, dbURL)
 }

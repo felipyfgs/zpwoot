@@ -68,6 +68,77 @@ definitions:
           $ref: '#/definitions/WhatsAppUserInfo'
         type: array
     type: object
+  CommunityInfo:
+    properties:
+      announcement_group_jid:
+        example: 123456789@g.us
+        type: string
+      created_at:
+        example: 1696570882
+        type: integer
+      description:
+        example: Descrição da comunidade
+        type: string
+      is_admin:
+        example: false
+        type: boolean
+      is_owner:
+        example: true
+        type: boolean
+      jid:
+        example: 123456789@g.us
+        type: string
+      linked_groups:
+        items:
+          type: string
+        type: array
+      linked_groups_count:
+        example: 3
+        type: integer
+      name:
+        example: Minha Comunidade
+        type: string
+      participant_count:
+        example: 25
+        type: integer
+    type: object
+  CommunityParticipant:
+    properties:
+      jid:
+        example: 5511999999999@s.whatsapp.net
+        type: string
+      name:
+        example: João Silva
+        type: string
+      role:
+        example: member
+        type: string
+    type: object
+  CommunitySubGroup:
+    properties:
+      created_at:
+        example: 1696570882
+        type: integer
+      is_announce:
+        example: false
+        type: boolean
+      is_locked:
+        example: false
+        type: boolean
+      jid:
+        example: 123456789@g.us
+        type: string
+      name:
+        example: Subgrupo 1
+        type: string
+      participants:
+        items:
+          type: string
+        type: array
+      topic:
+        example: Descrição do subgrupo
+        type: string
+    type: object
   ContactDetail:
     properties:
       businessName:
@@ -127,6 +198,24 @@ definitions:
         example: 3EB0A9253FA64269E11C9D
         type: string
     type: object
+  CreateCommunityRequest:
+    properties:
+      description:
+        example: Descrição da comunidade
+        type: string
+      name:
+        example: Minha Comunidade
+        type: string
+      participants:
+        example:
+        - "5511999999999"
+        - "5511888888888"
+        items:
+          type: string
+        type: array
+    required:
+    - name
+    type: object
   CreateGroupRequest:
     properties:
       name:
@@ -143,6 +232,17 @@ definitions:
     required:
     - name
     - participants
+    type: object
+  CreateNewsletterRequest:
+    properties:
+      description:
+        example: Descrição do newsletter
+        type: string
+      name:
+        example: Meu Newsletter
+        type: string
+    required:
+    - name
     type: object
   CreateSessionRequest:
     properties:
@@ -162,7 +262,6 @@ definitions:
   CreateWebhookRequest:
     properties:
       events:
-        description: Se vazio, aceita todos os eventos
         items:
           type: string
         type: array
@@ -242,6 +341,15 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  FollowNewsletterRequest:
+    properties:
+      invite_code:
+        example: abc123def456
+        type: string
+      newsletter_jid:
+        example: 123456789@newsletter
+        type: string
     type: object
   GetAvatarRequest:
     properties:
@@ -365,6 +473,35 @@ definitions:
     required:
     - groupJid
     type: object
+  LinkGroupRequest:
+    properties:
+      group_jid:
+        example: 123456789@g.us
+        type: string
+    required:
+    - group_jid
+    type: object
+  ListCommunitiesResponse:
+    properties:
+      communities:
+        items:
+          $ref: '#/definitions/CommunityInfo'
+        type: array
+    type: object
+  ListCommunityParticipantsResponse:
+    properties:
+      participants:
+        items:
+          $ref: '#/definitions/CommunityParticipant'
+        type: array
+    type: object
+  ListCommunitySubGroupsResponse:
+    properties:
+      sub_groups:
+        items:
+          $ref: '#/definitions/CommunitySubGroup'
+        type: array
+    type: object
   ListEventsResponse:
     properties:
       allEvents:
@@ -381,6 +518,26 @@ definitions:
       groups:
         items:
           $ref: '#/definitions/WhatsAppGroupInfo'
+        type: array
+    type: object
+  ListNewsletterMessagesResponse:
+    properties:
+      cursor:
+        example: cursor123
+        type: string
+      has_more:
+        example: true
+        type: boolean
+      messages:
+        items:
+          $ref: '#/definitions/NewsletterMessage'
+        type: array
+    type: object
+  ListNewslettersResponse:
+    properties:
+      newsletters:
+        items:
+          $ref: '#/definitions/NewsletterInfo'
         type: array
     type: object
   MarkReadRequest:
@@ -405,6 +562,96 @@ definitions:
       success:
         example: true
         type: boolean
+    type: object
+  NewsletterInfo:
+    properties:
+      created_at:
+        example: 1696570882
+        type: integer
+      description:
+        example: Descrição do newsletter
+        type: string
+      is_following:
+        example: true
+        type: boolean
+      is_muted:
+        example: false
+        type: boolean
+      is_owner:
+        example: true
+        type: boolean
+      jid:
+        example: 123456789@newsletter
+        type: string
+      name:
+        example: Meu Newsletter
+        type: string
+      subscriber_count:
+        example: 150
+        type: integer
+    type: object
+  NewsletterInfoWithInviteRequest:
+    properties:
+      invite_key:
+        example: abc123def456
+        type: string
+    required:
+    - invite_key
+    type: object
+  NewsletterMarkViewedRequest:
+    properties:
+      server_ids:
+        example:
+        - srv456
+        - srv789
+        items:
+          type: string
+        type: array
+    required:
+    - server_ids
+    type: object
+  NewsletterMessage:
+    properties:
+      content:
+        example: Conteúdo da mensagem
+        type: string
+      id:
+        example: msg123
+        type: string
+      server_id:
+        example: srv456
+        type: string
+      timestamp:
+        example: 1696570882
+        type: integer
+      type:
+        example: text
+        type: string
+      view_count:
+        example: 25
+        type: integer
+    type: object
+  NewsletterMuteRequest:
+    properties:
+      mute:
+        example: true
+        type: boolean
+    type: object
+  NewsletterReactionRequest:
+    properties:
+      message_id:
+        example: msg123
+        type: string
+      reaction:
+        example: "\U0001F44D"
+        type: string
+      server_id:
+        example: srv456
+        type: string
+    required:
+    - message_id
+    - reaction
+    - server_id
     type: object
   PairPhoneRequest:
     properties:
@@ -610,7 +857,6 @@ definitions:
   SendMultipleContactsRequest:
     properties:
       contacts:
-        description: Array of contacts sent in a single message
         items:
           $ref: '#/definitions/ContactInfo'
         minItems: 1
@@ -674,10 +920,6 @@ definitions:
   SendReactionMessageRequest:
     properties:
       fromMe:
-        description: |-
-          FromMe indicates if the message being reacted to was sent by us
-          Can be set explicitly or by using "me:" prefix in MessageID
-          Example: "me:3EB0C767D0D1A6F4FD29" or set FromMe: true
         example: false
         type: boolean
       messageId:
@@ -932,6 +1174,16 @@ definitions:
     - groupJid
     - topic
     type: object
+  SuccessResponse:
+    properties:
+      data: {}
+      message:
+        example: Operation completed successfully
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
   SystemInfoResponse:
     properties:
       message:
@@ -943,6 +1195,14 @@ definitions:
       version:
         example: 1.0.0
         type: string
+    type: object
+  UnlinkGroupRequest:
+    properties:
+      group_jid:
+        example: 123456789@g.us
+        type: string
+    required:
+    - group_jid
     type: object
   UpdateParticipantsRequest:
     properties:
@@ -1221,6 +1481,260 @@ paths:
       summary: Get WhatsApp Session
       tags:
       - Sessions
+  /sessions/{sessionId}/communities:
+    get:
+      consumes:
+      - application/json
+      description: Lista todas as comunidades que a sessão participa
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ListCommunitiesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Lista comunidades
+      tags:
+      - Comunidades
+    post:
+      consumes:
+      - application/json
+      description: Cria uma nova comunidade WhatsApp
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Dados da comunidade
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/CreateCommunityRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/CommunityInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Criar comunidade
+      tags:
+      - Comunidades
+  /sessions/{sessionId}/communities/{communityJid}/groups:
+    get:
+      consumes:
+      - application/json
+      description: Lista todos os subgrupos vinculados a uma comunidade
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: JID da comunidade
+        in: path
+        name: communityJid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ListCommunitySubGroupsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Listar subgrupos da comunidade
+      tags:
+      - Comunidades
+  /sessions/{sessionId}/communities/{communityJid}/link:
+    post:
+      consumes:
+      - application/json
+      description: Vincula um grupo existente a uma comunidade
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: JID da comunidade
+        in: path
+        name: communityJid
+        required: true
+        type: string
+      - description: Dados do grupo a vincular
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/LinkGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Vincular grupo à comunidade
+      tags:
+      - Comunidades
+  /sessions/{sessionId}/communities/{communityJid}/participants:
+    get:
+      consumes:
+      - application/json
+      description: Lista todos os participants de uma comunidade (de todos os grupos
+        vinculados)
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: JID da comunidade
+        in: path
+        name: communityJid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ListCommunityParticipantsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Listar participants da comunidade
+      tags:
+      - Comunidades
+  /sessions/{sessionId}/communities/{communityJid}/unlink:
+    post:
+      consumes:
+      - application/json
+      description: Desvincula um grupo de uma comunidade
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: JID da comunidade
+        in: path
+        name: communityJid
+        required: true
+        type: string
+      - description: Dados do grupo a desvincular
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/UnlinkGroupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Desvincular grupo da comunidade
+      tags:
+      - Comunidades
+  /sessions/{sessionId}/communities/info:
+    get:
+      consumes:
+      - application/json
+      description: Obtém informações detalhadas de uma comunidade específica
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: JID da comunidade
+        in: query
+        name: communityJid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/CommunityInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Obter informações da comunidade
+      tags:
+      - Comunidades
   /sessions/{sessionId}/connect:
     post:
       consumes:
@@ -2841,6 +3355,424 @@ paths:
       summary: Send video message
       tags:
       - Messages
+  /sessions/{sessionId}/newsletters:
+    get:
+      consumes:
+      - application/json
+      description: Lista todos os newsletters que a sessão segue
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ListNewslettersResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Lista newsletters
+      tags:
+      - Newsletters
+    post:
+      consumes:
+      - application/json
+      description: Cria um novo newsletter WhatsApp
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Dados do newsletter
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/CreateNewsletterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/NewsletterInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Criar newsletter
+      tags:
+      - Newsletters
+  /sessions/{sessionId}/newsletters/{newsletterJid}/mark-viewed:
+    post:
+      consumes:
+      - application/json
+      description: Marca mensagens específicas do newsletter como visualizadas
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: JID do newsletter
+        in: path
+        name: newsletterJid
+        required: true
+        type: string
+      - description: IDs das mensagens
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/NewsletterMarkViewedRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Marcar mensagens como visualizadas
+      tags:
+      - Newsletters
+  /sessions/{sessionId}/newsletters/{newsletterJid}/messages:
+    get:
+      consumes:
+      - application/json
+      description: Lista mensagens de um newsletter com paginação
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: JID do newsletter
+        in: path
+        name: newsletterJid
+        required: true
+        type: string
+      - description: 'Número de mensagens (padrão: 50)'
+        in: query
+        name: count
+        type: integer
+      - description: Cursor para paginação
+        in: query
+        name: before
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/ListNewsletterMessagesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Obter mensagens do newsletter
+      tags:
+      - Newsletters
+  /sessions/{sessionId}/newsletters/{newsletterJid}/mute:
+    post:
+      consumes:
+      - application/json
+      description: Alterna o estado de silenciamento de um newsletter
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: JID do newsletter
+        in: path
+        name: newsletterJid
+        required: true
+        type: string
+      - description: Estado de silenciamento
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/NewsletterMuteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Silenciar/dessilenciar newsletter
+      tags:
+      - Newsletters
+  /sessions/{sessionId}/newsletters/{newsletterJid}/react:
+    post:
+      consumes:
+      - application/json
+      description: Envia uma reação (emoji) a uma mensagem específica do newsletter
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: JID do newsletter
+        in: path
+        name: newsletterJid
+        required: true
+        type: string
+      - description: Dados da reação
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/NewsletterReactionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Reagir a mensagem do newsletter
+      tags:
+      - Newsletters
+  /sessions/{sessionId}/newsletters/{newsletterJid}/send:
+    post:
+      consumes:
+      - application/json
+      description: Envia uma mensagem de texto para um newsletter (apenas para owners/admins)
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: JID do newsletter
+        in: path
+        name: newsletterJid
+        required: true
+        type: string
+      - description: Dados da mensagem
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Enviar mensagem para newsletter
+      tags:
+      - Newsletters
+  /sessions/{sessionId}/newsletters/{newsletterJid}/unfollow:
+    post:
+      consumes:
+      - application/json
+      description: Para de seguir um newsletter específico
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: JID do newsletter
+        in: path
+        name: newsletterJid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Deixar de seguir newsletter
+      tags:
+      - Newsletters
+  /sessions/{sessionId}/newsletters/follow:
+    post:
+      consumes:
+      - application/json
+      description: Segue um newsletter por JID ou código de convite
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Dados para seguir newsletter
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/FollowNewsletterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Seguir newsletter
+      tags:
+      - Newsletters
+  /sessions/{sessionId}/newsletters/info:
+    get:
+      consumes:
+      - application/json
+      description: Obtém informações detalhadas de um newsletter específico
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: JID do newsletter
+        in: query
+        name: newsletterJid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/NewsletterInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Obter informações do newsletter
+      tags:
+      - Newsletters
+  /sessions/{sessionId}/newsletters/info-invite:
+    post:
+      consumes:
+      - application/json
+      description: Obtém informações de um newsletter usando código de convite
+      parameters:
+      - description: ID da sessão
+        in: path
+        name: sessionId
+        required: true
+        type: string
+      - description: Código de convite
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/NewsletterInfoWithInviteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/NewsletterInfo'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      summary: Obter informações do newsletter via convite
+      tags:
+      - Newsletters
   /sessions/{sessionId}/pair:
     post:
       consumes:
