@@ -11,6 +11,10 @@ import (
 	"zpwoot/internal/core/ports/output"
 )
 
+const (
+	sessionNotFoundCode = "SESSION_NOT_FOUND"
+)
+
 type DeleteUseCase struct {
 	sessionService *session.Service
 	whatsappClient output.WhatsAppClient
@@ -46,9 +50,10 @@ func (uc *DeleteUseCase) Execute(ctx context.Context, sessionID string) error {
 
 	err = uc.whatsappClient.DeleteSession(ctx, sessionID)
 	if err != nil {
-		if waErr, ok := err.(*output.WhatsAppError); ok {
+		var waErr *output.WhatsAppError
+		if errors.As(err, &waErr) {
 			switch waErr.Code {
-			case "SESSION_NOT_FOUND":
+			case sessionNotFoundCode:
 				break
 			default:
 				break
@@ -58,7 +63,7 @@ func (uc *DeleteUseCase) Execute(ctx context.Context, sessionID string) error {
 
 	err = uc.sessionService.Delete(ctx, sessionID)
 	if err != nil {
-		if err == shared.ErrSessionNotFound {
+		if errors.Is(err, shared.ErrSessionNotFound) {
 			return dto.ErrSessionNotFound
 		}
 
@@ -77,7 +82,7 @@ func (uc *DeleteUseCase) ExecuteForce(ctx context.Context, sessionID string) err
 	_ = uc.whatsappClient.DeleteSession(ctx, sessionID)
 
 	err := uc.sessionService.Delete(ctx, sessionID)
-	if err != nil && err != shared.ErrSessionNotFound {
+	if err != nil && !errors.Is(err, shared.ErrSessionNotFound) {
 		return fmt.Errorf("failed to delete session from domain: %w", err)
 	}
 
@@ -91,7 +96,7 @@ func (uc *DeleteUseCase) ExecuteWithValidation(ctx context.Context, sessionID st
 
 	_, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
-		if err == shared.ErrSessionNotFound {
+		if errors.Is(err, shared.ErrSessionNotFound) {
 			return dto.ErrSessionNotFound
 		}
 

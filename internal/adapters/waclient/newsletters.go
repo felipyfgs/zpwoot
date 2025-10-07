@@ -234,7 +234,7 @@ func (ns *NewsletterService) GetMessages(ctx context.Context, sessionID string, 
 	for _, msg := range messages {
 		message := dto.NewsletterMessage{
 			ID:        msg.MessageID,
-			ServerID:  string(msg.MessageServerID),
+			ServerID:  fmt.Sprintf("%d", msg.MessageServerID),
 			Content:   "",
 			Type:      msg.Type,
 			Timestamp: msg.Timestamp.Unix(),

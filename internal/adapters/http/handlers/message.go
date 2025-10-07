@@ -16,6 +16,10 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+const (
+	whatsappNetSuffix = "@s.whatsapp.net"
+)
+
 type MessageHandler struct {
 	messageService input.MessageService
 	logger         output.Logger
@@ -109,7 +113,7 @@ func (h *MessageHandler) SendText(w http.ResponseWriter, r *http.Request) {
 
 	normalizedTo := req.Phone
 	if !strings.Contains(normalizedTo, "@") {
-		normalizedTo = normalizedTo + "@s.whatsapp.net"
+		normalizedTo += whatsappNetSuffix
 	}
 
 	response := h.buildMessageResponse(result, normalizedTo, "text", req.Text)
@@ -187,7 +191,7 @@ func (h *MessageHandler) SendImage(w http.ResponseWriter, r *http.Request) {
 
 	normalizedTo := req.Phone
 	if !strings.Contains(normalizedTo, "@") {
-		normalizedTo = normalizedTo + "@s.whatsapp.net"
+		normalizedTo += whatsappNetSuffix
 	}
 
 	response := h.buildMessageResponse(result, normalizedTo, "image", req.Caption)
@@ -264,7 +268,7 @@ func (h *MessageHandler) SendAudio(w http.ResponseWriter, r *http.Request) {
 
 	normalizedTo := req.Phone
 	if !strings.Contains(normalizedTo, "@") {
-		normalizedTo = normalizedTo + "@s.whatsapp.net"
+		normalizedTo += whatsappNetSuffix
 	}
 
 	response := h.buildMessageResponse(result, normalizedTo, "audio", "")
@@ -393,7 +397,7 @@ func (h *MessageHandler) SendVideo(w http.ResponseWriter, r *http.Request) {
 
 	normalizedTo := req.Phone
 	if !strings.Contains(normalizedTo, "@") {
-		normalizedTo = normalizedTo + "@s.whatsapp.net"
+		normalizedTo += whatsappNetSuffix
 	}
 
 	response := h.buildMessageResponse(result, normalizedTo, "video", req.Caption)
@@ -470,7 +474,7 @@ func (h *MessageHandler) SendDocument(w http.ResponseWriter, r *http.Request) {
 
 	normalizedTo := req.Phone
 	if !strings.Contains(normalizedTo, "@") {
-		normalizedTo = normalizedTo + "@s.whatsapp.net"
+		normalizedTo += whatsappNetSuffix
 	}
 
 	response := h.buildMessageResponse(result, normalizedTo, "document", req.Caption)
@@ -526,7 +530,7 @@ func (h *MessageHandler) SendLocation(w http.ResponseWriter, r *http.Request) {
 
 	normalizedTo := req.Phone
 	if !strings.Contains(normalizedTo, "@") {
-		normalizedTo = normalizedTo + "@s.whatsapp.net"
+		normalizedTo += whatsappNetSuffix
 	}
 
 	response := h.buildMessageResponse(result, normalizedTo, "location", req.Name)
@@ -593,7 +597,7 @@ func (h *MessageHandler) SendContact(w http.ResponseWriter, r *http.Request) {
 
 	normalizedTo := req.Phone
 	if !strings.Contains(normalizedTo, "@") {
-		normalizedTo = normalizedTo + "@s.whatsapp.net"
+		normalizedTo += whatsappNetSuffix
 	}
 
 	response := h.buildMessageResponse(result, normalizedTo, "contact", contactInfo.Name)
@@ -665,7 +669,7 @@ func (h *MessageHandler) SendReaction(w http.ResponseWriter, r *http.Request) {
 
 	normalizedTo := req.Phone
 	if !strings.Contains(normalizedTo, "@") {
-		normalizedTo = normalizedTo + "@s.whatsapp.net"
+		normalizedTo += whatsappNetSuffix
 	}
 
 	response := h.buildMessageResponse(result, normalizedTo, "reaction", req.Reaction)
@@ -723,7 +727,7 @@ func (h *MessageHandler) SendPoll(w http.ResponseWriter, r *http.Request) {
 
 	normalizedTo := req.Phone
 	if !strings.Contains(normalizedTo, "@") {
-		normalizedTo = normalizedTo + "@s.whatsapp.net"
+		normalizedTo += whatsappNetSuffix
 	}
 
 	response := h.buildMessageResponse(result, normalizedTo, "poll", req.Name)
@@ -798,7 +802,7 @@ func (h *MessageHandler) SendSticker(w http.ResponseWriter, r *http.Request) {
 
 	normalizedTo := req.Phone
 	if !strings.Contains(normalizedTo, "@") {
-		normalizedTo = normalizedTo + "@s.whatsapp.net"
+		normalizedTo += whatsappNetSuffix
 	}
 
 	response := h.buildMessageResponse(result, normalizedTo, "sticker", "")
@@ -860,7 +864,7 @@ func (h *MessageHandler) SendContactsArray(w http.ResponseWriter, r *http.Reques
 
 	normalizedTo := req.Phone
 	if !strings.Contains(normalizedTo, "@") {
-		normalizedTo = normalizedTo + "@s.whatsapp.net"
+		normalizedTo += whatsappNetSuffix
 	}
 
 	response := h.buildMessageResponse(result, normalizedTo, "contacts", fmt.Sprintf("%d contacts", len(contacts)))

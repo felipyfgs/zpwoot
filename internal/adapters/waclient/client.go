@@ -3,6 +3,7 @@ package waclient
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"time"
 
 	"zpwoot/internal/core/ports/output"
@@ -183,20 +184,20 @@ func (w *WAClientAdapter) convertError(err error) error {
 		return nil
 	}
 
-	if _, ok := err.(*output.WhatsAppError); ok {
+	var waErr *output.WhatsAppError
+	if errors.As(err, &waErr) {
 		return err
 	}
 
-	switch err {
-	case ErrSessionNotFound:
+	if errors.Is(err, ErrSessionNotFound) {
 		return output.ErrSessionNotFound
-	case ErrNotConnected:
+	} else if errors.Is(err, ErrNotConnected) {
 		return output.ErrSessionNotConnected
-	case ErrInvalidJID:
+	} else if errors.Is(err, ErrInvalidJID) {
 		return output.ErrInvalidJID
-	case ErrConnectionFailed:
+	} else if errors.Is(err, ErrConnectionFailed) {
 		return output.ErrConnectionFailed
-	default:
+	} else {
 		return &output.WhatsAppError{
 			Code:    "INTERNAL_ERROR",
 			Message: err.Error(),

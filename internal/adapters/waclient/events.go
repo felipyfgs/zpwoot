@@ -14,6 +14,10 @@ import (
 	"go.mau.fi/whatsmeow/types/events"
 )
 
+const (
+	unknownMessageType = "unknown"
+)
+
 type DefaultEventHandler struct {
 	logger        *logger.Logger
 	webhookSender output.WebhookSender
@@ -256,17 +260,17 @@ func (eh *DefaultEventHandler) sendWebhook(webhookConfig *webhook.Webhook, event
 
 func getMessageType(msg interface{}) string {
 	if msg == nil {
-		return "unknown"
+		return unknownMessageType
 	}
 
 	msgJSON, err := json.Marshal(msg)
 	if err != nil {
-		return "unknown"
+		return unknownMessageType
 	}
 
 	var msgMap map[string]interface{}
 	if err := json.Unmarshal(msgJSON, &msgMap); err != nil {
-		return "unknown"
+		return unknownMessageType
 	}
 
 	if _, ok := msgMap["conversation"]; ok {
@@ -325,7 +329,7 @@ func getMessageType(msg interface{}) string {
 		return "template"
 	}
 
-	return "unknown"
+	return unknownMessageType
 }
 
 type EventFilter struct {

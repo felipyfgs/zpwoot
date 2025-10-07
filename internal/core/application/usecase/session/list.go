@@ -29,7 +29,7 @@ func (uc *ListUseCase) Execute(ctx context.Context, pagination *dto.PaginationRe
 		pagination = &dto.PaginationRequest{Limit: 20, Offset: 0}
 	}
 
-	pagination.Validate()
+	_ = pagination.Validate()
 
 	domainSessions, err := uc.sessionService.List(ctx, pagination.Limit, pagination.Offset)
 	if err != nil {

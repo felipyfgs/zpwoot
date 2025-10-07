@@ -11,6 +11,10 @@ import (
 	"zpwoot/internal/core/ports/output"
 )
 
+const (
+	alreadyConnectedCode = "ALREADY_CONNECTED"
+)
+
 type QRUseCase struct {
 	sessionService *session.Service
 	whatsappClient output.WhatsAppClient
@@ -50,7 +54,7 @@ func (uc *QRUseCase) GetQRCode(ctx context.Context, sessionID string) (*dto.QRCo
 			switch waErr.Code {
 			case "SESSION_NOT_FOUND":
 				return nil, dto.ErrSessionNotFound
-			case "ALREADY_CONNECTED":
+			case alreadyConnectedCode:
 				return nil, fmt.Errorf("session is already connected")
 			case "QR_CODE_EXPIRED":
 				return uc.RefreshQRCode(ctx, sessionID)
@@ -99,7 +103,7 @@ func (uc *QRUseCase) RefreshQRCode(ctx context.Context, sessionID string) (*dto.
 			switch waErr.Code {
 			case "SESSION_NOT_FOUND":
 				return nil, dto.ErrSessionNotFound
-			case "ALREADY_CONNECTED":
+			case alreadyConnectedCode:
 				return nil, fmt.Errorf("session is already connected")
 			default:
 				return nil, fmt.Errorf("whatsapp QR refresh error: %w", err)

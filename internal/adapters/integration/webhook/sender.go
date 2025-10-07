@@ -102,7 +102,7 @@ func (s *HTTPWebhookSender) sendWithRetry(ctx context.Context, req *http.Request
 		}
 
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			s.logger.Info().
 				Str("url", url).
 				Str("event_type", eventType).
@@ -113,7 +113,7 @@ func (s *HTTPWebhookSender) sendWithRetry(ctx context.Context, req *http.Request
 			return nil
 		}
 
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		lastErr = fmt.Errorf("webhook returned status %d (attempt %d/%d)", resp.StatusCode, attempt+1, maxRetries)
 		s.logger.Warn().
 			Str("url", url).

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"time"
 
@@ -157,9 +156,4 @@ func processData() error {
 	return errors.New("simulated processing error")
 }
 
-func demonstrateContextLogging(ctx context.Context) {
-	if requestID, ok := ctx.Value("request_id").(string); ok {
-		logger.WithRequestID(requestID).Info().
-			Msg("Processing request with context")
-	}
-}
+

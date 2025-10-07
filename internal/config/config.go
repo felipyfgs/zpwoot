@@ -108,15 +108,7 @@ func getEnvAsInt(key string, fallback int) int {
 	return fallback
 }
 
-func getEnvAsBool(key string, fallback bool) bool {
-	if value := os.Getenv(key); value != "" {
-		if boolValue, err := strconv.ParseBool(value); err == nil {
-			return boolValue
-		}
-	}
 
-	return fallback
-}
 
 func (c *Config) GetServerAddress() string {
 	return c.ServerHost + ":" + c.Port

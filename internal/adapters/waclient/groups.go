@@ -2,10 +2,8 @@ package waclient
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"zpwoot/internal/core/application/dto"
@@ -407,37 +405,4 @@ func (gs *GroupService) RemoveGroupPhoto(ctx context.Context, sessionID string, 
 
 	return nil
 }
-func parseGroupJID(groupJID string) (types.JID, error) {
-	if strings.Contains(groupJID, "@g.us") {
-		jid, err := types.ParseJID(groupJID)
-		if err != nil {
-			return types.JID{}, fmt.Errorf("invalid group JID: %w", err)
-		}
 
-		return jid, nil
-	}
-
-	jid, err := types.ParseJID(groupJID + "@g.us")
-	if err != nil {
-		return types.JID{}, fmt.Errorf("invalid group JID: %w", err)
-	}
-
-	return jid, nil
-}
-func decodeBase64Image(imageStr string) ([]byte, error) {
-	if strings.HasPrefix(imageStr, "data:") {
-		parts := strings.SplitN(imageStr, ",", 2)
-		if len(parts) != 2 {
-			return nil, errors.New("invalid base64 data URI format")
-		}
-
-		imageStr = parts[1]
-	}
-
-	imageData, err := base64.StdEncoding.DecodeString(imageStr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode base64 image: %w", err)
-	}
-
-	return imageData, nil
-}

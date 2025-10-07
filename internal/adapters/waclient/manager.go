@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -248,7 +247,7 @@ func (wac *WAClient) ListSessions(ctx context.Context) ([]*Client, error) {
 
 func (wac *WAClient) ConnectSession(ctx context.Context, sessionID string) error {
 	client, err := wac.GetSession(ctx, sessionID)
-	if err == ErrSessionNotFound {
+	if errors.Is(err, ErrSessionNotFound) {
 		sess, dbErr := wac.sessionRepo.GetByID(ctx, sessionID)
 		if dbErr != nil {
 			return fmt.Errorf("session not found: %w", dbErr)
@@ -695,31 +694,4 @@ func NewWAStoreContainer(db *sqlx.DB, logger *logger.Logger, dbURL string) *sqls
 	return container
 }
 
-func maskDBURL(dbURL string) string {
-	if dbURL == "" {
-		return ""
-	}
 
-	start := strings.Index(dbURL, "://")
-	if start == -1 {
-		return "***"
-	}
-
-	userPassEnd := strings.Index(dbURL[start+3:], "@")
-	if userPassEnd == -1 {
-		return dbURL
-	}
-
-	userPassStart := start + 3
-	userPassSection := dbURL[userPassStart : userPassStart+userPassEnd]
-
-	colonIndex := strings.Index(userPassSection, ":")
-	if colonIndex == -1 {
-		return dbURL
-	}
-
-	user := userPassSection[:colonIndex]
-	maskedSection := user + ":***"
-
-	return dbURL[:userPassStart] + maskedSection + dbURL[userPassStart+userPassEnd:]
-}

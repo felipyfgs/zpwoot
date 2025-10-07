@@ -25,7 +25,7 @@ func (s *Service) Create(ctx context.Context, name string) (*Session, error) {
 	}
 
 	existingSession, err := s.repo.GetByName(ctx, name)
-	if err != nil && err != shared.ErrSessionNotFound {
+	if err != nil && !errors.Is(err, shared.ErrSessionNotFound) {
 		return nil, fmt.Errorf("failed to check existing session: %w", err)
 	}
 

@@ -2,6 +2,7 @@ package session
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -33,7 +34,7 @@ func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateRequest) (*
 
 	domainSession, err := uc.sessionService.Create(ctx, req.Name)
 	if err != nil {
-		if err == shared.ErrSessionAlreadyExists {
+		if errors.Is(err, shared.ErrSessionAlreadyExists) {
 			return nil, dto.ErrSessionAlreadyExists
 		}
 
@@ -48,7 +49,8 @@ func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateRequest) (*
 
 		}
 
-		if waErr, ok := err.(*output.WhatsAppError); ok {
+		var waErr *output.WhatsAppError
+		if errors.As(err, &waErr) {
 			switch waErr.Code {
 			case "SESSION_ALREADY_EXISTS":
 				return nil, dto.ErrSessionAlreadyExists

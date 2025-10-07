@@ -2,6 +2,7 @@ package message
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"zpwoot/internal/core/application/dto"
@@ -38,7 +39,7 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 
 	domainSession, err := uc.sessionService.Get(ctx, sessionID)
 	if err != nil {
-		if err == shared.ErrSessionNotFound {
+		if errors.Is(err, shared.ErrSessionNotFound) {
 			return nil, dto.ErrSessionNotFound
 		}
 
@@ -67,7 +68,8 @@ func (uc *SendUseCase) Execute(ctx context.Context, sessionID string, req *dto.S
 	}
 
 	if err != nil {
-		if waErr, ok := err.(*output.WhatsAppError); ok {
+		var waErr *output.WhatsAppError
+		if errors.As(err, &waErr) {
 			switch waErr.Code {
 			case "SESSION_NOT_FOUND":
 				return nil, dto.ErrSessionNotFound
