@@ -84,7 +84,7 @@ func (uc *DisconnectUseCase) performWhatsAppDisconnection(ctx context.Context, s
 	if err != nil {
 		return uc.handleWhatsAppDisconnectionError(ctx, sessionID, domainSession, err)
 	}
-	return nil, nil
+	return nil, fmt.Errorf("disconnection completed successfully")
 }
 
 func (uc *DisconnectUseCase) handleWhatsAppDisconnectionError(ctx context.Context, sessionID string, domainSession *session.Session, err error) (*dto.SessionStatusResponse, error) {

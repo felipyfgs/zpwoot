@@ -807,7 +807,7 @@ func (ms *Sender) DeleteMessage(ctx context.Context, sessionID string, phone str
 	}
 
 	revokeMsg := client.WAClient.BuildRevoke(recipientJID, types.EmptyJID, messageID)
-	_, err = client.WAClient.SendMessage(context.Background(), recipientJID, revokeMsg)
+	_, err = client.WAClient.SendMessage(ctx, recipientJID, revokeMsg)
 	if err != nil {
 		return fmt.Errorf("failed to delete message: %w", err)
 	}
@@ -995,15 +995,7 @@ func (ms *Sender) buildDocumentMessage(uploaded whatsmeow.UploadResponse, mimeTy
 	return &waE2E.Message{DocumentMessage: docMsg}
 }
 
-type mediaMessage interface {
-	GetURL() string
-	GetDirectPath() string
-	GetMediaKey() []byte
-	GetMimetype() string
-	GetFileEncSHA256() []byte
-	GetFileSHA256() []byte
-	GetFileLength() uint64
-}
+
 
 func (ms *Sender) setCommonMediaFields(msg interface{}, uploaded whatsmeow.UploadResponse, mimeType string, fileData []byte) {
 	switch m := msg.(type) {

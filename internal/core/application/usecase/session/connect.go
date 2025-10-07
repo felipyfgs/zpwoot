@@ -109,7 +109,7 @@ func (uc *ConnectUseCase) performWhatsAppConnection(ctx context.Context, session
 		return nil, fmt.Errorf("failed to connect WhatsApp session: %w", err)
 	}
 
-	return nil, nil
+	return nil, fmt.Errorf("connection completed successfully")
 }
 
 func (uc *ConnectUseCase) updateConnectionStatus(ctx context.Context, sessionID string) {

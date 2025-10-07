@@ -11,11 +11,27 @@ import (
 )
 
 func main() {
+	cfg := initializeLogger()
+
+	demonstrateBasicLogging()
+	demonstrateContextualLogging()
+	demonstrateStructuredLogging()
+	demonstratePerformanceLogging()
+	demonstrateErrorHandling()
+	demonstrateConditionalLogging(cfg)
+	demonstrateHighFrequencyLogging()
+
+	finalizeExample()
+}
+
+func initializeLogger() *config.Config {
 	cfg := config.Load()
-
 	logger.InitWithConfig(cfg)
-
 	logger.Info().Msg("Application started")
+	return cfg
+}
+
+func demonstrateBasicLogging() {
 	logger.Debug().Msg("Debug information")
 	logger.Warn().Msg("Warning message")
 	logger.Error().Msg("Error occurred")
@@ -33,7 +49,9 @@ func main() {
 		Str("host", "localhost").
 		Int("port", 5432).
 		Msg("Failed to connect to database")
+}
 
+func demonstrateContextualLogging() {
 	apiLogger := logger.WithComponent("api")
 	apiLogger.Info().
 		Str("method", "GET").
@@ -63,12 +81,15 @@ func main() {
 		Str("endpoint", "/api/v1/users").
 		Int("response_size", 1024).
 		Msg("Processing request")
+}
 
+func demonstrateStructuredLogging() {
 	log := logger.New()
 	log.Info().
 		Str("service", "zpwoot").
 		Msg("Service instance created")
 
+	cfg := config.Load()
 	dbLogger := logger.NewFromAppConfig(cfg).WithComponent("database")
 	dbLogger.Info().
 		Str("operation", "migration").
@@ -98,9 +119,10 @@ func main() {
 		Strs("tags", []string{"api", "user", "create"}).
 		Ints("response_codes", []int{200, 201, 204}).
 		Msg("Operation completed")
+}
 
+func demonstratePerformanceLogging() {
 	start := time.Now()
-
 	time.Sleep(10 * time.Millisecond)
 
 	logger.Info().
@@ -108,7 +130,9 @@ func main() {
 		Dur("duration", time.Since(start)).
 		Int("records_processed", 1000).
 		Msg("Batch processing completed")
+}
 
+func demonstrateErrorHandling() {
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -127,7 +151,9 @@ func main() {
 				Msg("Failed to process data after retries")
 		}
 	}()
+}
 
+func demonstrateConditionalLogging(cfg *config.Config) {
 	debugMode := cfg.LogLevel == "debug"
 	if debugMode {
 		logger.Debug().
@@ -135,7 +161,9 @@ func main() {
 			Str("config_file", ".env").
 			Msg("Debug mode enabled")
 	}
+}
 
+func demonstrateHighFrequencyLogging() {
 	highFreqLogger := logger.WithComponent("high_frequency")
 
 	for i := 0; i < 5; i++ {
@@ -143,7 +171,9 @@ func main() {
 			Int("iteration", i).
 			Msg("High frequency operation")
 	}
+}
 
+func finalizeExample() {
 	logger.Info().
 		Str("example", "completed").
 		Dur("total_runtime", time.Since(time.Now().Add(-100*time.Millisecond))).
