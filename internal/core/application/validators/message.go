@@ -37,11 +37,11 @@ func ValidatePhoneNumber(phone string) error {
 
 func ValidateJID(jid string) error {
 	if jid == "" {
-		return fmt.Errorf("JID cannot be empty")
+		return errors.New("JID cannot be empty")
 	}
 
 	if !JIDRegex.MatchString(jid) {
-		return fmt.Errorf("invalid JID format (must be phone@s.whatsapp.net or phone@g.us)")
+		return errors.New("invalid JID format (must be phone@s.whatsapp.net or phone@g.us)")
 	}
 
 	return nil
@@ -49,7 +49,7 @@ func ValidateJID(jid string) error {
 
 func ValidateMessageText(text string) error {
 	if text == "" {
-		return fmt.Errorf("message text cannot be empty")
+		return errors.New("message text cannot be empty")
 	}
 
 	if len(text) > MessageTextMaxLength {

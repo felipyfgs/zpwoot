@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -32,11 +33,11 @@ func NewHTTPWebhookSender(httpClient *http.Client, logger *logger.Logger) output
 }
 func (s *HTTPWebhookSender) SendWebhook(ctx context.Context, url string, secret *string, event *output.WebhookEvent) error {
 	if url == "" {
-		return fmt.Errorf("webhook URL cannot be empty")
+		return errors.New("webhook URL cannot be empty")
 	}
 
 	if event == nil {
-		return fmt.Errorf("webhook event cannot be nil")
+		return errors.New("webhook event cannot be nil")
 	}
 
 	payload, err := json.Marshal(event)

@@ -286,7 +286,6 @@ func convertMessageToMap(msg interface{}) (map[string]interface{}, bool) {
 }
 
 func detectMessageType(msgMap map[string]interface{}) string {
-
 	if hasMessageField(msgMap, "conversation", "extendedTextMessage") {
 		return "text"
 	}
