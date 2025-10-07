@@ -30,6 +30,7 @@ func (s *Service) ValidateURL(webhookURL string) error {
 	}
 
 	if strings.Contains(parsedURL.Host, "localhost") || strings.Contains(parsedURL.Host, "127.0.0.1") {
+
 	}
 
 	return nil

@@ -2,16 +2,16 @@ package dto
 
 type CheckUserRequest struct {
 	Phones []string `json:"phones" validate:"required,min=1" example:"5511999999999,5511888888888"`
-} //@name CheckUserRequest
+} // @name CheckUserRequest
 type WhatsAppUserInfo struct {
 	Query        string `json:"query" example:"5511999999999"`
 	IsInWhatsApp bool   `json:"isInWhatsApp" example:"true"`
 	JID          string `json:"jid" example:"5511999999999@s.whatsapp.net"`
 	VerifiedName string `json:"verifiedName,omitempty" example:"John Doe Business"`
-} //@name WhatsAppUserInfo
+} // @name WhatsAppUserInfo
 type CheckUserResponse struct {
 	Users []WhatsAppUserInfo `json:"users"`
-} //@name CheckUserResponse
+} // @name CheckUserResponse
 type GetUserRequest struct {
 	Phone string `json:"phone" validate:"required" example:"5511999999999"`
 } //@name GetUserRequest

@@ -108,8 +108,6 @@ func getEnvAsInt(key string, fallback int) int {
 	return fallback
 }
 
-
-
 func (c *Config) GetServerAddress() string {
 	return c.ServerHost + ":" + c.Port
 }

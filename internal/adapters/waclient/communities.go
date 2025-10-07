@@ -11,6 +11,10 @@ import (
 	"go.mau.fi/whatsmeow/types"
 )
 
+const (
+	ownerRole = ownerRole
+)
+
 type CommunityService struct {
 	waClient *WAClient
 }
@@ -259,7 +263,7 @@ func (cs *CommunityService) GetParticipants(ctx context.Context, sessionID strin
 			Role: "member",
 		}
 		if participant.IsSuperAdmin {
-			communityParticipant.Role = "owner"
+			communityParticipant.Role = ownerRole
 		} else if participant.IsAdmin {
 			communityParticipant.Role = "admin"
 		}

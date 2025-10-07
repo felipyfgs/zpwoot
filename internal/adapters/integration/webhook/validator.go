@@ -29,7 +29,7 @@ func ValidateURL(webhookURL string) error {
 	}
 
 	if isLocalhost(parsedURL.Host) {
-		// Allow localhost for development/testing
+
 	}
 
 	if len(webhookURL) > 2048 {

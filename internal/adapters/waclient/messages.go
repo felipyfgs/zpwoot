@@ -917,7 +917,6 @@ func (ms *Sender) DeleteMessage(ctx context.Context, sessionID string, phone str
 		return ErrInvalidJID
 	}
 
-	// Use BuildRevoke instead of deprecated RevokeMessage
 	revokeMsg := client.WAClient.BuildRevoke(recipientJID, types.EmptyJID, messageID)
 	_, err = client.WAClient.SendMessage(context.Background(), recipientJID, revokeMsg)
 	if err != nil {
@@ -987,8 +986,6 @@ func (ms *Sender) RequestHistorySync(ctx context.Context, sessionID string, coun
 		count = 50
 	}
 
-	// TODO: Implement history sync request when available in whatsmeow
-	// For now, just validate the parameters
 	_ = count
 
 	return nil

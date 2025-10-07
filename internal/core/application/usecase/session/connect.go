@@ -84,11 +84,12 @@ func (uc *ConnectUseCase) Execute(ctx context.Context, sessionID string) (*dto.S
 	err = uc.sessionService.UpdateStatus(ctx, sessionID, session.StatusConnecting)
 	if err != nil {
 
+		fmt.Printf("Failed to update session status to connecting: %v\n", err)
 	}
 
 	waStatus, err := uc.whatsappClient.GetSessionStatus(ctx, sessionID)
 	if err != nil {
-		// Return default status when WhatsApp status is unavailable
+
 		return &dto.SessionStatusResponse{
 			ID:        sessionID,
 			Status:    string(session.StatusConnecting),

@@ -405,4 +405,3 @@ func (gs *GroupService) RemoveGroupPhoto(ctx context.Context, sessionID string, 
 
 	return nil
 }
-

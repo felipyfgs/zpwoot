@@ -10,6 +10,10 @@ import (
 	"go.mau.fi/whatsmeow/types"
 )
 
+const (
+	textPresenceType = "text"
+)
+
 type ContactService struct {
 	waClient *WAClient
 }
@@ -218,7 +222,7 @@ func (cs *ContactService) ChatPresence(ctx context.Context, sessionID string, ph
 
 	if media != "" {
 		switch media {
-		case "text":
+		case textPresenceType:
 			mediaType = types.ChatPresenceMediaText
 		case "audio":
 			mediaType = types.ChatPresenceMediaAudio

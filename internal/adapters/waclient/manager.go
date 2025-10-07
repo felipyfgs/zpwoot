@@ -693,5 +693,3 @@ func NewWAStoreContainer(db *sqlx.DB, logger *logger.Logger, dbURL string) *sqls
 
 	return container
 }
-
-

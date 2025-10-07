@@ -155,5 +155,3 @@ func processData() error {
 
 	return errors.New("simulated processing error")
 }
-
-
