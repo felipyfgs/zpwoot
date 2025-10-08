@@ -13,16 +13,16 @@ import (
 )
 
 type SessionHandler struct {
-	useCases       input.SessionUseCases
-	sessionManager input.SessionManager
-	logger         output.Logger
+	useCases input.SessionUseCases
+	waClient output.WhatsAppClient
+	logger   output.Logger
 }
 
-func NewSessionHandler(useCases input.SessionUseCases, sessionManager input.SessionManager, logger output.Logger) *SessionHandler {
+func NewSessionHandler(useCases input.SessionUseCases, waClient output.WhatsAppClient, logger output.Logger) *SessionHandler {
 	return &SessionHandler{
-		useCases:       useCases,
-		sessionManager: sessionManager,
-		logger:         logger,
+		useCases: useCases,
+		waClient: waClient,
+		logger:   logger,
 	}
 }
 

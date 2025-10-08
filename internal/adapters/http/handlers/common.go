@@ -46,16 +46,9 @@ func createSessionHandler(
 	sessionUseCases input.SessionUseCases,
 	waClient output.WhatsAppClient,
 ) *SessionHandler {
-	waClientAdapter, ok := waClient.(*waclient.WAClientAdapter)
-	if !ok {
-		panic("waClient is not a WAClientAdapter")
-	}
-
-	sessionManager := waclient.NewManager(waClientAdapter.GetWAClient())
-
 	return NewSessionHandler(
 		sessionUseCases,
-		sessionManager,
+		waClient,
 		logger,
 	)
 }
