@@ -17,6 +17,7 @@ const (
 	EventConnected    EventType = "Connected"
 	EventDisconnected EventType = "Disconnected"
 	EventQR           EventType = "QR"
+	EventPairSuccess  EventType = "PairSuccess"
 	EventReceipt      EventType = "Receipt"
 	EventReadReceipt  EventType = "ReadReceipt"
 	EventPresence     EventType = "Presence"

@@ -251,9 +251,6 @@ definitions:
         maxLength: 100
         minLength: 1
         type: string
-      qrCode:
-        example: true
-        type: boolean
       settings:
         $ref: '#/definitions/SessionSettings'
     required:
@@ -1086,6 +1083,15 @@ definitions:
         type: string
       message:
         example: Session is already connected
+        type: string
+      qrCode:
+        example: 2@abc123...
+        type: string
+      qrCodeBase64:
+        example: data:image/png;base64,iVBORw0KGgo...
+        type: string
+      qrCodeExpiresAt:
+        example: "2025-01-15T10:35:00Z"
         type: string
       status:
         example: connected

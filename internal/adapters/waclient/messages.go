@@ -140,29 +140,6 @@ func (ms *Sender) getConnectedClient(ctx context.Context, sessionID string) (*Cl
 	return client, nil
 }
 
-func (ms *Sender) waitForConnection(client *Client, timeout time.Duration) error {
-	if client.WAClient.IsConnected() {
-		return nil
-	}
-
-	ticker := time.NewTicker(100 * time.Millisecond)
-	defer ticker.Stop()
-
-	timeoutTimer := time.NewTimer(timeout)
-	defer timeoutTimer.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			if client.WAClient.IsConnected() {
-				return nil
-			}
-		case <-timeoutTimer.C:
-			return fmt.Errorf("timeout waiting for websocket connection")
-		}
-	}
-}
-
 func (ms *Sender) generateVCard(name, phone string) string {
 	return fmt.Sprintf("BEGIN:VCARD\nVERSION:3.0\nFN:%s\nTEL:%s\nEND:VCARD", name, phone)
 }

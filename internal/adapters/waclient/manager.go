@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -17,11 +18,13 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/mdp/qrterminal/v3"
 	"go.mau.fi/whatsmeow"
+	"go.mau.fi/whatsmeow/proto/waCompanionReg"
 	"go.mau.fi/whatsmeow/store"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	waLog "go.mau.fi/whatsmeow/util/log"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -48,6 +51,9 @@ type SessionRepository interface {
 }
 
 func NewWAClient(container *sqlstore.Container, logger *logger.Logger, sessionRepo SessionRepository, webhookSender output.WebhookSender, webhookRepo webhook.Repository) *WAClient {
+	store.DeviceProps.PlatformType = waCompanionReg.DeviceProps_UNKNOWN.Enum()
+	store.DeviceProps.Os = proto.String(runtime.GOOS)
+
 	wac := &WAClient{
 		sessions:    make(map[string]*Client),
 		container:   container,
@@ -72,14 +78,30 @@ func (wac *WAClient) loadSessionsFromDatabase() {
 	}
 
 	for _, sess := range sessions {
-		deviceStore := wac.getOrCreateDeviceStore(ctx, sess.ID, sess.DeviceJID)
+		if sess.DeviceJID == "" {
+			wac.logger.Debug().Str("session_id", sess.ID).Msg("Skipping session without device JID")
+			continue
+		}
+
+		jid, parseErr := types.ParseJID(sess.DeviceJID)
+		if parseErr != nil {
+			wac.logger.Error().Err(parseErr).Str("jid", sess.DeviceJID).Str("session_id", sess.ID).Msg("Failed to parse JID, skipping session")
+			continue
+		}
+
+		deviceStore, err := wac.container.GetDevice(ctx, jid)
+		if err != nil {
+			wac.logger.Error().Err(err).Str("jid", sess.DeviceJID).Str("session_id", sess.ID).Msg("Failed to get device store, skipping session")
+			continue
+		}
+
 		client := wac.createClient(ctx, sess, deviceStore)
 
 		wac.sessionsMutex.Lock()
 		wac.sessions[sess.ID] = client
 		wac.sessionsMutex.Unlock()
 
-		if sess.IsConnected && sess.DeviceJID != "" {
+		if sess.IsConnected {
 			go wac.autoReconnect(client)
 		}
 	}
@@ -138,28 +160,6 @@ func getTimeValue(t *time.Time) time.Time {
 	return *t
 }
 
-func (wac *WAClient) getOrCreateDeviceStore(ctx context.Context, sessionID, deviceJID string) *store.Device {
-	if deviceJID == "" {
-		wac.logger.Debug().Str("session_id", sessionID).Msg("No device JID, creating new device")
-		return wac.container.NewDevice()
-	}
-
-	jid, err := types.ParseJID(deviceJID)
-	if err != nil {
-		wac.logger.Warn().Err(err).Str("jid", deviceJID).Str("session_id", sessionID).Msg("Failed to parse JID, creating new device")
-		return wac.container.NewDevice()
-	}
-
-	deviceStore, err := wac.container.GetDevice(ctx, jid)
-	if err != nil {
-		wac.logger.Error().Err(err).Str("jid", deviceJID).Str("session_id", sessionID).Msg("Failed to get device, creating new one")
-		return wac.container.NewDevice()
-	}
-
-	wac.logger.Debug().Str("jid", deviceJID).Str("session_id", sessionID).Msg("Found existing device store")
-	return deviceStore
-}
-
 func (wac *WAClient) CreateSession(ctx context.Context, config *SessionConfig) (*Client, error) {
 	wac.sessionsMutex.Lock()
 	defer wac.sessionsMutex.Unlock()
@@ -173,7 +173,7 @@ func (wac *WAClient) CreateSession(ctx context.Context, config *SessionConfig) (
 		return nil, fmt.Errorf("failed to get session from database: %w", err)
 	}
 
-	deviceStore := wac.getOrCreateDeviceStore(ctx, config.SessionID, sess.DeviceJID)
+	deviceStore := wac.container.NewDevice()
 	client := wac.createClient(ctx, sess, deviceStore)
 	client.Config = config
 	client.Events = config.Events
@@ -181,8 +181,7 @@ func (wac *WAClient) CreateSession(ctx context.Context, config *SessionConfig) (
 
 	wac.sessions[config.SessionID] = client
 
-	wac.logger.Info().Str("session_id", config.SessionID).Msg("WhatsApp session initialized")
-
+	wac.logger.Info().Str("session_id", config.SessionID).Msg("WhatsApp session initialized with new device")
 	return client, nil
 }
 
@@ -224,12 +223,20 @@ func (wac *WAClient) ListSessions(ctx context.Context) ([]*Client, error) {
 }
 
 func (wac *WAClient) ConnectSession(ctx context.Context, sessionID string) error {
-	client, err := wac.getOrRecreateClient(ctx, sessionID)
+	sess, err := wac.sessionRepo.GetByID(ctx, sessionID)
+	if err != nil {
+		return fmt.Errorf("session not found: %w", err)
+	}
+
+	client, err := wac.getOrRecreateClient(ctx, sess)
 	if err != nil {
 		return err
 	}
 
-	if client.Status == session.StatusConnected {
+	wac.logger.Info().Str("session_id", sessionID).Msg("Connecting session")
+
+	if client.WAClient.IsConnected() {
+		wac.logger.Info().Str("session_id", sessionID).Msg("Session already connected")
 		return nil
 	}
 
@@ -243,18 +250,40 @@ func (wac *WAClient) ConnectSession(ctx context.Context, sessionID string) error
 	return wac.reconnectExistingSession(ctx, client)
 }
 
-func (wac *WAClient) getOrRecreateClient(ctx context.Context, sessionID string) (*Client, error) {
-	client, err := wac.GetSession(ctx, sessionID)
+func (wac *WAClient) getOrRecreateClient(ctx context.Context, sess *session.Session) (*Client, error) {
+	client, err := wac.GetSession(ctx, sess.ID)
 	if errors.Is(err, ErrSessionNotFound) {
-		sess, dbErr := wac.sessionRepo.GetByID(ctx, sessionID)
-		if dbErr != nil {
-			return nil, fmt.Errorf("session not found: %w", dbErr)
+		var deviceStore *store.Device
+
+		if sess.DeviceJID != "" {
+			jid, parseErr := types.ParseJID(sess.DeviceJID)
+			if parseErr != nil {
+				wac.logger.Error().Err(parseErr).Str("jid", sess.DeviceJID).Str("session_id", sess.ID).Msg("Failed to parse JID, creating new device")
+				deviceStore = wac.container.NewDevice()
+			} else {
+				deviceStore, err = wac.container.GetDevice(ctx, jid)
+				if err != nil {
+					wac.logger.Error().Err(err).Str("jid", sess.DeviceJID).Str("session_id", sess.ID).Msg("Failed to get device, creating new one")
+					deviceStore = wac.container.NewDevice()
+				} else {
+					wac.logger.Info().Str("jid", sess.DeviceJID).Str("session_id", sess.ID).Msg("Loaded existing device store")
+				}
+			}
+		} else {
+			wac.logger.Info().Str("session_id", sess.ID).Msg("No device JID, creating new device for QR code")
+			deviceStore = wac.container.NewDevice()
 		}
 
-		client, err = wac.recreateClient(ctx, sess)
-		if err != nil {
-			return nil, fmt.Errorf("failed to recreate client: %w", err)
+		if deviceStore == nil {
+			wac.logger.Warn().Str("session_id", sess.ID).Msg("No store found, creating new one")
+			deviceStore = wac.container.NewDevice()
 		}
+
+		client = wac.createClient(ctx, sess, deviceStore)
+
+		wac.sessionsMutex.Lock()
+		wac.sessions[sess.ID] = client
+		wac.sessionsMutex.Unlock()
 	} else if err != nil {
 		return nil, err
 	}
@@ -262,7 +291,7 @@ func (wac *WAClient) getOrRecreateClient(ctx context.Context, sessionID string) 
 }
 
 func (wac *WAClient) connectNewSession(ctx context.Context, client *Client) error {
-	qrChan, err := client.WAClient.GetQRChannel(ctx)
+	qrChan, err := client.WAClient.GetQRChannel(context.Background())
 	if err != nil && !errors.Is(err, whatsmeow.ErrQRStoreContainsID) {
 		wac.logger.Error().Err(err).Str("session_id", client.SessionID).Msg("Failed to get QR channel")
 		client.Status = session.StatusError
@@ -271,23 +300,20 @@ func (wac *WAClient) connectNewSession(ctx context.Context, client *Client) erro
 	}
 
 	if err := client.WAClient.Connect(); err != nil {
-		wac.logger.Error().Err(err).Str("session_id", client.SessionID).Msg("Failed to connect client")
+		wac.logger.Error().Err(err).Str("session_id", client.SessionID).Msg("Failed to connect")
 		client.Status = session.StatusError
 		wac.updateSessionStatus(ctx, client)
-		return fmt.Errorf("failed to connect client: %w", err)
+		return fmt.Errorf("failed to connect: %w", err)
 	}
 
-	wac.logger.Info().Str("session_id", client.SessionID).Msg("Connected - waiting for QR codes")
-	go wac.processQRCodes(ctx, client, qrChan)
+	wac.logger.Info().Str("session_id", client.SessionID).Msg("Waiting for QR code")
+	go wac.processQRCodes(context.Background(), client, qrChan)
 	return nil
 }
 
 func (wac *WAClient) reconnectExistingSession(ctx context.Context, client *Client) error {
-	wac.logger.Info().Str("session_id", client.SessionID).Msg("Already logged in, reconnecting")
-
 	if err := client.WAClient.Connect(); err != nil {
 		if strings.Contains(err.Error(), "websocket is already connected") {
-			wac.logger.Info().Str("session_id", client.SessionID).Msg("WebSocket already connected")
 			client.Status = session.StatusConnected
 			wac.updateSessionStatus(ctx, client)
 			return nil
@@ -302,35 +328,20 @@ func (wac *WAClient) reconnectExistingSession(ctx context.Context, client *Clien
 
 func (wac *WAClient) processQRCodes(ctx context.Context, client *Client, qrChan <-chan whatsmeow.QRChannelItem) {
 	for evt := range qrChan {
-		if evt.Event == "code" {
-			wac.updateClientWithQRCode(ctx, client, evt.Code)
+		switch evt.Event {
+		case "code":
+			wac.logger.Info().Str("session_id", client.SessionID).Msg("QR code generated")
 			wac.displayQRCode(evt.Code, client.SessionID)
-			wac.logger.Info().
-				Str("session_id", client.SessionID).
-				Int("timeout_seconds", int(evt.Timeout.Seconds())).
-				Msg("📱 Scan QR code")
-		} else {
-			wac.logger.Info().
-				Str("session_id", client.SessionID).
-				Str("event", evt.Event).
-				Msg("QR channel event")
+			wac.updateClientWithQRCode(ctx, client, evt.Code)
+			wac.sendQRWebhook(client, evt.Code)
+		case "timeout":
+			wac.logger.Warn().Str("session_id", client.SessionID).Msg("QR code expired")
+			wac.clearQRCode(client)
+			wac.updateSessionStatus(ctx, client)
+		case "success":
+			wac.logger.Info().Str("session_id", client.SessionID).Msg("QR code scanned successfully")
 		}
 	}
-}
-
-func (wac *WAClient) recreateClient(ctx context.Context, sess *session.Session) (*Client, error) {
-	wac.sessionsMutex.Lock()
-	defer wac.sessionsMutex.Unlock()
-
-	if existing, exists := wac.sessions[sess.ID]; exists {
-		return existing, nil
-	}
-
-	deviceStore := wac.getOrCreateDeviceStore(ctx, sess.ID, sess.DeviceJID)
-	client := wac.createClient(ctx, sess, deviceStore)
-	wac.sessions[sess.ID] = client
-
-	return client, nil
 }
 
 func (wac *WAClient) DisconnectSession(ctx context.Context, sessionID string) error {
@@ -433,6 +444,8 @@ func (wac *WAClient) createEventHandler(client *Client) func(interface{}) {
 			wac.handleDisconnected(client, v)
 		case *events.LoggedOut:
 			wac.handleLoggedOut(client, v)
+		case *events.PairSuccess:
+			wac.handlePairSuccess(client, v)
 		case *events.QR:
 			wac.handleQREvent(client, v)
 		case *events.Message:
@@ -492,48 +505,35 @@ func (wac *WAClient) handleLoggedOut(client *Client, evt *events.LoggedOut) {
 	wac.sendWebhook(client, EventLoggedOut, evt)
 }
 
-func (wac *WAClient) handleQREvent(client *Client, evt *events.QR) {
-	wac.logger.Info().
-		Str("session_id", client.SessionID).
-		Int("total_codes", len(evt.Codes)).
-		Msg("Received QR codes from WhatsApp")
+func (wac *WAClient) handlePairSuccess(client *Client, evt *events.PairSuccess) {
+	wac.logger.Info().Str("session_id", client.SessionID).Str("device_jid", evt.ID.String()).Msg("Device paired successfully")
 
-	if len(evt.Codes) == 0 {
-		wac.logger.Error().Str("session_id", client.SessionID).Msg("No QR codes received")
+	sess, err := wac.sessionRepo.GetByID(context.Background(), client.SessionID)
+	if err != nil {
+		wac.logger.Error().Err(err).Str("session_id", client.SessionID).Msg("Failed to get session")
 		return
 	}
 
-	client.Status = session.StatusQRCode
-	wac.updateSessionStatus(client.ctx, client)
+	sess.DeviceJID = evt.ID.String()
 
-	go wac.processQRCodesFromEvent(context.Background(), client, evt.Codes)
+	if err := wac.sessionRepo.Update(context.Background(), sess); err != nil {
+		wac.logger.Error().Err(err).Str("session_id", client.SessionID).Msg("Failed to update session")
+		return
+	}
+
+	wac.sendWebhook(client, EventPairSuccess, map[string]interface{}{
+		"deviceJID":    evt.ID.String(),
+		"businessName": evt.BusinessName,
+		"platform":     evt.Platform,
+	})
 }
 
-func (wac *WAClient) processQRCodesFromEvent(ctx context.Context, client *Client, codes []string) {
-	for i, code := range codes {
-		if client.Status != session.StatusQRCode {
-			wac.logger.Info().
-				Str("session_id", client.SessionID).
-				Int("qr_number", i+1).
-				Msg("QR processing stopped - client status changed")
-			return
-		}
-
-		wac.displayQRCode(code, client.SessionID)
-		wac.updateClientWithQRCode(ctx, client, code)
-		wac.sendQRWebhook(client, code)
-
-		if wac.waitForQRTimeout(ctx, client) {
-			return
-		}
-	}
+func (wac *WAClient) handleQREvent(client *Client, evt *events.QR) {
+	wac.logger.Debug().Str("session_id", client.SessionID).Int("codes", len(evt.Codes)).Msg("QR event received (ignored, using channel)")
 }
 
 func (wac *WAClient) displayQRCode(code, sessionID string) {
 	qrterminal.GenerateHalfBlock(code, qrterminal.L, os.Stdout)
-	wac.logger.Info().
-		Str("session_id", sessionID).
-		Msg("📱 Scan QR code")
 }
 
 func (wac *WAClient) updateClientWithQRCode(ctx context.Context, client *Client, code string) {
@@ -552,31 +552,8 @@ func (wac *WAClient) sendQRWebhook(client *Client, code string) {
 	wac.sendWebhook(client, EventQR, qrEvent)
 }
 
-func (wac *WAClient) waitForQRTimeout(ctx context.Context, client *Client) bool {
-	select {
-	case <-time.After(60 * time.Second):
-		wac.logger.Info().Str("session_id", client.SessionID).Msg("QR code expired")
-		wac.clearQRCode(client)
-		wac.updateSessionStatus(ctx, client)
-		return false
-	case <-ctx.Done():
-		wac.logger.Info().Str("session_id", client.SessionID).Msg("QR processing canceled")
-		return true
-	}
-}
-
 func (wac *WAClient) handleMessage(client *Client, evt *events.Message) {
 	client.LastSeen = time.Now()
-
-	wac.logger.Info().
-		Str("session_id", client.SessionID).
-		Str("msg_id", evt.Info.ID).
-		Str("from", evt.Info.Sender.String()).
-		Str("chat", evt.Info.Chat.String()).
-		Bool("from_me", evt.Info.IsFromMe).
-		Bool("is_group", evt.Info.IsGroup).
-		Str("type", evt.Info.Type).
-		Msg("Message received")
 
 	wac.sendWebhook(client, EventMessage, evt)
 
@@ -590,15 +567,13 @@ func (wac *WAClient) handleMessage(client *Client, evt *events.Message) {
 func (wac *WAClient) handleReceipt(client *Client, evt *events.Receipt) {
 	client.LastSeen = time.Now()
 
-	wac.logger.Info().
-		Str("session_id", client.SessionID).
-		Str("type", string(evt.Type)).
-		Strs("message_ids", evt.MessageIDs).
-		Str("from", evt.Sender.String()).
-		Str("chat", evt.Chat.String()).
-		Msg("Receipt received")
-
 	wac.sendWebhook(client, EventReceipt, evt)
+
+	if wac.eventHandler != nil {
+		if err := wac.eventHandler.HandleEvent(client, evt); err != nil {
+			wac.logger.Error().Err(err).Str("session_id", client.SessionID).Msg("Event handler error for receipt")
+		}
+	}
 }
 
 func (wac *WAClient) handlePresence(client *Client, evt *events.Presence) {

@@ -4558,10 +4558,6 @@ const docTemplate = `{
                     "minLength": 1,
                     "example": "my-session"
                 },
-                "qrCode": {
-                    "type": "boolean",
-                    "example": true
-                },
                 "settings": {
                     "$ref": "#/definitions/SessionSettings"
                 }
@@ -5742,6 +5738,18 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "Session is already connected"
+                },
+                "qrCode": {
+                    "type": "string",
+                    "example": "2@abc123..."
+                },
+                "qrCodeBase64": {
+                    "type": "string",
+                    "example": "data:image/png;base64,iVBORw0KGgo..."
+                },
+                "qrCodeExpiresAt": {
+                    "type": "string",
+                    "example": "2025-01-15T10:35:00Z"
                 },
                 "status": {
                     "type": "string",

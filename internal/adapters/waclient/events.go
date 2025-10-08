@@ -3,6 +3,7 @@ package waclient
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"zpwoot/internal/adapters/logger"
@@ -10,6 +11,7 @@ import (
 	"zpwoot/internal/core/ports/output"
 
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"go.mau.fi/whatsmeow/types/events"
 )
 
@@ -56,18 +58,20 @@ func (eh *DefaultEventHandler) HandleEvent(client *Client, event interface{}) er
 	case *events.OfflineSyncPreview:
 		return eh.handleOfflineSyncPreview(client, evt)
 	default:
-		eh.logger.Debug().Interface("event", event).Msg("Unhandled event type")
+		// Log payload de eventos não tratados em DEBUG (payload no final)
+		if payload, err := json.Marshal(event); err == nil {
+			log.Debug().
+				Str("event", "unhandled").
+				Str("type", fmt.Sprintf("%T", event)).
+				Str("session_id", client.SessionID).
+				RawJSON("payload", payload).
+				Msg("Event received")
+		}
 		return nil
 	}
 }
 
 func (eh *DefaultEventHandler) handleMessage(client *Client, evt *events.Message) error {
-	eh.logger.Debug().
-		Str("session_name", client.Name).
-		Str("message_id", evt.Info.ID).
-		Str("sender", evt.Info.Sender.String()).
-		Msg("Message event")
-
 	messageInfo := &MessageInfo{
 		ID:        evt.Info.ID,
 		Chat:      evt.Info.Chat.String(),
@@ -84,86 +88,134 @@ func (eh *DefaultEventHandler) handleMessage(client *Client, evt *events.Message
 		"message":     evt.Message,
 	}
 
+	// Log completo em uma linha (INFO + payload no final)
+	if payload, err := json.Marshal(webhookData); err == nil {
+		log.Info().
+			Str("chat", evt.Info.Chat.String()).
+			Str("from", evt.Info.Sender.String()).
+			Str("type", getMessageType(evt.Message)).
+			Bool("from_me", evt.Info.IsFromMe).
+			Bool("is_group", evt.Info.IsGroup).
+			Str("session_id", client.SessionID).
+			RawJSON("payload", payload).
+			Msg("Message received")
+	}
+
 	return eh.sendWebhookIfEnabled(client, EventMessage, webhookData)
 }
 
 func (eh *DefaultEventHandler) handleReceipt(client *Client, evt *events.Receipt) error {
-	eh.logger.Debug().
-		Str("session_name", client.Name).
-		Interface("message_ids", evt.MessageIDs).
-		Msg("Receipt event")
+	// Log completo em uma linha (INFO + payload no final)
+	if payload, err := json.Marshal(evt); err == nil {
+		log.Info().
+			Str("chat", evt.Chat.String()).
+			Str("from", evt.Sender.String()).
+			Str("type", string(evt.Type)).
+			Str("session_id", client.SessionID).
+			RawJSON("payload", payload).
+			Msg("Receipt received")
+	}
 
 	return eh.sendWebhookIfEnabled(client, EventReadReceipt, evt)
 }
 
 func (eh *DefaultEventHandler) handlePresence(client *Client, evt *events.Presence) error {
-	eh.logger.Debug().
-		Str("session_name", client.Name).
-		Str("from", evt.From.String()).
-		Msg("Presence event")
+	// Log completo em DEBUG apenas (payload no final)
+	if payload, err := json.Marshal(evt); err == nil {
+		log.Debug().
+			Str("event", "presence").
+			Str("from", evt.From.String()).
+			Str("session_id", client.SessionID).
+			RawJSON("payload", payload).
+			Msg("Event received")
+	}
 
 	return eh.sendWebhookIfEnabled(client, EventPresence, evt)
 }
 
 func (eh *DefaultEventHandler) handleChatPresence(client *Client, evt *events.ChatPresence) error {
-	eh.logger.Debug().
-		Str("session_name", client.Name).
-		Str("chat", evt.Chat.String()).
-		Msg("Chat presence event")
+	// Log completo em DEBUG apenas (payload no final)
+	if payload, err := json.Marshal(evt); err == nil {
+		log.Debug().
+			Str("event", "chat_presence").
+			Str("chat", evt.Chat.String()).
+			Str("session_id", client.SessionID).
+			RawJSON("payload", payload).
+			Msg("Event received")
+	}
 
 	return eh.sendWebhookIfEnabled(client, EventChatPresence, evt)
 }
 
 func (eh *DefaultEventHandler) handleHistorySync(client *Client, evt *events.HistorySync) error {
-	eh.logger.Info().
-		Str("session_name", client.Name).
-		Int("conversations_count", len(evt.Data.Conversations)).
-		Msg("History sync event")
-
 	syncInfo := map[string]interface{}{
 		"type":              evt.Data.SyncType,
 		"conversationCount": len(evt.Data.Conversations),
+	}
+
+	// Log completo em DEBUG apenas (payload no final)
+	if payload, err := json.Marshal(syncInfo); err == nil {
+		log.Debug().
+			Str("event", "history_sync").
+			Str("session_id", client.SessionID).
+			RawJSON("payload", payload).
+			Msg("Event received")
 	}
 
 	return eh.sendWebhookIfEnabled(client, EventHistorySync, syncInfo)
 }
 
 func (eh *DefaultEventHandler) handleAppStateSyncComplete(client *Client, evt *events.AppStateSyncComplete) error {
-	eh.logger.Info().
-		Str("session_name", client.Name).
-		Str("sync_name", string(evt.Name)).
-		Msg("App state sync complete")
+	eh.logger.Debug().
+		Str("session_id", client.SessionID).
+		Str("event", "app_state_sync").
+		Msg("Event received")
+
 	return nil
 }
 
-func (eh *DefaultEventHandler) handlePushNameSetting(client *Client, _ *events.PushNameSetting) error {
-	eh.logger.Debug().Str("session_name", client.Name).Msg("Push name setting")
+func (eh *DefaultEventHandler) handlePushNameSetting(client *Client, evt *events.PushNameSetting) error {
+	eh.logger.Debug().
+		Str("session_id", client.SessionID).
+		Str("event", "push_name").
+		Msg("Event received")
+
 	return nil
 }
 
-func (eh *DefaultEventHandler) handleBlocklistChange(client *Client, _ *events.BlocklistChange) error {
-	eh.logger.Debug().Str("session_name", client.Name).Msg("Blocklist change")
+func (eh *DefaultEventHandler) handleBlocklistChange(client *Client, evt *events.BlocklistChange) error {
+	eh.logger.Debug().
+		Str("session_id", client.SessionID).
+		Str("event", "blocklist").
+		Msg("Event received")
+
 	return nil
 }
 
 func (eh *DefaultEventHandler) handleGroupInfo(client *Client, evt *events.GroupInfo) error {
 	eh.logger.Debug().
-		Str("session_name", client.Name).
-		Str("group_jid", evt.JID.String()).
-		Msg("Group info event")
+		Str("session_id", client.SessionID).
+		Str("event", "group_info").
+		Msg("Event received")
+
 	return nil
 }
 
 func (eh *DefaultEventHandler) handleJoinedGroup(client *Client, evt *events.JoinedGroup) error {
-	eh.logger.Info().
-		Str("session_name", client.Name).
-		Str("group_jid", evt.GroupInfo.JID.String()).
-		Msg("Joined group")
+	eh.logger.Debug().
+		Str("session_id", client.SessionID).
+		Str("event", "joined_group").
+		Msg("Event received")
+
 	return nil
 }
 
-func (eh *DefaultEventHandler) handleOfflineSyncPreview(client *Client, _ *events.OfflineSyncPreview) error {
-	eh.logger.Debug().Str("session_name", client.Name).Msg("Offline sync preview")
+func (eh *DefaultEventHandler) handleOfflineSyncPreview(client *Client, evt *events.OfflineSyncPreview) error {
+	eh.logger.Debug().
+		Str("session_id", client.SessionID).
+		Str("event", "offline_sync").
+		Msg("Event received")
+
 	return nil
 }
 

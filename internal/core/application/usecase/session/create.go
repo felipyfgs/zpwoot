@@ -64,24 +64,7 @@ func (uc *CreateUseCase) Execute(ctx context.Context, req *dto.CreateRequest) (*
 		return nil, fmt.Errorf("failed to create WhatsApp session: %w", err)
 	}
 
-	if req.GenerateQRCode {
+	uc.logger.Info().Str("session_id", sessionID).Str("name", req.Name).Msg("Session created successfully")
 
-		qrInfo, err := uc.whatsappClient.ConnectAndGetQRCode(ctx, sessionID)
-		if err != nil {
-			uc.logger.Warn().Err(err).Str("session_id", sessionID).Msg("Failed to connect and get QR code")
-		} else if qrInfo != nil && qrInfo.Code != "" {
-
-			domainSession.SetQRCode(qrInfo.Code, qrInfo.ExpiresAt)
-
-			if updateErr := uc.sessionService.Update(ctx, domainSession); updateErr != nil {
-				uc.logger.Error().Err(updateErr).Str("session_id", sessionID).Msg("Failed to update session with QR code")
-			} else {
-				uc.logger.Info().Str("session_id", sessionID).Msg("QR code successfully generated and stored")
-			}
-		}
-	}
-
-	response := dto.ToCreateResponse(domainSession)
-
-	return response, nil
+	return dto.ToCreateResponse(domainSession), nil
 }

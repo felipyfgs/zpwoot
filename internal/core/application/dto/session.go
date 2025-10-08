@@ -32,9 +32,8 @@ type SessionSettings struct {
 } // @name SessionSettings
 
 type CreateRequest struct {
-	Name           string           `json:"name" example:"my-session" validate:"required,min=1,max=100" description:"Session name for identification"`
-	Settings       *SessionSettings `json:"settings,omitempty" description:"Session settings (proxy, webhook)"`
-	GenerateQRCode bool             `json:"qrCode,omitempty" example:"true" description:"Auto-generate QR code after creation (default: false)"`
+	Name     string           `json:"name" example:"my-session" validate:"required,min=1,max=100" description:"Session name for identification"`
+	Settings *SessionSettings `json:"settings,omitempty" description:"Session settings (proxy, webhook)"`
 } // @name CreateSessionRequest
 
 type UpdateRequest struct {
