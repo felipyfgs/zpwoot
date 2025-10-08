@@ -20,10 +20,9 @@ type CommunityService struct {
 }
 
 func NewCommunityService(waClient *WAClient) input.CommunityService {
-	return &CommunityService{
-		waClient: waClient,
-	}
+	return &CommunityService{waClient: waClient}
 }
+
 func (cs *CommunityService) ListCommunities(ctx context.Context, sessionID string) (*dto.ListCommunitiesResponse, error) {
 	client, err := cs.waClient.GetSession(ctx, sessionID)
 	if err != nil {

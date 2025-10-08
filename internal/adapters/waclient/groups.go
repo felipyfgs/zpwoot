@@ -17,10 +17,9 @@ type GroupService struct {
 }
 
 func NewGroupService(waClient *WAClient) *GroupService {
-	return &GroupService{
-		waClient: waClient,
-	}
+	return &GroupService{waClient: waClient}
 }
+
 func (gs *GroupService) ListGroups(ctx context.Context, sessionID string) (*dto.ListGroupsResponse, error) {
 	client, err := gs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -45,7 +44,6 @@ func (gs *GroupService) ListGroups(ctx context.Context, sessionID string) (*dto.
 			IsLocked:   group.IsLocked,
 		})
 	}
-
 	return response, nil
 }
 func (gs *GroupService) GetGroupInfo(ctx context.Context, sessionID string, groupJID string) (*dto.WhatsAppGroupInfo, error) {

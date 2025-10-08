@@ -27,13 +27,9 @@ func NewSender(waClient *WAClient) *Sender {
 	return &Sender{waClient: waClient}
 }
 
-func (ms *Sender) SendTextMessage(ctx context.Context, sessionID string, to string, text string, contextInfo *output.MessageContextInfo) (*whatsmeow.SendResponse, error) {
+func (ms *Sender) SendTextMessage(ctx context.Context, sessionID, to, text string, contextInfo *output.MessageContextInfo) (*whatsmeow.SendResponse, error) {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
-		return nil, err
-	}
-
-	if err := ms.waitForConnection(client, 10*time.Second); err != nil {
 		return nil, err
 	}
 
@@ -43,7 +39,6 @@ func (ms *Sender) SendTextMessage(ctx context.Context, sessionID string, to stri
 	}
 
 	var message *waE2E.Message
-
 	if contextInfo != nil && contextInfo.StanzaID != "" {
 		message = &waE2E.Message{
 			ExtendedTextMessage: &waE2E.ExtendedTextMessage{
@@ -59,29 +54,26 @@ func (ms *Sender) SendTextMessage(ctx context.Context, sessionID string, to stri
 	if err != nil {
 		return nil, fmt.Errorf("failed to send text message: %w", err)
 	}
-
 	return &resp, nil
 }
 
-func (ms *Sender) SendMediaMessage(ctx context.Context, sessionID string, to string, media *output.MediaData) (*whatsmeow.SendResponse, error) {
+func (ms *Sender) SendMediaMessage(ctx context.Context, sessionID, to string, media *output.MediaData) (*whatsmeow.SendResponse, error) {
 	client, recipientJID, fileData, err := ms.validateMediaInputs(ctx, sessionID, to, media)
 	if err != nil {
 		return nil, err
 	}
 
 	mimeType, mediaType := ms.prepareMediaData(media)
-
 	uploaded, err := ms.uploadMediaToWhatsApp(ctx, client, fileData, mediaType)
 	if err != nil {
 		return nil, err
 	}
 
 	message := ms.buildMediaMessage(mediaType, uploaded, mimeType, fileData, media)
-
 	return ms.sendPreparedMessage(ctx, client, recipientJID, message)
 }
 
-func (ms *Sender) SendLocationMessage(ctx context.Context, sessionID string, to string, lat, lng float64, name string) error {
+func (ms *Sender) SendLocationMessage(ctx context.Context, sessionID, to string, lat, lng float64, name string) error {
 	client, err := ms.getConnectedClient(ctx, sessionID)
 	if err != nil {
 		return err

@@ -3,7 +3,6 @@ package waclient
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"zpwoot/internal/adapters/logger"
@@ -57,7 +56,7 @@ func (eh *DefaultEventHandler) HandleEvent(client *Client, event interface{}) er
 	case *events.OfflineSyncPreview:
 		return eh.handleOfflineSyncPreview(client, evt)
 	default:
-		eh.logUnhandledEvent(event)
+		eh.logger.Debug().Interface("event", event).Msg("Unhandled event type")
 		return nil
 	}
 }
@@ -67,7 +66,7 @@ func (eh *DefaultEventHandler) handleMessage(client *Client, evt *events.Message
 		Str("session_name", client.Name).
 		Str("message_id", evt.Info.ID).
 		Str("sender", evt.Info.Sender.String()).
-		Msg("Message event in session")
+		Msg("Message event")
 
 	messageInfo := &MessageInfo{
 		ID:        evt.Info.ID,
@@ -92,7 +91,7 @@ func (eh *DefaultEventHandler) handleReceipt(client *Client, evt *events.Receipt
 	eh.logger.Debug().
 		Str("session_name", client.Name).
 		Interface("message_ids", evt.MessageIDs).
-		Msg("Receipt event in session")
+		Msg("Receipt event")
 
 	return eh.sendWebhookIfEnabled(client, EventReadReceipt, evt)
 }
@@ -101,7 +100,7 @@ func (eh *DefaultEventHandler) handlePresence(client *Client, evt *events.Presen
 	eh.logger.Debug().
 		Str("session_name", client.Name).
 		Str("from", evt.From.String()).
-		Msg("Presence event in session")
+		Msg("Presence event")
 
 	return eh.sendWebhookIfEnabled(client, EventPresence, evt)
 }
@@ -110,7 +109,7 @@ func (eh *DefaultEventHandler) handleChatPresence(client *Client, evt *events.Ch
 	eh.logger.Debug().
 		Str("session_name", client.Name).
 		Str("chat", evt.Chat.String()).
-		Msg("Chat presence event in session")
+		Msg("Chat presence event")
 
 	return eh.sendWebhookIfEnabled(client, EventChatPresence, evt)
 }
@@ -119,7 +118,7 @@ func (eh *DefaultEventHandler) handleHistorySync(client *Client, evt *events.His
 	eh.logger.Info().
 		Str("session_name", client.Name).
 		Int("conversations_count", len(evt.Data.Conversations)).
-		Msg("History sync event in session")
+		Msg("History sync event")
 
 	syncInfo := map[string]interface{}{
 		"type":              evt.Data.SyncType,
@@ -133,24 +132,17 @@ func (eh *DefaultEventHandler) handleAppStateSyncComplete(client *Client, evt *e
 	eh.logger.Info().
 		Str("session_name", client.Name).
 		Str("sync_name", string(evt.Name)).
-		Msg("App state sync complete in session")
-
+		Msg("App state sync complete")
 	return nil
 }
 
 func (eh *DefaultEventHandler) handlePushNameSetting(client *Client, _ *events.PushNameSetting) error {
-	eh.logger.Debug().
-		Str("session_name", client.Name).
-		Msg("Push name setting in session")
-
+	eh.logger.Debug().Str("session_name", client.Name).Msg("Push name setting")
 	return nil
 }
 
 func (eh *DefaultEventHandler) handleBlocklistChange(client *Client, _ *events.BlocklistChange) error {
-	eh.logger.Debug().
-		Str("session_name", client.Name).
-		Msg("Blocklist change in session")
-
+	eh.logger.Debug().Str("session_name", client.Name).Msg("Blocklist change")
 	return nil
 }
 
@@ -158,8 +150,7 @@ func (eh *DefaultEventHandler) handleGroupInfo(client *Client, evt *events.Group
 	eh.logger.Debug().
 		Str("session_name", client.Name).
 		Str("group_jid", evt.JID.String()).
-		Msg("Group info event in session")
-
+		Msg("Group info event")
 	return nil
 }
 
@@ -167,23 +158,13 @@ func (eh *DefaultEventHandler) handleJoinedGroup(client *Client, evt *events.Joi
 	eh.logger.Info().
 		Str("session_name", client.Name).
 		Str("group_jid", evt.GroupInfo.JID.String()).
-		Msg("Joined group in session")
-
+		Msg("Joined group")
 	return nil
 }
 
 func (eh *DefaultEventHandler) handleOfflineSyncPreview(client *Client, _ *events.OfflineSyncPreview) error {
-	eh.logger.Debug().
-		Str("session_name", client.Name).
-		Msg("Offline sync preview in session")
-
+	eh.logger.Debug().Str("session_name", client.Name).Msg("Offline sync preview")
 	return nil
-}
-
-func (eh *DefaultEventHandler) logUnhandledEvent(event interface{}) {
-	eh.logger.Debug().
-		Str("event_type", fmt.Sprintf("%T", event)).
-		Msg("Unhandled event type")
 }
 
 func (eh *DefaultEventHandler) sendWebhookIfEnabled(client *Client, eventType EventType, eventData interface{}) error {
@@ -195,9 +176,7 @@ func (eh *DefaultEventHandler) sendWebhookIfEnabled(client *Client, eventType Ev
 		if err.Error() == "webhook not found" {
 			return nil
 		}
-
 		eh.logger.Error().Err(err).Str("session_id", client.SessionID).Msg("Failed to load webhook config")
-
 		return nil
 	}
 
@@ -223,7 +202,6 @@ func (eh *DefaultEventHandler) shouldSendWebhook(webhookConfig *webhook.Webhook,
 			return true
 		}
 	}
-
 	return false
 }
 
@@ -263,7 +241,6 @@ func getMessageType(msg interface{}) string {
 	if !ok {
 		return unknownMessageType
 	}
-
 	return detectMessageType(msgMap)
 }
 
@@ -281,7 +258,6 @@ func convertMessageToMap(msg interface{}) (map[string]interface{}, bool) {
 	if err := json.Unmarshal(msgJSON, &msgMap); err != nil {
 		return nil, false
 	}
-
 	return msgMap, true
 }
 
@@ -289,7 +265,6 @@ func detectMessageType(msgMap map[string]interface{}) string {
 	if hasMessageField(msgMap, "conversation", "extendedTextMessage") {
 		return "text"
 	}
-
 	if hasMessageField(msgMap, "imageMessage") {
 		return "image"
 	}
@@ -305,21 +280,18 @@ func detectMessageType(msgMap map[string]interface{}) string {
 	if hasMessageField(msgMap, "stickerMessage") {
 		return "sticker"
 	}
-
 	if hasMessageField(msgMap, "locationMessage") {
 		return "location"
 	}
 	if hasMessageField(msgMap, "liveLocationMessage") {
 		return "liveLocation"
 	}
-
 	if hasMessageField(msgMap, "contactMessage") {
 		return "contact"
 	}
 	if hasMessageField(msgMap, "contactsArrayMessage") {
 		return "contacts"
 	}
-
 	if hasMessageField(msgMap, "buttonsMessage") {
 		return "buttons"
 	}
@@ -329,7 +301,6 @@ func detectMessageType(msgMap map[string]interface{}) string {
 	if hasMessageField(msgMap, "templateMessage") {
 		return "template"
 	}
-
 	return unknownMessageType
 }
 
@@ -340,41 +311,4 @@ func hasMessageField(msgMap map[string]interface{}, fields ...string) bool {
 		}
 	}
 	return false
-}
-
-type EventFilter struct {
-	AllowedEvents  []EventType
-	BlockedChats   []string
-	BlockedSenders []string
-}
-
-func (ef *EventFilter) ShouldProcess(eventType EventType, chat, sender string) bool {
-	if len(ef.AllowedEvents) > 0 {
-		allowed := false
-
-		for _, allowedEvent := range ef.AllowedEvents {
-			if allowedEvent == eventType {
-				allowed = true
-				break
-			}
-		}
-
-		if !allowed {
-			return false
-		}
-	}
-
-	for _, blockedChat := range ef.BlockedChats {
-		if blockedChat == chat {
-			return false
-		}
-	}
-
-	for _, blockedSender := range ef.BlockedSenders {
-		if blockedSender == sender {
-			return false
-		}
-	}
-
-	return true
 }

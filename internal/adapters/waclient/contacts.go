@@ -19,10 +19,9 @@ type ContactService struct {
 }
 
 func NewContactService(waClient *WAClient) input.ContactService {
-	return &ContactService{
-		waClient: waClient,
-	}
+	return &ContactService{waClient: waClient}
 }
+
 func (cs *ContactService) CheckUser(ctx context.Context, sessionID string, phones []string) ([]input.UserCheckResult, error) {
 	client, err := cs.waClient.GetSession(ctx, sessionID)
 	if err != nil {
@@ -39,7 +38,6 @@ func (cs *ContactService) CheckUser(ctx context.Context, sessionID string, phone
 	}
 
 	results := make([]input.UserCheckResult, 0, len(resp))
-
 	for _, item := range resp {
 		result := input.UserCheckResult{
 			Query:        item.Query,

@@ -16,9 +16,7 @@ type WAClientAdapter struct {
 }
 
 func NewWAClientAdapter(client *WAClient) *WAClientAdapter {
-	return &WAClientAdapter{
-		client: client,
-	}
+	return &WAClientAdapter{client: client}
 }
 
 func (w *WAClientAdapter) GetWAClient() *WAClient {
@@ -26,11 +24,8 @@ func (w *WAClientAdapter) GetWAClient() *WAClient {
 }
 
 func (w *WAClientAdapter) CreateSession(ctx context.Context, sessionID string) error {
-	config := &SessionConfig{
-		SessionID: sessionID,
-	}
+	config := &SessionConfig{SessionID: sessionID}
 	_, err := w.client.CreateSession(ctx, config)
-
 	return err
 }
 
@@ -71,7 +66,6 @@ func (w *WAClientAdapter) IsConnected(ctx context.Context, sessionID string) boo
 	if err != nil {
 		return false
 	}
-
 	return client.IsConnected()
 }
 
@@ -80,7 +74,6 @@ func (w *WAClientAdapter) IsLoggedIn(ctx context.Context, sessionID string) bool
 	if err != nil {
 		return false
 	}
-
 	return client.IsLoggedIn()
 }
 
@@ -105,7 +98,7 @@ func (w *WAClientAdapter) GetQRCode(ctx context.Context, sessionID string) (*out
 	}, nil
 }
 
-func (w *WAClientAdapter) PairPhone(ctx context.Context, sessionID string, phone string) (string, error) {
+func (w *WAClientAdapter) PairPhone(ctx context.Context, sessionID, phone string) (string, error) {
 	client, err := w.client.GetSession(ctx, sessionID)
 	if err != nil {
 		return "", w.convertError(err)
@@ -119,14 +112,12 @@ func (w *WAClientAdapter) PairPhone(ctx context.Context, sessionID string, phone
 	if err != nil {
 		return "", w.convertError(err)
 	}
-
 	return linkingCode, nil
 }
 
 func (w *WAClientAdapter) SendTextMessage(ctx context.Context, sessionID, to, text string) (*output.MessageResult, error) {
-	messageSender := NewSender(w.client)
-
-	resp, err := messageSender.SendTextMessage(ctx, sessionID, to, text, nil)
+	sender := NewSender(w.client)
+	resp, err := sender.SendTextMessage(ctx, sessionID, to, text, nil)
 	if err != nil {
 		return nil, w.convertError(err)
 	}
@@ -139,9 +130,8 @@ func (w *WAClientAdapter) SendTextMessage(ctx context.Context, sessionID, to, te
 }
 
 func (w *WAClientAdapter) SendMediaMessage(ctx context.Context, sessionID, to string, media *output.MediaData) (*output.MessageResult, error) {
-	messageSender := NewSender(w.client)
-
-	resp, err := messageSender.SendMediaMessage(ctx, sessionID, to, media)
+	sender := NewSender(w.client)
+	resp, err := sender.SendMediaMessage(ctx, sessionID, to, media)
 	if err != nil {
 		return nil, w.convertError(err)
 	}
@@ -154,9 +144,8 @@ func (w *WAClientAdapter) SendMediaMessage(ctx context.Context, sessionID, to st
 }
 
 func (w *WAClientAdapter) SendLocationMessage(ctx context.Context, sessionID, to string, location *output.Location) (*output.MessageResult, error) {
-	messageSender := NewSender(w.client)
-
-	err := messageSender.SendLocationMessage(ctx, sessionID, to, location.Latitude, location.Longitude, location.Name)
+	sender := NewSender(w.client)
+	err := sender.SendLocationMessage(ctx, sessionID, to, location.Latitude, location.Longitude, location.Name)
 	if err != nil {
 		return nil, w.convertError(err)
 	}
@@ -169,13 +158,13 @@ func (w *WAClientAdapter) SendLocationMessage(ctx context.Context, sessionID, to
 }
 
 func (w *WAClientAdapter) SendContactMessage(ctx context.Context, sessionID, to string, contact *output.ContactInfo) (*output.MessageResult, error) {
-	messageSender := NewSender(w.client)
+	sender := NewSender(w.client)
 	contactInfo := &ContactInfo{
 		Name:  contact.Name,
 		Phone: contact.PhoneNumber,
 	}
 
-	err := messageSender.SendContactMessage(ctx, sessionID, to, contactInfo)
+	err := sender.SendContactMessage(ctx, sessionID, to, contactInfo)
 	if err != nil {
 		return nil, w.convertError(err)
 	}
@@ -220,109 +209,18 @@ func generateMessageID() string {
 
 func randomString(length int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
 	b := make([]byte, length)
-
 	randomBytes := make([]byte, length)
+
 	if _, err := rand.Read(randomBytes); err != nil {
 		for i := range b {
 			b[i] = charset[time.Now().UnixNano()%int64(len(charset))]
 		}
-
 		return string(b)
 	}
 
 	for i := range b {
 		b[i] = charset[randomBytes[i]%byte(len(charset))]
 	}
-
 	return string(b)
-}
-
-type ContactInfo struct {
-	Name  string `json:"name"`
-	Phone string `json:"phone"`
-	VCard string `json:"vcard,omitempty"`
-}
-
-type Manager struct {
-	client *WAClient
-}
-
-func NewManager(client *WAClient) *Manager {
-	return &Manager{
-		client: client,
-	}
-}
-
-func (s *Manager) CreateSession(ctx context.Context, sessionID string) error {
-	config := &SessionConfig{
-		SessionID: sessionID,
-	}
-	_, err := s.client.CreateSession(ctx, config)
-
-	return err
-}
-
-func (s *Manager) GetSessionStatus(ctx context.Context, sessionID string) (*output.SessionStatus, error) {
-	client, err := s.client.GetSession(ctx, sessionID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &output.SessionStatus{
-		SessionID:   client.SessionID,
-		Connected:   client.IsConnected(),
-		LoggedIn:    client.IsLoggedIn(),
-		DeviceJID:   client.GetDeviceJID(),
-		ConnectedAt: client.ConnectedAt,
-		LastSeen:    client.LastSeen,
-	}, nil
-}
-
-func (s *Manager) DeleteSession(ctx context.Context, sessionID string) error {
-	return s.client.DeleteSession(ctx, sessionID)
-}
-
-func (s *Manager) ConnectSession(ctx context.Context, sessionID string) error {
-	return s.client.ConnectSession(ctx, sessionID)
-}
-
-func (s *Manager) DisconnectSession(ctx context.Context, sessionID string) error {
-	return s.client.DisconnectSession(ctx, sessionID)
-}
-
-func (s *Manager) LogoutSession(ctx context.Context, sessionID string) error {
-	return s.client.LogoutSession(ctx, sessionID)
-}
-
-func (s *Manager) IsConnected(ctx context.Context, sessionID string) bool {
-	client, err := s.client.GetSession(ctx, sessionID)
-	if err != nil {
-		return false
-	}
-
-	return client.IsConnected()
-}
-
-func (s *Manager) IsLoggedIn(ctx context.Context, sessionID string) bool {
-	client, err := s.client.GetSession(ctx, sessionID)
-	if err != nil {
-		return false
-	}
-
-	return client.IsLoggedIn()
-}
-
-func (s *Manager) GetQRCode(ctx context.Context, sessionID string) (*output.QRCodeInfo, error) {
-	qrEvent, err := s.client.GetQRCodeForSession(ctx, sessionID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &output.QRCodeInfo{
-		Code:      qrEvent.Code,
-		Base64:    qrEvent.Base64,
-		ExpiresAt: qrEvent.ExpiresAt,
-	}, nil
 }

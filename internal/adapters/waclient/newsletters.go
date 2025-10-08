@@ -17,10 +17,9 @@ type NewsletterService struct {
 }
 
 func NewNewsletterService(waClient *WAClient) input.NewsletterService {
-	return &NewsletterService{
-		waClient: waClient,
-	}
+	return &NewsletterService{waClient: waClient}
 }
+
 func (ns *NewsletterService) ListNewsletters(ctx context.Context, sessionID string) (*dto.ListNewslettersResponse, error) {
 	client, err := ns.waClient.GetSession(ctx, sessionID)
 	if err != nil {
